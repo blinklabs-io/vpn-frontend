@@ -1,7 +1,7 @@
 import { useWalletStore } from '../stores/walletStore'
 
 const WalletConnection = () => {
-  const { isConnected, stakeAddress, connect, disconnect } = useWalletStore()
+  const { isConnected, connect, disconnect } = useWalletStore()
 
   const handleConnect = async () => {
     try {
@@ -23,12 +23,9 @@ const WalletConnection = () => {
   if (isConnected) {
     return (
       <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-600">
-          {stakeAddress ? `${stakeAddress.slice(0, 8)}...${stakeAddress.slice(-8)}` : 'Connected'}
-        </span>
         <button
           onClick={disconnect}
-          className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+          className="flex py-2.5 px-6 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium cursor-pointer"
         >
           Disconnect
         </button>
@@ -39,7 +36,7 @@ const WalletConnection = () => {
   return (
     <button
       onClick={handleConnect}
-      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+      className="flex py-2.5 px-6 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer"
     >
       Connect Wallet
     </button>
