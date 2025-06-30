@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@cardano-foundation/cardano-connect-with-wallet": "^0.2.14",
-    "@tailwindcss/vite": "^4.1.10",
+    "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-query": "^5.81.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
