@@ -8,12 +8,15 @@ interface WalletState {
   enabledWallet: string | null
   stakeAddress: string | null
   walletApi: CardanoWalletApi | null
+  isWalletModalOpen: boolean
 
   // Actions
   setWalletState: (state: Partial<WalletState>) => void
   connect: (walletName: string) => Promise<void>
   disconnect: () => void
   signMessage: (message: string) => Promise<unknown>
+  toggleWalletModal: () => void
+  closeWalletModal: () => void
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -24,6 +27,7 @@ export const useWalletStore = create<WalletState>()(
       enabledWallet: null,
       stakeAddress: null,
       walletApi: null,
+      isWalletModalOpen: false,
 
       setWalletState: (newState) => set((state) => ({ ...state, ...newState })),
 
@@ -57,6 +61,7 @@ export const useWalletStore = create<WalletState>()(
           enabledWallet: null,
           stakeAddress: null,
           walletApi: null,
+          isWalletModalOpen: false,
         })
       },
 
@@ -72,6 +77,14 @@ export const useWalletStore = create<WalletState>()(
           console.error('Failed to sign message:', error)
           throw error
         }
+      },
+
+      toggleWalletModal: () => {
+        set((state) => ({ isWalletModalOpen: !state.isWalletModalOpen }))
+      },
+
+      closeWalletModal: () => {
+        set({ isWalletModalOpen: false })
       },
     }),
     {
