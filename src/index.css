@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+body {
+  background-color: #040617;
+}
+
+@media (min-width: 1145px) {
+  .cards\:flex-row {
+    flex-direction: row;
+  }
+  .cards\:bg-red-500 {
+    background-color: #ef4444;
+  }
+}
