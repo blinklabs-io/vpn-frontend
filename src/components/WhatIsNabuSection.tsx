@@ -41,7 +41,7 @@ interface WhatIsNabuSectionProps {
 
 const WhatIsNabuSection = ({ onGetStarted }: WhatIsNabuSectionProps) => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 md:py-16 z-20 text-white">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 md:pt-16 z-20 text-white">
       <div className="flex flex-col items-center gap-8 sm:gap-12 w-full max-w-[80rem]">
         <div className="flex flex-col justify-center items-center gap-4 sm:gap-6 text-center">
           <img src={globeIcon} alt="globe" className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20" />

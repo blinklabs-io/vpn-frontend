@@ -28,8 +28,8 @@ const Account = () => {
   }
 
   return (
-    <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)]">
-      <div className="flex flex-col items-center justify-center min-h-screen py-6 gap-6 md:py-16 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
+    <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
+      <div className="flex flex-col items-center justify-center min-h-screen py-16 gap-6 md:py-16 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
         {/* VPN CONTENT */}
         <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
           {/* VPN CONTENT LEFT */}

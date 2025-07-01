@@ -7,7 +7,7 @@ interface HeroSectionProps {
 
 const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
   return (
-    <div className="flex flex-col items-center justify-end min-h-screen px-4 relative z-20 pointer-events-none">
+    <div className="flex flex-col items-center justify-end min-h-[calc(100vh-4rem)] px-4 relative z-20 pointer-events-none">
       <img
         src={heroBackdrop}
         alt="Hero Backdrop"
