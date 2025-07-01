@@ -39,12 +39,14 @@ const Account = () => {
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
       {/* Wallet Modal */}
-      <WalletModal
-        isOpen={isWalletModalOpen}
-        onDisconnect={handleDisconnect}
-      />
-
       <div className="flex flex-col items-center justify-center py-8 gap-6 md:py-8 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
+        <WalletModal
+          isOpen={isWalletModalOpen}
+          onDisconnect={handleDisconnect}
+        />
+      </div>
+
+      <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
         {!isConnected ? (
           <WalletConnection
             variant="white"
