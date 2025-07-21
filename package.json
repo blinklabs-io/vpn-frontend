@@ -32,7 +32,7 @@
     "imagemin-webp": "^8.0.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.36.0",
-    "vite": "^7.0.4",
+    "vite": "^7.0.5",
     "vite-plugin-imagemin": "^0.6.1"
   }
 }
