@@ -1,8 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 
-export const API_BASE_URL = import.meta.env.DEV 
-  ? '/api'
-  : 'https://api.b7s.services/api'
+export const API_BASE_URL = '/api'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
