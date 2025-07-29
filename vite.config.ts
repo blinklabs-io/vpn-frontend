@@ -1,21 +1,34 @@
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import ViteImageOptimize from 'vite-plugin-imagemin'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    wasm(),
+    topLevelAwait(),
     ViteImageOptimize({
       gifsicle: { optimizationLevel: 7 },
       mozjpeg: { quality: 80 },
       pngquant: { quality: [0.65, 0.8] },
       webp: { quality: 80 },
-      // avif: { quality: 80 }
     })
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://api.b7s.services',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {
@@ -24,6 +37,22 @@ export default defineConfig({
           router: ['react-router']
         }
       }
+    }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: true,
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        'dist/'
+      ]
     }
   }
 })
