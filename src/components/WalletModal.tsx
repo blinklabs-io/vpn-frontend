@@ -1,9 +1,15 @@
+import { useWalletStore } from '../stores/walletStore'
+
 interface WalletModalProps {
   isOpen: boolean
   onDisconnect: () => void
 }
 
 const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
+  const { balance, enabledWallet, walletAddress } = useWalletStore()
+
+  const adaBalance = balance ? (parseFloat(balance) / 1_000_000).toFixed(2) : "0.00"
+  
   if (!isOpen) return null
 
   return (
@@ -21,12 +27,12 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                 />
                 <div className="flex flex-col">
                   <h3 className="text-white font-medium text-lg">Your Wallet</h3>
-                  <p className="text-white/70 text-sm">addr1q9kd0v3...slz</p>
+                  <p className="text-white/70 text-sm max-w-[10rem] truncate">{enabledWallet}: {walletAddress}</p>
                 </div>
               </div>
               <button
                 onClick={onDisconnect}
-                className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit self-end"
+                className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit self-start"
               >
                 Disconnect
               </button>
@@ -36,7 +42,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
             <div className="text-right">
               <p className="text-white/70 text-sm mb-2 font-normal">Wallet Balance</p>
               <p className="text-white text-2xl font-bold">
-                83.42 <span className="text-sm font-normal">ADA</span>
+                {adaBalance} <span className="text-sm font-normal">ADA</span>
               </p>
             </div>
           </div>
