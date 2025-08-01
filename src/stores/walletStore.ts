@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CardanoWalletApi } from '../types/cardano'
-import * as CSL from '@emurgo/cardano-serialization-lib-browser'
+import { Address, Value } from '@harmoniclabs/cardano-ledger-ts'
 
 interface WalletState {
   isConnected: boolean
@@ -30,7 +30,8 @@ const decodeHexAddress = (hexAddress: string): string | null => {
     
     const bytes = new Uint8Array(cleanHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
     
-    const address = CSL.Address.from_bytes(bytes).to_bech32()
+    const address = Address.fromBytes(bytes).toString()
+    console.log('Address:', address)
     return address
   } catch (error) {
     console.error('Failed to decode address:', error)
@@ -156,18 +157,14 @@ export const useWalletStore = create<WalletState>()(
           const balanceHex = await walletApi.getBalance()
           console.log('Raw balance from wallet:', balanceHex)
           
-          let balanceLovelace: string
-          if (balanceHex.startsWith('0x')) {
-            balanceLovelace = parseInt(balanceHex, 16).toString()
-          } else {
-            try {
-              balanceLovelace = parseInt(balanceHex, 16).toString()
-            } catch {
-              balanceLovelace = balanceHex
-            }
-          }
+          // Decode the CBOR structure to get the Value object
+          const value = Value.fromCbor(balanceHex)
           
-          set({ balance: balanceLovelace })
+          // Extract just the ADA amount (coin) as string
+          const adaLovelace = value.lovelaces.toString()
+          console.log('ADA balance in lovelace:', adaLovelace)
+          
+          set({ balance: adaLovelace })
         } catch (error) {
           console.error('Failed to get balance:', error)
           throw error

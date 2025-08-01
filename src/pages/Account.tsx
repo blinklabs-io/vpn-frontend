@@ -132,7 +132,7 @@ const Account = () => {
                   <div className="flex flex-col justify-center items-end gap-3">
                     <p className="font-light text-white text-sm">Available Balance</p>
                     <p className="font-light text-white text-sm">
-                      <span className="font-bold text-4xl">{balance ? balance : "0.00"}</span> ADA
+                      <span className="font-bold text-2xl">{balance ? balance : "0.00"}</span> ADA
                     </p>
                   </div>
                 </div>
