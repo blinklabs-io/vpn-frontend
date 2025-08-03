@@ -3,7 +3,6 @@ import { defineConfig } from 'vitest/config'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import ViteImageOptimize from 'vite-plugin-imagemin'
-import wasm from 'vite-plugin-wasm'
 import topLevelAwait from 'vite-plugin-top-level-await'
 
 // https://vite.dev/config/
@@ -11,7 +10,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    wasm(),
     topLevelAwait(),
     ViteImageOptimize({
       gifsicle: { optimizationLevel: 7 },

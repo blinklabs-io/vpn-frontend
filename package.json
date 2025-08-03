@@ -23,7 +23,6 @@
     "react-router": "^7.7.0",
     "tailwindcss": "^4.1.8",
     "vite-plugin-top-level-await": "^1.6.0",
-    "vite-plugin-wasm": "^3.5.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
