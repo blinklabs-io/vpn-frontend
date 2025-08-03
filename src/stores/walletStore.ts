@@ -12,12 +12,15 @@ interface WalletState {
   walletApi: CardanoWalletApi | null
   isWalletModalOpen: boolean
   balance: string | null
+  pendingTx: string | null // Store original transaction for signing
 
   // Actions
   setWalletState: (state: Partial<WalletState>) => void
   connect: (walletName: string) => Promise<void>
   disconnect: () => void
   signMessage: (message: string) => Promise<unknown>
+  signTransaction: (txCbor: string) => Promise<string>
+  submitTransaction: (signedTxCbor: string) => Promise<string>
   toggleWalletModal: () => void
   closeWalletModal: () => void
   getBalance: () => Promise<void>
@@ -50,6 +53,7 @@ export const useWalletStore = create<WalletState>()(
       walletApi: null,
       isWalletModalOpen: false,
       balance: null,
+      pendingTx: null,
 
       setWalletState: (newState) => set((state) => ({ ...state, ...newState })),
 
@@ -88,8 +92,18 @@ export const useWalletStore = create<WalletState>()(
         }
 
         try {
-          const usedAddresses = await walletApi.getUsedAddresses()
+          // Try change address first (this is usually the signing address)
+          const changeAddress = await walletApi.getChangeAddress()
+          console.log('Change address (raw):', changeAddress)
           
+          const decodedChangeAddress = decodeHexAddress(changeAddress)
+          if (decodedChangeAddress) {
+            console.log('Using change address as wallet address:', decodedChangeAddress)
+            set({ walletAddress: decodedChangeAddress })
+            return
+          }
+
+          const usedAddresses = await walletApi.getUsedAddresses()
           if (usedAddresses && usedAddresses.length > 0) {
             const decodedAddress = decodeHexAddress(usedAddresses[0])
             if (decodedAddress) {
@@ -98,12 +112,12 @@ export const useWalletStore = create<WalletState>()(
             }
           }
 
+          // Last resort - unused addresses
           const unusedAddresses = await walletApi.getUnusedAddresses()
           if (unusedAddresses && unusedAddresses.length > 0) {
             const decodedAddress = decodeHexAddress(unusedAddresses[0])
             if (decodedAddress) {
               set({ walletAddress: decodedAddress })
-              return
             }
           }
 
@@ -122,6 +136,7 @@ export const useWalletStore = create<WalletState>()(
           walletApi: null,
           isWalletModalOpen: false,
           balance: null,
+          pendingTx: null,
         })
       },
 
@@ -135,6 +150,40 @@ export const useWalletStore = create<WalletState>()(
           return await walletApi.signData(message)
         } catch (error) {
           console.error('Failed to sign message:', error)
+          throw error
+        }
+      },
+
+      signTransaction: async (txCbor: string) => {
+        const { walletApi } = get()
+        if (!walletApi) {
+          throw new Error('No wallet connected')
+        }
+
+        try {
+          console.log('Signing transaction...')
+          const signedTxCbor = await walletApi.signTx(txCbor)
+          console.log('Transaction signed successfully')
+          return signedTxCbor as string
+        } catch (error) {
+          console.error('Failed to sign transaction:', error)
+          throw error
+        }
+      },
+
+      submitTransaction: async (signedTxCbor: string) => {
+        const { walletApi } = get()
+        if (!walletApi) {
+          throw new Error('No wallet connected')
+        }
+
+        try {
+          console.log('Submitting transaction...')
+          const txHash = await walletApi.submitTx(signedTxCbor)
+          console.log('Transaction submitted! Hash:', txHash)
+          return txHash
+        } catch (error) {
+          console.error('Failed to submit transaction:', error)
           throw error
         }
       },

@@ -7,7 +7,16 @@ import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
 
 const Account = () => {
-  const { isConnected, isWalletModalOpen, disconnect, closeWalletModal, balance, walletAddress } = useWalletStore()
+  const { 
+    isConnected, 
+    isWalletModalOpen, 
+    disconnect, 
+    closeWalletModal, 
+    balance, 
+    walletAddress,
+    signTransaction,
+    submitTransaction
+  } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
 
@@ -17,10 +26,30 @@ const Account = () => {
   })
 
   const signupMutation = useSignup({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('Transaction built successfully:', data)
-      // TODO: Handle transaction signing and submission
-      alert(`Transaction built! Client ID: ${data.clientId}`)
+      
+      try {
+        console.log('Signing transaction...')
+        const signedTxCbor = await signTransaction(data.txCbor)
+        console.log('Transaction signed successfully')
+        
+        console.log('Submitting transaction...')
+        const txHash = await submitTransaction(signedTxCbor)
+        console.log('Transaction submitted! Hash:', txHash)
+        
+        alert(`VPN purchase successful! Transaction: ${txHash}`)
+      } catch (error) {
+        console.error('Transaction error details:', error)
+        
+        if (error instanceof Error && error.message?.includes('submitTx')) {
+          alert(`Transaction submission failed: ${error.message}`)
+        } else if (error instanceof Error && error.message?.includes('signTx')) {
+          alert(`Transaction signing failed: ${error.message}`)
+        } else {
+          alert(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+      }
     },
     onError: (error) => {
       console.error('Signup failed:', error)
@@ -108,7 +137,7 @@ const Account = () => {
 
     console.log('Sending signup payload:', payload)
     console.log('Wallet address:', walletAddress)
-    console.log('Selected option:', selectedOption)
+    console.log('Expected to match missing signatory:', '901e718037e033a140371c4300bef09060f9e1167941513278230f5d')
 
     signupMutation.mutate(payload)
   }
