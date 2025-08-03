@@ -40,7 +40,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
             <div className="text-right">
               <p className="text-white/70 text-sm mb-2 font-normal">Wallet Balance</p>
               <p className="text-white text-2xl font-bold">
-                {adaBalance} <span className="text-sm font-normal">ADA</span>
+                {balance || "0.00"} <span className="text-sm font-normal">ADA</span>
               </p>
             </div>
           </div>
