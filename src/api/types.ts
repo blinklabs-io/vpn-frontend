@@ -24,4 +24,16 @@ export interface QueryOptions {
   enabled?: boolean
   refetchInterval?: number
   staleTime?: number
+}
+
+export interface TxSignupRequest {
+  clientAddress: string
+  duration: number
+  price: number
+  region: string
+}
+
+export interface TxSignupResponse {
+  clientId: string
+  txCbor: string
 } 

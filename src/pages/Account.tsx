@@ -1,19 +1,31 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData } from "../api/hooks/useRefData"
+import { useRefData, useSignup } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
 
 const Account = () => {
-  const { isConnected, isWalletModalOpen, disconnect, closeWalletModal, balance } = useWalletStore()
+  const { isConnected, isWalletModalOpen, disconnect, closeWalletModal, balance, walletAddress } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
 
   const { data: refData } = useRefData({
     queryKey: ['refdata'],
     enabled: isConnected,
+  })
+
+  const signupMutation = useSignup({
+    onSuccess: (data) => {
+      console.log('Transaction built successfully:', data)
+      // TODO: Handle transaction signing and submission
+      alert(`Transaction built! Client ID: ${data.clientId}`)
+    },
+    onError: (error) => {
+      console.error('Signup failed:', error)
+      alert(`Purchase failed: ${error.message}`)
+    }
   })
 
   const formatDuration = (durationMs: number) => {
@@ -70,6 +82,36 @@ const Account = () => {
 
   const selectedOption = durationOptions.find((option: { value: number }) => option.value === selectedDuration)
   const currentPrice = selectedOption ? formatPrice(selectedOption.price) : "0.00"
+
+  const handlePurchase = () => {
+    if (!walletAddress) {
+      alert('No wallet address available')
+      return
+    }
+
+    if (!selectedOption) {
+      alert('Please select a duration')
+      return
+    }
+
+    if (!selectedRegion) {
+      alert('Please select a region')
+      return
+    }
+
+    const payload = {
+      clientAddress: walletAddress,
+      duration: selectedDuration,
+      price: selectedOption.price,
+      region: selectedRegion
+    }
+
+    console.log('Sending signup payload:', payload)
+    console.log('Wallet address:', walletAddress)
+    console.log('Selected option:', selectedOption)
+
+    signupMutation.mutate(payload)
+  }
 
   const handleDelete = (instanceId: string) => {
     console.log('Delete instance:', instanceId)
@@ -186,8 +228,16 @@ const Account = () => {
                     )}
                   </div>
                   {refData?.prices ? (
-                    <button className="flex items-center justify-center gap-2.5 rounded-md bg-[#9400FF] text-black py-1 px-2.5 backdrop-blur-sm">
-                      <p className="font-light text-white text-sm">Purchase {currentPrice} ADA</p>
+                    <button 
+                      className={`flex items-center justify-center gap-2.5 rounded-md bg-[#9400FF] text-black py-1 px-2.5 backdrop-blur-sm ${
+                        signupMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      }`}
+                      onClick={handlePurchase}
+                      disabled={signupMutation.isPending}
+                    >
+                      <p className="font-light text-white text-sm">
+                        {signupMutation.isPending ? 'Processing...' : `Purchase ${currentPrice} ADA`}
+                      </p>
                     </button>
                   ) : (
                     <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
