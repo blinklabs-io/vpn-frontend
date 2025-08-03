@@ -160,11 +160,11 @@ export const useWalletStore = create<WalletState>()(
           // Decode the CBOR structure to get the Value object
           const value = Value.fromCbor(balanceHex)
           
-          // Extract just the ADA amount (coin) as string
-          const adaLovelace = value.lovelaces.toString()
-          console.log('ADA balance in lovelace:', adaLovelace)
+          // Extract just the ADA amount as bigint, then convert properly
+          const lovelaceBigInt = value.lovelaces
+          const adaBalance = (Number(lovelaceBigInt) / 1_000_000).toFixed(2)
           
-          set({ balance: adaLovelace })
+          set({ balance: adaBalance })
         } catch (error) {
           console.error('Failed to get balance:', error)
           throw error
