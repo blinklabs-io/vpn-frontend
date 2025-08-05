@@ -35,6 +35,12 @@ export async function apiClient<T>(
       throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
 
+    const contentLength = response.headers.get('content-length')
+    if (contentLength === '0' || !contentLength) {
+      console.log('Empty response received for:', endpoint)
+      return {} as T
+    }
+
     return response.json()
   } catch (error) {
     if (error instanceof TypeError) {
@@ -72,4 +78,18 @@ export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
 
 export function getClientList(request: ClientListRequest): Promise<ClientInfo[]> {
   return post<ClientInfo[]>('/client/list', request)
+} 
+
+export interface ClientAvailableRequest {
+  id: string
+}
+
+export interface ClientAvailableResponse {
+  available: boolean
+  config?: string
+  message?: string
+}
+
+export function checkClientAvailable(request: ClientAvailableRequest): Promise<ClientAvailableResponse> {
+  return post<ClientAvailableResponse>('/client/available', request)
 } 

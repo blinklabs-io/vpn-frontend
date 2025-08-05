@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup, useClientList } from "../api/hooks"
+import { useRefData, useSignup, useClientList, useClientAvailable } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
@@ -20,6 +20,7 @@ const Account = () => {
   } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
 
   const { data: refData } = useRefData({
     queryKey: ['refdata'],
@@ -62,6 +63,26 @@ const Account = () => {
     { clientAddress: walletAddress || '' },
     { enabled: !!walletAddress && isConnected }
   )
+
+  // Add client available query
+  const { data: clientAvailable } = useClientAvailable(
+    { id: selectedClientId || '' },
+    { enabled: !!selectedClientId }
+  )
+
+  // Test the available endpoint with the first client
+  const firstClient = clientList?.[0]
+  const { data: testAvailable } = useClientAvailable(
+    { id: firstClient?.id || '' },
+    { enabled: !!firstClient?.id }
+  )
+
+  // Log the test result
+  useEffect(() => {
+    if (testAvailable) {
+      console.log('Test client available result:', testAvailable)
+    }
+  }, [testAvailable])
 
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60))
@@ -152,9 +173,23 @@ const Account = () => {
     console.log('Delete instance:', instanceId)
   }
 
-  const handleAction = (instanceId: string, action: string) => {
-    console.log(`${action} for instance:`, instanceId)
+  const handleAction = async (instanceId: string, action: string) => {
+    if (action === 'Get Config') {
+      setSelectedClientId(instanceId)
+      // The hook will automatically fetch the config
+    } else if (action === 'Renew Access') {
+      console.log('Renew access for instance:', instanceId)
+      // Implement renewal logic here
+    }
   }
+
+  // Show config modal when available
+  useEffect(() => {
+    if (clientAvailable?.config) {
+      alert(`VPN Config:\n\n${clientAvailable.config}`)
+      setSelectedClientId(null) // Reset after showing
+    }
+  }, [clientAvailable?.config])
 
   const handleDisconnect = () => {
     disconnect()

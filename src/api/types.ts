@@ -50,4 +50,14 @@ export interface ClientInfo {
 
 export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
   data: ClientInfo[]
+}
+
+export interface ClientAvailableRequest {
+  id: string
+}
+
+export interface ClientAvailableResponse {
+  available: boolean
+  config?: string
+  message?: string
 } 
