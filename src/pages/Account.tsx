@@ -196,13 +196,35 @@ const Account = () => {
     closeWalletModal()
   }
 
+  const formatTimeRemaining = (expirationDate: string) => {
+    const now = new Date()
+    const expiration = new Date(expirationDate)
+    const diffMs = expiration.getTime() - now.getTime()
+    
+    if (diffMs <= 0) {
+      return 'Expired'
+    }
+    
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+    
+    if (days > 0) {
+      return `${days}d ${hours}h`
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    } else {
+      return `${minutes}m`
+    }
+  }
+
   const vpnInstances = useMemo(() => {
     if (!clientList) return []
     
     return clientList.map((client: ClientInfo) => ({
       id: client.id,
       region: client.region,
-      duration: 'VPN Access',
+      duration: formatTimeRemaining(client.expiration),
       status: new Date(client.expiration) > new Date() ? 'Active' as const : 'Expired' as const,
       expires: new Date(client.expiration).toLocaleDateString()
     }))
@@ -314,7 +336,30 @@ const Account = () => {
                 <p className="text-white text-lg font-bold md:text-base md:font-normal">VPN Instances</p>
                 <div className="flex flex-col items-start gap-2 w-full">
                   {isLoadingClients ? (
-                    <div className="w-full h-20 bg-gray-300/20 rounded animate-pulse"></div>
+                    <>
+                      {/* Shimmer instances - show 3 loading placeholders */}
+                      {[1, 2, 3].map((index) => (
+                        <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
+                          <div className="flex flex-col items-start gap-1 w-full">
+                            <div className="flex justify-between items-start w-full gap-2">
+                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
+                            </div>
+                            <div className="flex justify-between items-start w-full">
+                              <div className="flex items-center gap-2">
+                                <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
+                                <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+                              </div>
+                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center w-full">
+                            <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
+                            <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
                   ) : vpnInstances.length > 0 ? (
                     vpnInstances.map((instance) => (
                       <VpnInstance
