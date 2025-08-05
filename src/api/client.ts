@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
+import type { ApiResponse } from './types'
 
 export const API_BASE_URL = '/api'
 
@@ -53,4 +54,22 @@ export function post<T>(endpoint: string, data?: unknown, options?: RequestInit)
     body: data ? JSON.stringify(data) : undefined,
     ...options,
   })
+} 
+
+export interface ClientListRequest {
+  clientAddress: string
+}
+
+export interface ClientInfo {
+  expiration: string
+  id: string
+  region: string
+}
+
+export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
+  data: ClientInfo[]
+}
+
+export function getClientList(request: ClientListRequest): Promise<ClientInfo[]> {
+  return post<ClientInfo[]>('/client/list', request)
 } 

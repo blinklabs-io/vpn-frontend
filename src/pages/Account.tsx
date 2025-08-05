@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup } from "../api/hooks"
+import { useRefData, useSignup, useClientList } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
+import type { ClientInfo } from '../api/types'
 
 const Account = () => {
   const { 
@@ -31,11 +32,11 @@ const Account = () => {
       
       try {
         console.log('Signing transaction...')
-        const signedTxCbor = await signTransaction(data.txCbor)
+        await signTransaction(data.txCbor)
         console.log('Transaction signed successfully')
         
         console.log('Submitting transaction...')
-        const txHash = await submitTransaction(signedTxCbor)
+        const txHash = await submitTransaction(data.txCbor)
         console.log('Transaction submitted! Hash:', txHash)
         
         alert(`VPN purchase successful! Transaction: ${txHash}`)
@@ -56,6 +57,11 @@ const Account = () => {
       alert(`Purchase failed: ${error.message}`)
     }
   })
+
+  const { data: clientList, isLoading: isLoadingClients } = useClientList(
+    { clientAddress: walletAddress || '' },
+    { enabled: !!walletAddress && isConnected }
+  )
 
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60))
@@ -155,23 +161,17 @@ const Account = () => {
     closeWalletModal()
   }
 
-  //mock vpn instances data
-  const vpnInstances = [
-    {
-      id: 'instance-1',
-      region: selectedRegion || 'us east-1',
-      duration: '1 day',
-      status: 'Active' as const,
-      expires: '1 day'
-    },
-    {
-      id: 'instance-2', 
-      region: 'us east-2',
-      duration: '6 hours',
-      status: 'Expired' as const,
-      expires: 'Expired'
-    }
-  ]
+  const vpnInstances = useMemo(() => {
+    if (!clientList) return []
+    
+    return clientList.map((client: ClientInfo) => ({
+      id: client.id,
+      region: client.region,
+      duration: 'VPN Access',
+      status: new Date(client.expiration) > new Date() ? 'Active' as const : 'Expired' as const,
+      expires: new Date(client.expiration).toLocaleDateString()
+    }))
+  }, [clientList])
 
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
@@ -278,17 +278,23 @@ const Account = () => {
               <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
                 <p className="text-white text-lg font-bold md:text-base md:font-normal">VPN Instances</p>
                 <div className="flex flex-col items-start gap-2 w-full">
-                  {vpnInstances.map((instance) => (
-                    <VpnInstance
-                      key={instance.id}
-                      region={instance.region}
-                      duration={instance.duration}
-                      status={instance.status}
-                      expires={instance.expires}
-                      onDelete={() => handleDelete(instance.id)}
-                      onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
-                    />
-                  ))}
+                  {isLoadingClients ? (
+                    <div className="w-full h-20 bg-gray-300/20 rounded animate-pulse"></div>
+                  ) : vpnInstances.length > 0 ? (
+                    vpnInstances.map((instance) => (
+                      <VpnInstance
+                        key={instance.id}
+                        region={instance.region}
+                        duration={instance.duration}
+                        status={instance.status}
+                        expires={instance.expires}
+                        onDelete={() => handleDelete(instance.id)}
+                        onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-white/60 text-sm">No VPN instances found</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CardanoWalletApi } from '../types/cardano'
-import { Address, Value, Tx, TxWitnessSet, VKeyWitness } from '@harmoniclabs/cardano-ledger-ts'
+import { Address, Value } from '@harmoniclabs/cardano-ledger-ts'
 
 
 

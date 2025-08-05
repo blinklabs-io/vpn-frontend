@@ -36,4 +36,18 @@ export interface TxSignupRequest {
 export interface TxSignupResponse {
   clientId: string
   txCbor: string
+}
+
+export interface ClientListRequest {
+  clientAddress: string
+}
+
+export interface ClientInfo {
+  expiration: string
+  id: string
+  region: string
+}
+
+export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
+  data: ClientInfo[]
 } 
