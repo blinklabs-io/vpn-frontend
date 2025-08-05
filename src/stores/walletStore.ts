@@ -28,6 +28,7 @@ interface WalletState {
   closeWalletModal: () => void
   getBalance: () => Promise<void>
   getWalletAddress: () => Promise<void>
+  reconnectWallet: () => Promise<void>
 }
 
 const decodeHexAddress = (hexAddress: string): string | null => {
@@ -37,7 +38,6 @@ const decodeHexAddress = (hexAddress: string): string | null => {
     const bytes = new Uint8Array(cleanHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
     
     const address = Address.fromBytes(bytes).toString()
-    console.log('Address:', address)
     return address
   } catch (error) {
     console.error('Failed to decode address:', error)
@@ -97,11 +97,9 @@ export const useWalletStore = create<WalletState>()(
         try {
           // Try change address first (this is usually the signing address)
           const changeAddress = await walletApi.getChangeAddress()
-          console.log('Change address (raw):', changeAddress)
           
           const decodedChangeAddress = decodeHexAddress(changeAddress)
           if (decodedChangeAddress) {
-            console.log('Using change address as wallet address:', decodedChangeAddress)
             set({ walletAddress: decodedChangeAddress })
             return
           }
@@ -164,8 +162,7 @@ export const useWalletStore = create<WalletState>()(
         }
 
         try {
-          console.log('Signing transaction...')
-          
+
           const witnessSet = await walletApi.signTx(txCbor)
           
           return witnessSet as string
@@ -182,11 +179,8 @@ export const useWalletStore = create<WalletState>()(
         }
 
         try {
-          console.log('Submitting witness set...')
-          
-          // Try submitting the witness set directly
+
           const txHash = await walletApi.submitTx(witnessSet)
-          console.log('Transaction submitted! Hash:', txHash)
           return txHash
         } catch (error) {
           console.error('Failed to submit transaction:', error)
@@ -210,12 +204,8 @@ export const useWalletStore = create<WalletState>()(
 
         try {
           const balanceHex = await walletApi.getBalance()
-          console.log('Raw balance from wallet:', balanceHex)
-          
-          // Decode the CBOR structure to get the Value object
           const value = Value.fromCbor(balanceHex)
           
-          // Extract just the ADA amount as bigint, then convert properly
           const lovelaceBigInt = value.lovelaces
           const adaBalance = (Number(lovelaceBigInt) / 1_000_000).toFixed(2)
           
@@ -223,6 +213,18 @@ export const useWalletStore = create<WalletState>()(
         } catch (error) {
           console.error('Failed to get balance:', error)
           throw error
+        }
+      },
+
+      reconnectWallet: async () => {
+        const { isConnected, enabledWallet } = get()
+        if (isConnected && enabledWallet) {
+          try {
+            await get().connect(enabledWallet)
+          } catch (error) {
+            console.error('Failed to auto-reconnect wallet:', error)
+            get().disconnect()
+          }
         }
       },
     }),
@@ -233,6 +235,7 @@ export const useWalletStore = create<WalletState>()(
         enabledWallet: state.enabledWallet,
         stakeAddress: state.stakeAddress,
         walletAddress: state.walletAddress,
+          
       }),
     }
   )
