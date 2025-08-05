@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CardanoWalletApi } from '../types/cardano'
-import { Address, Value } from '@harmoniclabs/cardano-ledger-ts'
+import { Address, Value, Tx, TxWitnessSet, VKeyWitness } from '@harmoniclabs/cardano-ledger-ts'
+
+
+
 
 interface WalletState {
   isConnected: boolean
@@ -19,8 +22,8 @@ interface WalletState {
   connect: (walletName: string) => Promise<void>
   disconnect: () => void
   signMessage: (message: string) => Promise<unknown>
-  signTransaction: (txCbor: string) => Promise<string>
-  submitTransaction: (signedTxCbor: string) => Promise<string>
+  signTransaction: (txCbor: string) => Promise<string> // Returns witness set
+  submitTransaction: (witnessSet: string) => Promise<string>
   toggleWalletModal: () => void
   closeWalletModal: () => void
   getBalance: () => Promise<void>
@@ -162,24 +165,27 @@ export const useWalletStore = create<WalletState>()(
 
         try {
           console.log('Signing transaction...')
-          const signedTxCbor = await walletApi.signTx(txCbor)
-          console.log('Transaction signed successfully')
-          return signedTxCbor as string
+          
+          const witnessSet = await walletApi.signTx(txCbor)
+          
+          return witnessSet as string
         } catch (error) {
           console.error('Failed to sign transaction:', error)
           throw error
         }
       },
 
-      submitTransaction: async (signedTxCbor: string) => {
+      submitTransaction: async (witnessSet: string) => {
         const { walletApi } = get()
         if (!walletApi) {
           throw new Error('No wallet connected')
         }
 
         try {
-          console.log('Submitting transaction...')
-          const txHash = await walletApi.submitTx(signedTxCbor)
+          console.log('Submitting witness set...')
+          
+          // Try submitting the witness set directly
+          const txHash = await walletApi.submitTx(witnessSet)
           console.log('Transaction submitted! Hash:', txHash)
           return txHash
         } catch (error) {
