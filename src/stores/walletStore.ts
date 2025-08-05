@@ -148,7 +148,13 @@ export const useWalletStore = create<WalletState>()(
         }
 
         try {
-          return await walletApi.signData(message)
+          const address = await walletApi.getChangeAddress()
+          const payload = Array.from(new TextEncoder().encode(message))
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('')
+          
+          console.log('Signing with address: ----->', address, 'payload:', payload)
+          return await walletApi.signData(address, payload)
         } catch (error) {
           console.error('Failed to sign message:', error)
           throw error

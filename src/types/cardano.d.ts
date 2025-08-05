@@ -4,7 +4,7 @@ interface CardanoWalletApi {
   getUsedAddresses(): Promise<string[]>
   getUnusedAddresses(): Promise<string[]>
   getChangeAddress(): Promise<string>
-  signData(message: string): Promise<unknown>
+  signData(address: string, payload: string): Promise<{key: string, signature: string}>
   signTx(tx: string): Promise<unknown>
   getBalance(): Promise<string>
   getUtxos(): Promise<unknown[]>

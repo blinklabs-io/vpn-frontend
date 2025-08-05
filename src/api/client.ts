@@ -90,6 +90,63 @@ export interface ClientAvailableResponse {
   message?: string
 }
 
+export interface ClientProfileRequest {
+  id: string
+  key: string
+  signature: string
+}
+
 export function checkClientAvailable(request: ClientAvailableRequest): Promise<ClientAvailableResponse> {
   return post<ClientAvailableResponse>('/client/available', request)
+}
+
+export function getClientProfile(request: ClientProfileRequest): Promise<string> {
+  const url = `${API_BASE_URL}/client/profile`
+  
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'accept': 'application/json',
+    },
+    body: JSON.stringify(request),
+    redirect: 'manual'
+  }).then(async (response) => {
+    console.log('Profile response status:', response)
+    
+    // Handle successful redirect
+    if (response.status === 302) {
+      const location = response.headers.get('location')
+      if (location) {
+        return location
+      }
+      throw new Error('No redirect location found')
+    }
+    
+    if (response.type === 'opaqueredirect') {
+      console.log('Got opaque redirect, using follow approach...')
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+        },
+        body: JSON.stringify(request),
+        redirect: 'follow'
+      }).then(finalResponse => {
+        console.log('Final response URL:', finalResponse.url)
+        if (finalResponse.url && finalResponse.url !== url) {
+          return finalResponse.url
+        }
+        throw new Error('Could not get redirect URL')
+      })
+    }
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+    
+    return response.text()
+  })
 } 

@@ -60,4 +60,10 @@ export interface ClientAvailableResponse {
   available: boolean
   config?: string
   message?: string
+}
+
+export interface ClientProfileRequest {
+  id: string
+  key: string
+  signature: string
 } 
