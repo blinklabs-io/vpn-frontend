@@ -57,9 +57,7 @@ export interface ClientAvailableRequest {
 }
 
 export interface ClientAvailableResponse {
-  available: boolean
-  config?: string
-  message?: string
+  msg?: string
 }
 
 export interface ClientProfileRequest {

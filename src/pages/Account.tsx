@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup, useClientList, useClientAvailable, useClientProfile } from "../api/hooks"
+import { useRefData, useSignup, useClientList, useMultipleClientAvailable, useClientProfile } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
@@ -15,8 +15,7 @@ const Account = () => {
     closeWalletModal, 
     balance, 
     walletAddress,
-    signTransaction,
-    submitTransaction
+    signAndSubmitTransaction,
   } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
@@ -31,25 +30,18 @@ const Account = () => {
       console.log('Transaction built successfully:', data)
       
       try {
-        console.log('Signing transaction...')
-        await signTransaction(data.txCbor)
-        console.log('Transaction signed successfully')
-        
-        console.log('Submitting transaction...')
-        const txHash = await submitTransaction(data.txCbor)
-        console.log('Transaction submitted! Hash:', txHash)
-        
+        // Option 1: Use the new combined method
+        const txHash = await signAndSubmitTransaction(data.txCbor)
         alert(`VPN purchase successful! Transaction: ${txHash}`)
+        
+        // Option 2: Use separate methods correctly
+        // const signedTxCbor = await signTransaction(data.txCbor)
+        // const txHash = await submitTransaction(signedTxCbor)
+        // alert(`VPN purchase successful! Transaction: ${txHash}`)
+        
       } catch (error) {
         console.error('Transaction error details:', error)
-        
-        if (error instanceof Error && error.message?.includes('submitTx')) {
-          alert(`Transaction submission failed: ${error.message}`)
-        } else if (error instanceof Error && error.message?.includes('signTx')) {
-          alert(`Transaction signing failed: ${error.message}`)
-        } else {
-          alert(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        }
+        alert(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     },
     onError: (error) => {
@@ -63,16 +55,29 @@ const Account = () => {
     { enabled: !!walletAddress && isConnected }
   )
 
-  const firstClient = clientList?.[0]
-  const { data: testAvailable } = useClientAvailable(
-    { id: firstClient?.id || '' }
-  )
+  const clientIds = (clientList || []).map(client => client.id)
+  const clientAvailabilityQueries = useMultipleClientAvailable(clientIds)
 
-  useEffect(() => {
-    if (testAvailable) {
-      console.log('Test client available result:', testAvailable)
-    }
-  }, [testAvailable])
+  const clientAvailabilityMap = useMemo(() => {
+    const map: Record<string, { available: boolean; msg?: string }> = {}
+    
+    clientList?.forEach((client, index) => {
+      const availabilityData = clientAvailabilityQueries[index]?.data
+      if (availabilityData) {
+        // Check if the response indicates availability
+        const isAvailable = availabilityData.msg === "Profile is available"
+        
+        map[client.id] = {
+          available: isAvailable,
+          msg: availabilityData.msg
+        }
+      }
+    })
+    
+    return map
+  }, [clientList, clientAvailabilityQueries])
+
+
 
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60))
@@ -152,10 +157,6 @@ const Account = () => {
       region: selectedRegion
     }
 
-    console.log('Sending signup payload:', payload)
-    console.log('Wallet address:', walletAddress)
-    console.log('Expected to match missing signatory:', '901e718037e033a140371c4300bef09060f9e1167941513278230f5d')
-
     signupMutation.mutate(payload)
   }
 
@@ -170,12 +171,7 @@ const Account = () => {
       try {
         const s3Url = await clientProfileMutation.mutateAsync(instanceId)
         
-        const link = document.createElement('a')
-        link.href = s3Url
-        link.download = `vpn-config-${instanceId}.ovpn`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        window.open(s3Url, '_blank')
       } catch (error) {
         console.error('Failed to get config:', error)
         alert('Failed to get VPN config. Please try again.')
@@ -215,14 +211,21 @@ const Account = () => {
   const vpnInstances = useMemo(() => {
     if (!clientList) return []
     
-    return clientList.map((client: ClientInfo) => ({
-      id: client.id,
-      region: client.region,
-      duration: formatTimeRemaining(client.expiration),
-      status: new Date(client.expiration) > new Date() ? 'Active' as const : 'Expired' as const,
-      expires: new Date(client.expiration).toLocaleDateString()
-    }))
-  }, [clientList])
+    return clientList.map((client: ClientInfo) => {
+      const availability = clientAvailabilityMap[client.id]
+      const isExpired = new Date(client.expiration) <= new Date()
+      
+      const isActive = availability ? availability.available : !isExpired
+      
+      return {
+        id: client.id,
+        region: client.region,
+        duration: formatTimeRemaining(client.expiration),
+        status: isActive ? 'Active' as const : 'Expired' as const,
+        expires: new Date(client.expiration).toLocaleDateString()
+      }
+    })
+  }, [clientList, clientAvailabilityMap])
 
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CardanoWalletApi } from '../types/cardano'
-import { Address, Value } from '@harmoniclabs/cardano-ledger-ts'
+import { Address, Value, Tx } from '@harmoniclabs/cardano-ledger-ts'
 
 
 
@@ -22,13 +22,14 @@ interface WalletState {
   connect: (walletName: string) => Promise<void>
   disconnect: () => void
   signMessage: (message: string) => Promise<unknown>
-  signTransaction: (txCbor: string) => Promise<string> // Returns witness set
-  submitTransaction: (witnessSet: string) => Promise<string>
+  signTransaction: (txCbor: string) => Promise<string> // Returns signed transaction CBOR
+  submitTransaction: (signedTxCbor: string) => Promise<string>
   toggleWalletModal: () => void
   closeWalletModal: () => void
   getBalance: () => Promise<void>
   getWalletAddress: () => Promise<void>
   reconnectWallet: () => Promise<void>
+  signAndSubmitTransaction: (txCbor: string) => Promise<string> // New combined method
 }
 
 const decodeHexAddress = (hexAddress: string): string | null => {
@@ -168,28 +169,49 @@ export const useWalletStore = create<WalletState>()(
         }
 
         try {
-
-          const witnessSet = await walletApi.signTx(txCbor)
+          // Decode the unsigned transaction
+          const unsignedTx = Tx.fromCbor(txCbor)
           
-          return witnessSet as string
+          await unsignedTx.signWithCip30Wallet(walletApi)
+
+          return unsignedTx.toCbor().toString()
         } catch (error) {
           console.error('Failed to sign transaction:', error)
           throw error
         }
       },
 
-      submitTransaction: async (witnessSet: string) => {
+      submitTransaction: async (signedTxCbor: string) => {
         const { walletApi } = get()
         if (!walletApi) {
           throw new Error('No wallet connected')
         }
 
         try {
-
-          const txHash = await walletApi.submitTx(witnessSet)
+          const txHash = await walletApi.submitTx(signedTxCbor)
           return txHash
         } catch (error) {
           console.error('Failed to submit transaction:', error)
+          throw error
+        }
+      },
+
+      // New combined method for convenience
+      signAndSubmitTransaction: async (txCbor: string) => {
+        const { signTransaction, submitTransaction } = get()
+        
+        try {
+          console.log('Signing transaction...')
+          const signedTxCbor = await signTransaction(txCbor)
+          console.log('Transaction signed successfully')
+          
+          console.log('Submitting transaction...')
+          const txHash = await submitTransaction(signedTxCbor)
+          console.log('Transaction submitted! Hash:', txHash)
+          
+          return txHash
+        } catch (error) {
+          console.error('Failed to sign and submit transaction:', error)
           throw error
         }
       },

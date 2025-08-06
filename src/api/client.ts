@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import type { ApiResponse } from './types'
+import type { ClientAvailableRequest, ClientAvailableResponse, ClientInfo, ClientListRequest, ClientProfileRequest } from './types'
 
 export const API_BASE_URL = '/api'
 
@@ -62,39 +62,13 @@ export function post<T>(endpoint: string, data?: unknown, options?: RequestInit)
   })
 } 
 
-export interface ClientListRequest {
-  clientAddress: string
-}
-
-export interface ClientInfo {
-  expiration: string
-  id: string
-  region: string
-}
-
-export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
-  data: ClientInfo[]
-}
+// Types moved to types.ts to avoid conflicts
 
 export function getClientList(request: ClientListRequest): Promise<ClientInfo[]> {
   return post<ClientInfo[]>('/client/list', request)
 } 
 
-export interface ClientAvailableRequest {
-  id: string
-}
-
-export interface ClientAvailableResponse {
-  available: boolean
-  config?: string
-  message?: string
-}
-
-export interface ClientProfileRequest {
-  id: string
-  key: string
-  signature: string
-}
+// Types moved to types.ts to avoid conflicts
 
 export function checkClientAvailable(request: ClientAvailableRequest): Promise<ClientAvailableResponse> {
   return post<ClientAvailableResponse>('/client/available', request)
