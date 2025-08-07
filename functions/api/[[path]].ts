@@ -32,12 +32,19 @@ export async function onRequest({ request, params }) {
     }
   }
 
+  const responseHeaders = new Headers();
+  
+  response.headers.forEach((value, key) => {
+    responseHeaders.set(key, value);
+  });
+  
+  responseHeaders.set('Access-Control-Allow-Origin', '*');
+  responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: {
-      ...response.headers,
-      'Access-Control-Allow-Origin': '*',
-    },
+    headers: responseHeaders,
   });
 }
