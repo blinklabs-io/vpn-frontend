@@ -109,7 +109,7 @@ const Account = () => {
   }
 
   const durationOptions = useMemo(() => {
-    if (!refData?.prices) return []
+    if (!Array.isArray(refData?.prices)) return []
     
     return refData.prices.map((priceData: { duration: number; price: number }) => ({
       label: formatDuration(priceData.duration),
@@ -126,7 +126,7 @@ const Account = () => {
   }, [durationOptions, selectedDuration])
 
   useEffect(() => {
-    if (refData?.regions && refData.regions.length > 0 && !selectedRegion) {
+    if (Array.isArray(refData?.regions) && refData.regions.length > 0 && !selectedRegion) {
       setSelectedRegion(refData.regions[0])
     }
   }, [refData?.regions, selectedRegion])
@@ -265,7 +265,7 @@ const Account = () => {
                 {/* Duration Selection */}
                 <div className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]">
                   <div className="flex flex-col justify-center items-start gap-2 w-full">
-                    {refData?.prices ? (
+                    {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
                       <>
                         <div className="flex items-center gap-2 w-full">
                           {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
@@ -294,7 +294,7 @@ const Account = () => {
                 <div className="flex flex-row gap-2 w-full justify-between items-center">
                   <div className="flex items-center gap-2">
                     <p className="font-light text-white text-md">Regions:</p>
-                    {refData?.regions ? (
+                    {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
                       <select 
                         value={selectedRegion}
                         onChange={(e) => setSelectedRegion(e.target.value)}
@@ -310,7 +310,7 @@ const Account = () => {
                       <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
                     )}
                   </div>
-                  {refData?.prices ? (
+                  {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
                     <button 
                       className={`flex items-center justify-center gap-2.5 rounded-md bg-[#9400FF] text-black py-1 px-2.5 backdrop-blur-sm ${
                         signupMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'

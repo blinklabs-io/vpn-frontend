@@ -12,12 +12,18 @@ export async function onRequest({ request, params }) {
   const url = new URL(request.url);
   const apiUrl = `https://api.b7s.services/api/${params.path.join('/')}${url.search}`;
   
+  console.log('Proxying request to:', apiUrl);
+  console.log('Request method:', request.method);
+  
   const response = await fetch(apiUrl, {
     method: request.method,
     headers: request.headers,
     body: request.body,
     redirect: 'manual'
   });
+
+  console.log('Upstream response status:', response.status);
+  console.log('Upstream response headers:', Object.fromEntries(response.headers.entries()));
 
   if (params.path.join('/') === 'client/profile' && response.status === 302) {
     const location = response.headers.get('location');
@@ -42,7 +48,11 @@ export async function onRequest({ request, params }) {
   responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
 
-  return new Response(response.body, {
+  const responseBody = await response.text();
+  console.log('Response body length:', responseBody.length);
+  console.log('Response body preview:', responseBody.substring(0, 200));
+
+  return new Response(responseBody, {
     status: response.status,
     statusText: response.statusText,
     headers: responseHeaders,

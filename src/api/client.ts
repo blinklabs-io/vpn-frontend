@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import type { ClientAvailableRequest, ClientAvailableResponse, ClientInfo, ClientListRequest, ClientProfileRequest } from './types'
 
-export const API_BASE_URL = '/api'
+export const API_BASE_URL = 'https://api.b7s.services/api'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,13 +35,23 @@ export async function apiClient<T>(
       throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
 
-    const contentLength = response.headers.get('content-length')
-    if (contentLength === '0' || !contentLength) {
-      console.log('Empty response received for:', endpoint)
+    // Handle empty responses explicitly
+    if (response.status === 204 || response.status === 205) {
       return {} as T
     }
 
-    return response.json()
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      return response.json() as Promise<T>
+    }
+
+    // Fallback: try to parse text as JSON, else return empty object
+    const text = await response.text()
+    try {
+      return JSON.parse(text) as T
+    } catch {
+      return {} as T
+    }
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error('Network error: Unable to connect to the API')
