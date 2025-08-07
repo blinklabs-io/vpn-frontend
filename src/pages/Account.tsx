@@ -1,13 +1,23 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData } from "../api/hooks/useRefData"
+import { useRefData, useSignup, useClientList, useClientProfile } from "../api/hooks"
+import { queryClient } from "../api/client"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
+import type { ClientInfo } from '../api/types'
 
 const Account = () => {
-  const { isConnected, isWalletModalOpen, disconnect, closeWalletModal, balance } = useWalletStore()
+  const { 
+    isConnected, 
+    isWalletModalOpen, 
+    disconnect, 
+    closeWalletModal, 
+    balance, 
+    walletAddress,
+    signAndSubmitTransaction,
+  } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
 
@@ -15,6 +25,38 @@ const Account = () => {
     queryKey: ['refdata'],
     enabled: isConnected,
   })
+
+  const signupMutation = useSignup({
+    onSuccess: async (data) => {
+      console.log('Transaction built successfully:', data)
+      
+      try {
+        const txHash = await signAndSubmitTransaction(data.txCbor)
+        alert(`VPN purchase successful! Transaction: ${txHash}`)
+        
+        if (walletAddress) {
+          queryClient.invalidateQueries({
+            queryKey: ['clientList', { clientAddress: walletAddress }]
+          })
+        }
+        
+      } catch (error) {
+        console.error('Transaction error details:', error)
+        alert(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
+    onError: (error) => {
+      console.error('Signup failed:', error)
+      alert(`Purchase failed: ${error.message}`)
+    }
+  })
+
+  const { data: clientList, isLoading: isLoadingClients } = useClientList(
+    { clientAddress: walletAddress || '' },
+    { enabled: !!walletAddress && isConnected }
+  )
+
+
 
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60))
@@ -71,12 +113,51 @@ const Account = () => {
   const selectedOption = durationOptions.find((option: { value: number }) => option.value === selectedDuration)
   const currentPrice = selectedOption ? formatPrice(selectedOption.price) : "0.00"
 
+  const handlePurchase = () => {
+    if (!walletAddress) {
+      alert('No wallet address available')
+      return
+    }
+
+    if (!selectedOption) {
+      alert('Please select a duration')
+      return
+    }
+
+    if (!selectedRegion) {
+      alert('Please select a region')
+      return
+    }
+
+    const payload = {
+      clientAddress: walletAddress,
+      duration: selectedDuration,
+      price: selectedOption.price,
+      region: selectedRegion
+    }
+
+    signupMutation.mutate(payload)
+  }
+
   const handleDelete = (instanceId: string) => {
     console.log('Delete instance:', instanceId)
   }
 
-  const handleAction = (instanceId: string, action: string) => {
-    console.log(`${action} for instance:`, instanceId)
+  const clientProfileMutation = useClientProfile()
+
+  const handleAction = async (instanceId: string, action: string) => {
+    if (action === 'Get Config') {
+      try {
+        const s3Url = await clientProfileMutation.mutateAsync(instanceId)
+        
+        window.open(s3Url, '_blank')
+      } catch (error) {
+        console.error('Failed to get config:', error)
+        alert('Failed to get VPN config. Please try again.')
+      }
+    } else if (action === 'Renew Access') {
+      console.log('Renew access for instance:', instanceId)
+    }
   }
 
   const handleDisconnect = () => {
@@ -84,23 +165,44 @@ const Account = () => {
     closeWalletModal()
   }
 
-  //mock vpn instances data
-  const vpnInstances = [
-    {
-      id: 'instance-1',
-      region: selectedRegion || 'us east-1',
-      duration: '1 day',
-      status: 'Active' as const,
-      expires: '1 day'
-    },
-    {
-      id: 'instance-2', 
-      region: 'us east-2',
-      duration: '6 hours',
-      status: 'Expired' as const,
-      expires: 'Expired'
+  const formatTimeRemaining = (expirationDate: string) => {
+    const now = new Date()
+    const expiration = new Date(expirationDate)
+    const diffMs = expiration.getTime() - now.getTime()
+    
+    if (diffMs <= 0) {
+      return 'Expired'
     }
-  ]
+    
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+    
+    if (days > 0) {
+      return `${days}d ${hours}h`
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    } else {
+      return `${minutes}m`
+    }
+  }
+
+  const vpnInstances = useMemo(() => {
+    if (!clientList) return []
+    
+    return clientList.map((client: ClientInfo, index: number) => {
+      const isExpired = new Date(client.expiration) <= new Date()
+      
+      return {
+        id: client.id,
+        uniqueKey: `${client.id}-${index}`,
+        region: client.region,
+        duration: formatTimeRemaining(client.expiration),
+        status: isExpired ? 'Expired' as const : 'Active' as const,
+        expires: new Date(client.expiration).toLocaleDateString()
+      }
+    })
+  }, [clientList])
 
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
@@ -186,8 +288,16 @@ const Account = () => {
                     )}
                   </div>
                   {refData?.prices ? (
-                    <button className="flex items-center justify-center gap-2.5 rounded-md bg-[#9400FF] text-black py-1 px-2.5 backdrop-blur-sm">
-                      <p className="font-light text-white text-sm">Purchase {currentPrice} ADA</p>
+                    <button 
+                      className={`flex items-center justify-center gap-2.5 rounded-md bg-[#9400FF] text-black py-1 px-2.5 backdrop-blur-sm ${
+                        signupMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      }`}
+                      onClick={handlePurchase}
+                      disabled={signupMutation.isPending}
+                    >
+                      <p className="font-light text-white text-sm">
+                        {signupMutation.isPending ? 'Processing...' : `Purchase ${currentPrice} ADA`}
+                      </p>
                     </button>
                   ) : (
                     <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
@@ -199,17 +309,46 @@ const Account = () => {
               <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
                 <p className="text-white text-lg font-bold md:text-base md:font-normal">VPN Instances</p>
                 <div className="flex flex-col items-start gap-2 w-full">
-                  {vpnInstances.map((instance) => (
-                    <VpnInstance
-                      key={instance.id}
-                      region={instance.region}
-                      duration={instance.duration}
-                      status={instance.status}
-                      expires={instance.expires}
-                      onDelete={() => handleDelete(instance.id)}
-                      onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
-                    />
-                  ))}
+                  {isLoadingClients ? (
+                    <>
+                      {/* Shimmer instances - show 3 loading placeholders */}
+                      {[1, 2, 3].map((index) => (
+                        <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
+                          <div className="flex flex-col items-start gap-1 w-full">
+                            <div className="flex justify-between items-start w-full gap-2">
+                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
+                            </div>
+                            <div className="flex justify-between items-start w-full">
+                              <div className="flex items-center gap-2">
+                                <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
+                                <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+                              </div>
+                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center w-full">
+                            <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
+                            <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : vpnInstances.length > 0 ? (
+                    vpnInstances.map((instance) => (
+                      <VpnInstance
+                        key={instance.uniqueKey}
+                        region={instance.region}
+                        duration={instance.duration}
+                        status={instance.status}
+                        expires={instance.expires}
+                        onDelete={() => handleDelete(instance.id)}
+                        onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-white/60 text-sm">No VPN instances found</p>
+                  )}
                 </div>
               </div>
             </div>

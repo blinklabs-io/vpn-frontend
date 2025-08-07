@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router'
+import { useEffect } from 'react'
 import nabuLogo from '/nabu-logo.svg'
 import cardanoIcon from '/cardano-icon.svg'
 import WalletConnection from './WalletConnection'
@@ -7,7 +8,11 @@ import { useWalletStore } from '../stores/walletStore'
 const Navigation = () => {
   const location = useLocation()
   const isAccountPage = location.pathname === '/account'
-  const { isWalletModalOpen, toggleWalletModal } = useWalletStore()
+  const { isWalletModalOpen, toggleWalletModal, reconnectWallet } = useWalletStore()
+
+  useEffect(() => {
+    reconnectWallet()
+  }, [reconnectWallet])
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-50 bg-[#00000033]">

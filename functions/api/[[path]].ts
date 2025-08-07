@@ -15,8 +15,22 @@ export async function onRequest({ request, params }) {
   const response = await fetch(apiUrl, {
     method: request.method,
     headers: request.headers,
-    body: request.body
+    body: request.body,
+    redirect: 'manual'
   });
+
+  if (params.path.join('/') === 'client/profile' && response.status === 302) {
+    const location = response.headers.get('location');
+    if (location) {
+      return new Response(location, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+  }
 
   return new Response(response.body, {
     status: response.status,

@@ -1,172 +1,175 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { CardanoWalletApi } from '../types/cardano'
-import { Address, Value } from '@harmoniclabs/cardano-ledger-ts'
 
 interface WalletState {
+  // State from the new library
+  wallet: unknown | undefined
   isConnected: boolean
-  isEnabled: boolean
-  enabledWallet: string | null
+  isLoading: boolean
+  error: string | undefined
+  
+  // Helper functions from the new library
+  connect: (id: string) => void
+  disconnect: () => void
+  getBalance: (callback: (balance: number) => void) => void
+  getAddress: (callback: (address: string) => void) => void
+  getChangeAddress: (callback: (address: string) => void) => void
+  signTransaction: (tx: string, callback: (signedTx: string) => void, partialSign?: boolean) => void
+  getSupportedWallets: (options?: { omit?: string[] }) => readonly unknown[]
+  
+  // Additional state for compatibility
   stakeAddress: string | null
   walletAddress: string | null
-  walletApi: CardanoWalletApi | null
-  isWalletModalOpen: boolean
   balance: string | null
-
+  
+  // Legacy state for backward compatibility
+  isWalletModalOpen: boolean
+  enabledWallet: string | null
+  
   // Actions
   setWalletState: (state: Partial<WalletState>) => void
-  connect: (walletName: string) => Promise<void>
-  disconnect: () => void
-  signMessage: (message: string) => Promise<unknown>
+  clearWalletState: () => void
+  signAndSubmitTransaction: (txCbor: string) => Promise<string>
+  submitTransaction: (signedTxCbor: string) => Promise<string>
   toggleWalletModal: () => void
   closeWalletModal: () => void
-  getBalance: () => Promise<void>
-  getWalletAddress: () => Promise<void>
-}
-
-const decodeHexAddress = (hexAddress: string): string | null => {
-  try {
-    const cleanHex = hexAddress.startsWith('0x') ? hexAddress.slice(2) : hexAddress
-    
-    const bytes = new Uint8Array(cleanHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
-    
-    const address = Address.fromBytes(bytes).toString()
-    console.log('Address:', address)
-    return address
-  } catch (error) {
-    console.error('Failed to decode address:', error)
-    return null
-  }
+  reconnectWallet: () => Promise<void>
+  signMessage: (message: string) => Promise<unknown>
 }
 
 export const useWalletStore = create<WalletState>()(
   persist(
     (set, get) => ({
+      wallet: undefined,
       isConnected: false,
-      isEnabled: false,
-      enabledWallet: null,
+      isLoading: false,
+      error: undefined,
       stakeAddress: null,
       walletAddress: null,
-      walletApi: null,
-      isWalletModalOpen: false,
       balance: null,
-
+      isWalletModalOpen: false,
+      enabledWallet: null,
+      
+      // These will be set by the hook
+      connect: () => {},
+      disconnect: () => {},
+      getBalance: () => {},
+      getAddress: () => {},
+      getChangeAddress: () => {},
+      signTransaction: () => {},
+      getSupportedWallets: () => [],
+      
       setWalletState: (newState) => set((state) => ({ ...state, ...newState })),
-
-      connect: async (walletName: string) => {
+      
+      clearWalletState: () => set({
+        wallet: undefined,
+        isConnected: false,
+        isLoading: false,
+        error: undefined,
+        stakeAddress: null,
+        walletAddress: null,
+        balance: null,
+        isWalletModalOpen: false,
+        enabledWallet: null,
+        connect: () => {},
+        disconnect: () => {},
+        getBalance: () => {},
+        getAddress: () => {},
+        getChangeAddress: () => {},
+        signTransaction: () => {},
+        getSupportedWallets: () => [],
+      }),
+      
+      signAndSubmitTransaction: async (txCbor: string) => {
+        const { wallet, signTransaction, submitTransaction } = get()
+        if (!wallet) {
+          throw new Error('No wallet connected')
+        }
+        
         try {
-          if (!window.cardano || !window.cardano[walletName]) {
-            throw new Error(`${walletName} wallet not found`)
-          }
-
-          const walletApi = await window.cardano[walletName].enable()
-          
-          const stakeAddresses = await walletApi.getRewardAddresses()
-          const stakeAddress = stakeAddresses?.[0] || null
-
-          set({
-            isConnected: true,
-            isEnabled: true,
-            enabledWallet: walletName,
-            stakeAddress,
-            walletApi,
+          const signedTx = await new Promise<string>((resolve) => {
+            signTransaction(txCbor, (signedTx: string) => {
+              resolve(signedTx)
+            }, true)
           })
-
-          const { getBalance, getWalletAddress } = get()
-          await Promise.all([getBalance(), getWalletAddress()])
-
-        } catch (error) {
-          console.error(`Failed to connect to ${walletName}:`, error)
-          throw error
-        }
-      },
-
-      getWalletAddress: async () => {
-        const { walletApi } = get()
-        if (!walletApi) {
-          throw new Error('No wallet connected')
-        }
-
-        try {
-          const usedAddresses = await walletApi.getUsedAddresses()
           
-          if (usedAddresses && usedAddresses.length > 0) {
-            const decodedAddress = decodeHexAddress(usedAddresses[0])
-            if (decodedAddress) {
-              set({ walletAddress: decodedAddress })
-              return
-            }
+          return await submitTransaction(signedTx)
+        } catch (error: unknown) {
+          if (error instanceof Error && error.message?.includes('script integrity hash')) {
+            throw new Error('Script integrity error. Please try: 1) Clear wallet script cache, 2) Reconnect wallet, 3) Try a different wallet (Flint/Yoroi)')
           }
-
-          const unusedAddresses = await walletApi.getUnusedAddresses()
-          if (unusedAddresses && unusedAddresses.length > 0) {
-            const decodedAddress = decodeHexAddress(unusedAddresses[0])
-            if (decodedAddress) {
-              set({ walletAddress: decodedAddress })
-              return
-            }
+          
+          if (error instanceof Error && error.message?.includes('network')) {
+            throw new Error('Network mismatch. Please ensure your wallet is on the correct network.')
           }
-
-        } catch (error) {
-          console.error('Failed to get wallet address:', error)
+          
+          console.error('Partial signing failed, trying full signing...')
+          
+          // Fallback to full signing
+          const signedTx = await new Promise<string>((resolve) => {
+            signTransaction(txCbor, (signedTx: string) => {
+              resolve(signedTx)
+            }, false)
+          })
+          
+          return await submitTransaction(signedTx)
         }
       },
-
-      disconnect: () => {
-        set({
-          isConnected: false,
-          isEnabled: false,
-          enabledWallet: null,
-          stakeAddress: null,
-          walletAddress: null,
-          walletApi: null,
-          isWalletModalOpen: false,
-          balance: null,
-        })
-      },
-
-      signMessage: async (message: string) => {
-        const { walletApi } = get()
-        if (!walletApi) {
+      
+      submitTransaction: async (signedTxCbor: string) => {
+        const { wallet } = get()
+        if (!wallet) {
           throw new Error('No wallet connected')
         }
-
+        
         try {
-          return await walletApi.signData(message)
+          // Use the standard Cardano wallet submitTx method
+          const txHash = await (wallet as unknown as { submitTx: (tx: string) => Promise<string> }).submitTx(signedTxCbor)
+          return txHash
         } catch (error) {
-          console.error('Failed to sign message:', error)
+          console.error('Failed to submit transaction:', error)
           throw error
         }
       },
-
+      
       toggleWalletModal: () => {
         set((state) => ({ isWalletModalOpen: !state.isWalletModalOpen }))
       },
-
+      
       closeWalletModal: () => {
         set({ isWalletModalOpen: false })
       },
-
-      getBalance: async () => {
-        const { walletApi } = get()
-        if (!walletApi) {
+      
+      reconnectWallet: async () => {
+        const { isConnected, enabledWallet, connect } = get()
+        if (isConnected && enabledWallet) {
+          try {
+            connect(enabledWallet)
+          } catch (error) {
+            console.error('Failed to auto-reconnect wallet:', error)
+            get().disconnect()
+          }
+        }
+      },
+      
+      signMessage: async (message: string) => {
+        const { wallet } = get()
+        if (!wallet) {
           throw new Error('No wallet connected')
         }
-
+        
         try {
-          const balanceHex = await walletApi.getBalance()
-          console.log('Raw balance from wallet:', balanceHex)
+          // Use the wallet's signData method
+          const address = await new Promise<string>((resolve) => {
+            (wallet as unknown as { getAddress: (callback: (address: string) => void) => void }).getAddress((address: string) => {
+              resolve(address)
+            })
+          })
           
-          // Decode the CBOR structure to get the Value object
-          const value = Value.fromCbor(balanceHex)
-          
-          // Extract just the ADA amount as bigint, then convert properly
-          const lovelaceBigInt = value.lovelaces
-          const adaBalance = (Number(lovelaceBigInt) / 1_000_000).toFixed(2)
-          
-          set({ balance: adaBalance })
+          const signResult = await (wallet as unknown as { signData: (address: string, message: string) => Promise<unknown> }).signData(address, message)
+          return signResult
         } catch (error) {
-          console.error('Failed to get balance:', error)
+          console.error('Failed to sign message:', error)
           throw error
         }
       },
@@ -175,9 +178,9 @@ export const useWalletStore = create<WalletState>()(
       name: 'wallet-storage',
       partialize: (state) => ({
         isConnected: state.isConnected,
-        enabledWallet: state.enabledWallet,
         stakeAddress: state.stakeAddress,
         walletAddress: state.walletAddress,
+        enabledWallet: state.enabledWallet,
       }),
     }
   )

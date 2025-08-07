@@ -1,24 +1,8 @@
+import { ConnectWallet } from '@newm.io/cardano-dapp-wallet-connector'
 import { useWalletStore } from '../stores/walletStore'
 
 const FloatingWalletButton = () => {
-  const { isConnected, stakeAddress, connect, disconnect } = useWalletStore()
-
-  const handleConnect = async () => {
-    try {
-      const walletNames = ['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']
-      for (const walletName of walletNames) {
-        try {
-          await connect(walletName)
-          console.log(`Connected to ${walletName}`)
-          break
-        } catch (error) {
-          console.log(`Failed to connect to ${walletName}:`, error)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to connect wallet:', error)
-    }
-  }
+  const { isConnected, stakeAddress, disconnect } = useWalletStore()
 
   if (isConnected) {
     return (
@@ -40,12 +24,30 @@ const FloatingWalletButton = () => {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-full shadow-lg transition duration-200 hover:shadow-xl"
-    >
-      Connect Wallet
-    </button>
+    <div className="fixed bottom-6 right-6 z-50">
+      <ConnectWallet 
+        mainButtonStyle={{
+          backgroundColor: '#2563eb',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: '9999px',
+          border: 'none',
+          fontWeight: '500',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.2s',
+          cursor: 'pointer'
+        }}
+        onConnect={(wallet: unknown) => {
+          console.log('Wallet connected:', wallet)
+        }}
+        onDisconnect={() => {
+          console.log('Wallet disconnected')
+        }}
+        onError={(message: string) => {
+          console.error('Wallet error:', message)
+        }}
+      />
+    </div>
   )
 }
 
