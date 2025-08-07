@@ -1,3 +1,4 @@
+import { ConnectWallet } from '@newm.io/cardano-dapp-wallet-connector'
 import { useWalletStore } from '../stores/walletStore'
 
 interface WalletConnectionProps {
@@ -11,30 +12,18 @@ const WalletConnection = ({
   showTitle = false,
   showDescription = false
 }: WalletConnectionProps) => {
-  const { isConnected, connect, disconnect } = useWalletStore()
+  const { isConnected, disconnect, clearWalletState } = useWalletStore()
 
-  const handleConnect = async () => {
-    try {
-      const walletNames = ['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']
-      for (const walletName of walletNames) {
-        try {
-          await connect(walletName)
-          console.log(`Connected to ${walletName}`)
-          break
-        } catch (error) {
-          console.log(`Failed to connect to ${walletName}:`, error)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to connect wallet:', error)
-    }
+  const handleDisconnect = () => {
+    disconnect()
+    clearWalletState()
   }
 
   if (isConnected) {
     return (
       <div className="flex items-center space-x-4">
         <button
-          onClick={disconnect}
+          onClick={handleDisconnect}
           className="flex py-2.5 px-6 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium cursor-pointer"
         >
           Disconnect
@@ -43,16 +32,11 @@ const WalletConnection = ({
     )
   }
 
-  const buttonClasses = variant === 'white'
-    ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base"
-    : "flex py-2.5 px-6 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer"
-
   if (showTitle || showDescription) {
     return (
       <div className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto">
         <div className="border-2 border-white rounded-3xl p-8 md:p-12 w-full">
           <div className="flex items-start gap-4 mb-6">
-            {/* Logomark Icon */}
             <div className="flex-shrink-0">
               <img
                 src="/wallet-icon-white.svg"
@@ -72,28 +56,72 @@ const WalletConnection = ({
 
           {showDescription && (
             <p className="text-white text-base md:text-lg font-light leading-relaxed mb-8">
-              Any descriptive copy that can explain how this wallet linking system works.
             </p>
           )}
 
-          <button
-            onClick={handleConnect}
-            className="bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer"
-          >
-            Connect
-          </button>
+          <ConnectWallet 
+            mainButtonStyle={{
+              backgroundColor: 'white',
+              color: 'black',
+              padding: '12px 32px',
+              borderRadius: '8px',
+              border: 'none',
+              fontWeight: '500',
+              fontSize: '18px',
+              cursor: 'pointer'
+            }}
+            onConnect={(wallet) => {
+              console.log('Wallet connected:', wallet)
+            }}
+            onDisconnect={() => {
+              console.log('Wallet disconnected')
+              clearWalletState()
+            }}
+            onError={(message) => {
+              console.error('Wallet error:', message)
+            }}
+          />
         </div>
       </div>
     )
   }
 
+  const buttonStyle = variant === 'white'
+    ? {
+        backgroundColor: 'white',
+        color: 'black',
+        padding: '12px 32px',
+        borderRadius: '6px',
+        border: 'none',
+        fontWeight: '500',
+        fontSize: '16px',
+        cursor: 'pointer'
+      }
+    : {
+        backgroundColor: 'transparent',
+        color: 'white',
+        padding: '10px 24px',
+        borderRadius: '6px',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        fontWeight: '500',
+        cursor: 'pointer',
+        backdropFilter: 'blur(4px)'
+      }
+
   return (
-    <button
-      onClick={handleConnect}
-      className={buttonClasses}
-    >
-      Connect Wallet
-    </button>
+    <ConnectWallet 
+      mainButtonStyle={buttonStyle}
+      onConnect={(wallet) => {
+        console.log('Wallet connected:', wallet)
+      }}
+      onDisconnect={() => {
+        console.log('Wallet disconnected')
+        clearWalletState()
+      }}
+      onError={(message) => {
+        console.error('Wallet error:', message)
+      }}
+    />
   )
 }
 

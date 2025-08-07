@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup, useClientList, useMultipleClientAvailable, useClientProfile } from "../api/hooks"
+import { useRefData, useSignup, useClientList, useClientProfile } from "../api/hooks"
+import { queryClient } from "../api/client"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
@@ -30,14 +31,14 @@ const Account = () => {
       console.log('Transaction built successfully:', data)
       
       try {
-        // Option 1: Use the new combined method
         const txHash = await signAndSubmitTransaction(data.txCbor)
         alert(`VPN purchase successful! Transaction: ${txHash}`)
         
-        // Option 2: Use separate methods correctly
-        // const signedTxCbor = await signTransaction(data.txCbor)
-        // const txHash = await submitTransaction(signedTxCbor)
-        // alert(`VPN purchase successful! Transaction: ${txHash}`)
+        if (walletAddress) {
+          queryClient.invalidateQueries({
+            queryKey: ['clientList', { clientAddress: walletAddress }]
+          })
+        }
         
       } catch (error) {
         console.error('Transaction error details:', error)
@@ -54,28 +55,6 @@ const Account = () => {
     { clientAddress: walletAddress || '' },
     { enabled: !!walletAddress && isConnected }
   )
-
-  const clientIds = (clientList || []).map(client => client.id)
-  const clientAvailabilityQueries = useMultipleClientAvailable(clientIds)
-
-  const clientAvailabilityMap = useMemo(() => {
-    const map: Record<string, { available: boolean; msg?: string }> = {}
-    
-    clientList?.forEach((client, index) => {
-      const availabilityData = clientAvailabilityQueries[index]?.data
-      if (availabilityData) {
-        // Check if the response indicates availability
-        const isAvailable = availabilityData.msg === "Profile is available"
-        
-        map[client.id] = {
-          available: isAvailable,
-          msg: availabilityData.msg
-        }
-      }
-    })
-    
-    return map
-  }, [clientList, clientAvailabilityQueries])
 
 
 
@@ -211,21 +190,19 @@ const Account = () => {
   const vpnInstances = useMemo(() => {
     if (!clientList) return []
     
-    return clientList.map((client: ClientInfo) => {
-      const availability = clientAvailabilityMap[client.id]
+    return clientList.map((client: ClientInfo, index: number) => {
       const isExpired = new Date(client.expiration) <= new Date()
-      
-      const isActive = availability ? availability.available : !isExpired
       
       return {
         id: client.id,
+        uniqueKey: `${client.id}-${index}`,
         region: client.region,
         duration: formatTimeRemaining(client.expiration),
-        status: isActive ? 'Active' as const : 'Expired' as const,
+        status: isExpired ? 'Expired' as const : 'Active' as const,
         expires: new Date(client.expiration).toLocaleDateString()
       }
     })
-  }, [clientList, clientAvailabilityMap])
+  }, [clientList])
 
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
@@ -360,7 +337,7 @@ const Account = () => {
                   ) : vpnInstances.length > 0 ? (
                     vpnInstances.map((instance) => (
                       <VpnInstance
-                        key={instance.id}
+                        key={instance.uniqueKey}
                         region={instance.region}
                         duration={instance.duration}
                         status={instance.status}
