@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup, useClientList, useMultipleClientAvailable, useClientProfile } from "../api/hooks"
+import { useRefData, useSignup, useClientList, useClientProfile } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
@@ -55,29 +55,15 @@ const Account = () => {
     { enabled: !!walletAddress && isConnected }
   )
 
-  const clientIds = (clientList || []).map(client => client.id)
-  const clientAvailabilityQueries = useMultipleClientAvailable(clientIds)
-
-  const clientAvailabilityMap = useMemo(() => {
-    const map: Record<string, { available: boolean; msg?: string }> = {}
-    
-    clientList?.forEach((client, index) => {
-      const availabilityData = clientAvailabilityQueries[index]?.data
-      if (availabilityData) {
-        // Check if the response indicates availability
-        const isAvailable = availabilityData.msg === "Profile is available"
-        
-        map[client.id] = {
-          available: isAvailable,
-          msg: availabilityData.msg
-        }
-      }
+  // Dedupe client list by id to avoid duplicate keys and duplicate queries
+  const dedupedClientList = useMemo(() => {
+    const seenIds = new Set<string>()
+    return (clientList || []).filter((client) => {
+      if (seenIds.has(client.id)) return false
+      seenIds.add(client.id)
+      return true
     })
-    
-    return map
-  }, [clientList, clientAvailabilityQueries])
-
-
+  }, [clientList])
 
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60))
@@ -209,13 +195,10 @@ const Account = () => {
   }
 
   const vpnInstances = useMemo(() => {
-    if (!clientList) return []
+    if (!dedupedClientList) return []
     
-    return clientList.map((client: ClientInfo) => {
-      const availability = clientAvailabilityMap[client.id]
-      const isExpired = new Date(client.expiration) <= new Date()
-      
-      const isActive = availability ? availability.available : !isExpired
+    return dedupedClientList.map((client: ClientInfo) => {
+      const isActive = new Date(client.expiration) > new Date()
       
       return {
         id: client.id,
@@ -225,7 +208,7 @@ const Account = () => {
         expires: new Date(client.expiration).toLocaleDateString()
       }
     })
-  }, [clientList, clientAvailabilityMap])
+  }, [dedupedClientList])
 
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">

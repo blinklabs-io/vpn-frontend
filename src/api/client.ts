@@ -1,7 +1,9 @@
 import { QueryClient } from '@tanstack/react-query'
 import type { ClientAvailableRequest, ClientAvailableResponse, ClientInfo, ClientListRequest, ClientProfileRequest } from './types'
 
-export const API_BASE_URL = 'https://api.b7s.services/api'
+export const API_BASE_URL = import.meta.env.DEV 
+  ? '/api'  
+  : '/api'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
