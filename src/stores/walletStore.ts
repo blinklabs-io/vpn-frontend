@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CardanoWalletApi } from '../types/cardano'
 import { Address, Value, Tx } from '@harmoniclabs/cardano-ledger-ts'
+import { showError } from '../utils/toast'
 
 
 
@@ -85,6 +86,7 @@ export const useWalletStore = create<WalletState>()(
 
         } catch (error) {
           console.error(`Failed to connect to ${walletName}:`, error)
+          showError(`Failed to connect to ${walletName}: ${error instanceof Error ? error.message : 'Unknown error'}`)
           throw error
         }
       },
@@ -125,6 +127,7 @@ export const useWalletStore = create<WalletState>()(
 
         } catch (error) {
           console.error('Failed to get wallet address:', error)
+          showError('Failed to get wallet address')
         }
       },
 
@@ -158,6 +161,7 @@ export const useWalletStore = create<WalletState>()(
           return await walletApi.signData(address, payload)
         } catch (error) {
           console.error('Failed to sign message:', error)
+          showError('Failed to sign message')
           throw error
         }
       },
