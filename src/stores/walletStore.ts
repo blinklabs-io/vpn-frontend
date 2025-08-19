@@ -175,9 +175,11 @@ export const useWalletStore = create<WalletState>()(
         try {
           // Decode the unsigned transaction
           const unsignedTx = Tx.fromCbor(txCbor)
+	  console.log('DEBUG: unsigned CBOR string:', unsignedTx.toCbor().toString())
           
           await unsignedTx.signWithCip30Wallet(walletApi)
 
+	  console.log('DEBUG: signed CBOR string:', unsignedTx.toCbor().toString())
           return unsignedTx.toCbor().toString()
         } catch (error) {
           console.error('Failed to sign transaction:', error)
@@ -185,14 +187,17 @@ export const useWalletStore = create<WalletState>()(
         }
       },
 
-      submitTransaction: async (signedTxCbor: string) => {
+      submitTransaction: async (txCbor: string) => {
         const { walletApi } = get()
         if (!walletApi) {
           throw new Error('No wallet connected')
         }
 
         try {
-          const txHash = await walletApi.submitTx(signedTxCbor)
+          // Decode the signed transaction
+          const signedTx = Tx.fromCbor(txCbor)
+	  console.log('DEBUG: signed CBOR string to submit:', signedTx.toCbor().toString())
+          const txHash = await walletApi.submitTx(signedTx.toCbor().toString())
           return txHash
         } catch (error) {
           console.error('Failed to submit transaction:', error)
@@ -206,10 +211,12 @@ export const useWalletStore = create<WalletState>()(
         
         try {
           console.log('Signing transaction...')
+	  console.log('txCbor:', txCbor)
           const signedTxCbor = await signTransaction(txCbor)
           console.log('Transaction signed successfully')
           
           console.log('Submitting transaction...')
+	  console.log('signedTxCbor:', signedTxCbor)
           const txHash = await submitTransaction(signedTxCbor)
           console.log('Transaction submitted! Hash:', txHash)
           
