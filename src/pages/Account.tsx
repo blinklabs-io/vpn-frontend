@@ -5,6 +5,7 @@ import VpnInstance from "../components/VpnInstance"
 import TransactionHistory from "../components/TransactionHistory"
 import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
+import { showSuccess, showError } from "../utils/toast"
 import type { ClientInfo } from '../api/types'
 
 const Account = () => {
@@ -32,21 +33,21 @@ const Account = () => {
       try {
         // Option 1: Use the new combined method
         const txHash = await signAndSubmitTransaction(data.txCbor)
-        alert(`VPN purchase successful! Transaction: ${txHash}`)
+        showSuccess(`VPN purchase successful! Transaction: ${txHash}`)
         
         // Option 2: Use separate methods correctly
         // const signedTxCbor = await signTransaction(data.txCbor)
         // const txHash = await submitTransaction(signedTxCbor)
-        // alert(`VPN purchase successful! Transaction: ${txHash}`)
+        // showSuccess(`VPN purchase successful! Transaction: ${txHash}`)
         
       } catch (error) {
         console.error('Transaction error details:', error)
-        alert(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        showError('Failed to sign and submit transaction')
       }
     },
     onError: (error) => {
       console.error('Signup failed:', error)
-      alert(`Purchase failed: ${error.message}`)
+      showError('Failed to sign and submit transaction')
     }
   })
 
@@ -122,17 +123,17 @@ const Account = () => {
 
   const handlePurchase = () => {
     if (!walletAddress) {
-      alert('No wallet address available')
+      showError('No wallet address available')
       return
     }
 
     if (!selectedOption) {
-      alert('Please select a duration')
+      showError('Please select a duration')
       return
     }
 
     if (!selectedRegion) {
-      alert('Please select a region')
+      showError('Please select a region')
       return
     }
 
@@ -160,7 +161,7 @@ const Account = () => {
         window.open(s3Url, '_blank')
       } catch (error) {
         console.error('Failed to get config:', error)
-        alert('Failed to get VPN config. Please try again.')
+        showError('Failed to get VPN config. Please try again.')
       }
     } else if (action === 'Renew Access') {
       console.log('Renew access for instance:', instanceId)
