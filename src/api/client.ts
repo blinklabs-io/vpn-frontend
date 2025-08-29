@@ -135,4 +135,24 @@ export function getClientProfile(request: ClientProfileRequest): Promise<string>
     
     return response.text()
   })
+}
+
+export function submitTransaction(signedTxCbor: string): Promise<string> {
+  const url = `${API_BASE_URL}/tx/submit`
+  
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/cbor',
+      'accept': 'application/json',
+    },
+    body: signedTxCbor,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Transaction submission failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+    
+    return response.text()
+  })
 } 

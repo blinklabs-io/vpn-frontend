@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { CardanoWalletApi } from '../types/cardano'
 import { Address, Value, Tx } from '@harmoniclabs/cardano-ledger-ts'
 import { showError } from '../utils/toast'
+import { submitTransaction as submitTransactionApi } from '../api/client'
 
 
 
@@ -186,16 +187,13 @@ export const useWalletStore = create<WalletState>()(
       },
 
       submitTransaction: async (signedTxCbor: string) => {
-        const { walletApi } = get()
-        if (!walletApi) {
-          throw new Error('No wallet connected')
-        }
-
         try {
-          const txHash = await walletApi.submitTx(signedTxCbor)
+          console.log('Submitting transaction via API...')
+          const txHash = await submitTransactionApi(signedTxCbor)
+          console.log('Transaction submitted successfully via API:', txHash)
           return txHash
         } catch (error) {
-          console.error('Failed to submit transaction:', error)
+          console.error('Failed to submit transaction via API:', error)
           throw error
         }
       },
