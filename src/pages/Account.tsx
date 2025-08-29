@@ -7,6 +7,7 @@ import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
 import { showSuccess, showError } from "../utils/toast"
 import type { ClientInfo } from '../api/types'
+import LoadingOverlay from "../components/LoadingOverlay"
 
 const Account = () => {
   const { 
@@ -230,6 +231,10 @@ const Account = () => {
           />
         ) : (
           <>
+            <LoadingOverlay 
+              isVisible={signupMutation.isPending} 
+              message="Processing Purchase..." 
+            />
             {/* VPN CONTENT */}
             <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
               {/* VPN CONTENT LEFT */}
