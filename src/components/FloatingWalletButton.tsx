@@ -1,9 +1,13 @@
 import { useWalletStore } from '../stores/walletStore'
+import { useState } from 'react'
+import LoadingOverlay from './LoadingOverlay'
 
 const FloatingWalletButton = () => {
   const { isConnected, stakeAddress, connect, disconnect } = useWalletStore()
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleConnect = async () => {
+    setIsLoading(true)
     try {
       const walletNames = ['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']
       for (const walletName of walletNames) {
@@ -17,6 +21,8 @@ const FloatingWalletButton = () => {
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -40,12 +46,16 @@ const FloatingWalletButton = () => {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-full shadow-lg transition duration-200 hover:shadow-xl"
-    >
-      Connect Wallet
-    </button>
+    <>
+      <LoadingOverlay isVisible={isLoading} message="Connecting Wallet..." />
+      <button
+        onClick={handleConnect}
+        disabled={isLoading}
+        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-6 rounded-full shadow-lg transition duration-200 hover:shadow-xl disabled:cursor-not-allowed"
+      >
+        Connect Wallet
+      </button>
+    </>
   )
 }
 
