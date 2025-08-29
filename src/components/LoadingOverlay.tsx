@@ -12,7 +12,6 @@ const LoadingOverlay = ({ isVisible, message }: LoadingOverlayProps) => {
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
       <div className="flex flex-col items-center space-y-4">
         <div className="relative w-20 h-20 flex items-center justify-center">
-          {/* Bigger White Cardano Icon */}
           <img src={cardanoIcon} alt="Cardano" className="w-16 h-16 animate-pulse brightness-0 invert" />
         </div>
         {message && (
