@@ -28,10 +28,10 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
       />
       <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 px-4 py-2 z-20 max-w-6xl mx-auto pointer-events-auto">
         <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center leading-tight">
-          Private. Decentralized. Yours.
+          Private. Transparent. Yours.
         </h1>
         <p className="font-ibm-plex text-white text-base sm:text-lg md:text-xl text-center max-w-4xl leading-relaxed">
-         <span className="font-ibm-plex">Take back control of your online privacy with Nabu</span>-<span className="font-ibm-plex">a fully decentralized VPN powered by Cardano.</span>
+         <span className="font-ibm-plex">Take back control of your online privacy with Nabu</span>-<span className="font-ibm-plex">a fully transparent VPN powered by Cardano.</span>
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-6 sm:py-8">
           <button

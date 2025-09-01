@@ -17,7 +17,7 @@ const cardData = [
   {
     icon: vpnIcon,
     header: "Launch VPN session",
-    subheader: "Lightning-fast VPN nodes with zero tracking."
+    subheader: "Lightning-fast VPN access with zero tracking."
   }
 ]
 
@@ -47,7 +47,8 @@ const WhatIsNabuSection = ({ onGetStarted }: WhatIsNabuSectionProps) => {
           <img src={globeIcon} alt="globe" className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20" />
           <p className="font-exo-2 text-white text-xl sm:text-2xl md:text-3xl font-bold">What is Nabu?</p>
           <p className="font-ibm-plex text-white text-base sm:text-lg md:text-xl text-center leading-relaxed max-w-4xl px-4">
-          Nabu uses your Cardano wallet as your identity—no signup forms, no tracking cookies. Once connected, you&apos;re seconds away from spinning up a secure, decentralized VPN tunnel that hides your IP, encrypts your traffic, and keeps your data yours.            </p>
+          Nabu uses your Cardano wallet as your identity—no signup forms, no tracking cookies. Once connected, you&apos;re seconds away from spinning up a secure VPN tunnel that hides your IP, encrypts your traffic, and keeps your data yours.
+      	  </p>
         </div>
         <div className="flex flex-col min-[1145px]:flex-row justify-center gap-4 sm:gap-6 text-center w-full">
           {cardData.map((card, index) => (
@@ -60,7 +61,7 @@ const WhatIsNabuSection = ({ onGetStarted }: WhatIsNabuSectionProps) => {
           ))}
         </div>
         <div className="flex flex-col items-center justify-center gap-6 text-center py-[4rem]">
-          <p className="font-exo-2 text-white ">Powered by Cardano. Transparent & trustless.</p>
+          <p className="font-exo-2 text-white ">Powered by Cardano. Transparent & secure.</p>
           <button
             onClick={onGetStarted}
             className="flex py-3 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full bg-gray-100 backdrop-blur-sm text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-200 transition-colors cursor-pointer"
