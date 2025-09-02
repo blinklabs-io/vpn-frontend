@@ -174,6 +174,9 @@ export const useWalletStore = create<WalletState>()(
         }
 
         try {
+          console.log('txCbor = ', txCbor)
+	  const witnessSet = await walletApi.signTx(txCbor, true)
+	  console.log('witnessSet = ', witnessSet)
           // Decode the unsigned transaction
           const unsignedTx = Tx.fromCbor(txCbor)
           
