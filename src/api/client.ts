@@ -139,14 +139,19 @@ export function getClientProfile(request: ClientProfileRequest): Promise<string>
 
 export function submitTransaction(signedTxCbor: string): Promise<string> {
   const url = `${API_BASE_URL}/tx/submit`
-  
+
+  var arr = [];
+  for (var i = 0, len = signedTxCbor.length; i < len; i+=2) {
+    arr.push(parseInt(signedTxCbor.substr(i,2),16));
+  }
+  const bodyBytes = new Uint8Array(arr);
   return fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/cbor',
       'accept': 'application/json',
     },
-    body: signedTxCbor,
+    body: bodyBytes,
   }).then(async (response) => {
     if (!response.ok) {
       const errorText = await response.text()
