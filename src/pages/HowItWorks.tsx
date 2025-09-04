@@ -63,6 +63,33 @@ const HowItWorks = () => {
           </div>
         </div>
 
+        <div className="bg-[#00000033] rounded-lg p-8 backdrop-blur-sm border border-[#ffffff1a] mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-6 text-center">Lorem Ipsum Dolor</h2>
+          <div className="grid md:grid-cols-2 gap-6 text-gray-300">
+
+	  TODO: add content
+
+	  Components:
+          * Smart contract
+	  * Indexer/API
+	  * Web frontend
+	  * OpenVPN instance(s)
+
+	  Sign-up steps:
+          * Retrieve list of available plans and regions from our API
+          * Call our API with your wallet address and the desired plan/region
+	  * Sign the TX returned by the API with your wallet and submit
+	  * VPN indexer picks up new on-chain data
+	    * generates a new client TLS certificate and VPN profile
+	    * uploads generated profile to S3
+	  * Generate challenge string and sign message with wallet
+	  * Submit signed challenge to our API to verify wallet ownership
+	  * Our API returns a pre-signed S3 link to download your VPN profile
+	  * Load download profile into your OpenVPN client of choice and connect
+
+	  </div>
+	</div>
+
         <div className="text-center">
           <Link 
             to="/" 
