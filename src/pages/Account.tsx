@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
 import { useRefData, useSignup, useClientList, useClientProfile } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
-import TransactionHistory from "../components/TransactionHistory"
-import WalletConnection from "../components/WalletConnection"
 import WalletModal from "../components/WalletModal"
 import { showSuccess, showError } from "../utils/toast"
 import type { ClientInfo } from '../api/types'
@@ -12,7 +10,6 @@ import LoadingOverlay from "../components/LoadingOverlay"
 const Account = () => {
   const { 
     isConnected, 
-    isWalletModalOpen, 
     disconnect, 
     closeWalletModal, 
     balance, 
@@ -24,7 +21,7 @@ const Account = () => {
 
   const { data: refData } = useRefData({
     queryKey: ['refdata'],
-    enabled: isConnected,
+    enabled: true, // Always enabled, not dependent on wallet connection
   })
 
   const signupMutation = useSignup({
@@ -214,161 +211,158 @@ const Account = () => {
 
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
-      {/* Wallet Modal */}
-      <div className="flex flex-col items-center justify-center py-8 gap-6 md:py-8 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
-        <WalletModal
-          isOpen={isWalletModalOpen}
-          onDisconnect={handleDisconnect}
-        />
-      </div>
-
       <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
-        {!isConnected ? (
-          <WalletConnection
-            variant="white"
-            showTitle={true}
-            showDescription={true}
-          />
-        ) : (
-          <>
-            <LoadingOverlay 
-              isVisible={signupMutation.isPending} 
-              message="Processing Purchase..." 
-            />
-            {/* VPN CONTENT */}
-            <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
-              {/* VPN CONTENT LEFT */}
-              <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
-                <div className="flex justify-between items-start gap-3 pb-4 w-full">
-                  <div className="flex flex-col justify-center items-start gap-3">
-                    <p className="font-exo-2 text-white text-lg font-bold">Buy VPN Access</p>
-                  </div>
-                  <div className="flex flex-col justify-center items-end gap-3">
-                    <p className="font-light text-white text-sm">Available Balance</p>
-                    <p className="font-light text-white text-sm">
-                      <span className="font-bold text-2xl">{balance ? balance : "0.00"}</span> ADA
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Duration Selection */}
-                <div className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]">
-                  <div className="flex flex-col justify-center items-start gap-2 w-full">
-                    {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
-                      <>
-                        <div className="flex items-center gap-2 w-full">
-                          {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
-                            <button
-                              key={option.value}
-                              className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1 px-2.5 cursor-pointer whitespace-nowrap text-xs md:text-sm ${
-                                selectedDuration === option.value ? "opacity-100" : "opacity-50"
-                              }`}
-                              onClick={() => setSelectedDuration(option.value)}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-2 px-2.5">
-                          {selectedOption?.timeDisplay}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="h-20 w-full bg-gray-300/20 rounded animate-pulse"></div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Region Selection and Purchase */}
-                <div className="flex flex-row gap-2 w-full justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <p className="font-light text-white text-md">Regions:</p>
-                    {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
-                      <select 
-                        value={selectedRegion}
-                        onChange={(e) => setSelectedRegion(e.target.value)}
-                        className="bg-transparent text-white text-sm border border-white/20 rounded px-2 py-1"
-                      >
-                        {refData.regions.map((region) => (
-                          <option key={region} value={region} className="text-black">
-                            {region.toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
-                    )}
-                  </div>
-                  {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
-                    <button 
-                      className={`flex items-center justify-center gap-2.5 rounded-md bg-[#9400FF] text-black py-1 px-2.5 backdrop-blur-sm ${
-                        signupMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                      }`}
-                      onClick={handlePurchase}
-                      disabled={signupMutation.isPending}
-                    >
-                      <p className="font-light text-white text-sm">
-                        {signupMutation.isPending ? 'Processing...' : `Purchase ${currentPrice} ADA`}
-                      </p>
-                    </button>
-                  ) : (
-                    <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
-                  )}
-                </div>
+        <LoadingOverlay 
+          isVisible={signupMutation.isPending} 
+          message="Processing Purchase..." 
+        />
+        
+        {/* VPN PURCHASE SECTION */}
+        <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
+          {/* VPN PURCHASE OPTIONS */}
+          <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
+            <div className="flex justify-between items-start gap-3 pb-4 w-full">
+              <div className="flex flex-col justify-center items-start gap-3">
+                <p className="font-exo-2 text-white text-lg font-bold">Buy VPN Access</p>
               </div>
-              
-              {/* VPN INSTANCES */}
-              <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
-                <p className="text-white text-lg font-bold md:text-base md:font-normal">VPN Instances</p>
-                <div className="flex flex-col items-start gap-2 w-full">
-                  {isLoadingClients ? (
-                    <>
-                      {/* Shimmer instances - show 3 loading placeholders */}
-                      {[1, 2, 3].map((index) => (
-                        <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
-                          <div className="flex flex-col items-start gap-1 w-full">
-                            <div className="flex justify-between items-start w-full gap-2">
-                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
-                            </div>
-                            <div className="flex justify-between items-start w-full">
-                              <div className="flex items-center gap-2">
-                                <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
-                                <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
-                              </div>
-                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center w-full">
-                            <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
-                            <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
-                          </div>
-                        </div>
+              <div className="flex flex-col justify-center items-end gap-3">
+                <p className="font-light text-white text-sm">Available Balance</p>
+                <p className="font-light text-white text-sm">
+                  <span className="font-bold text-2xl">{balance ? balance : "0.00"}</span> ADA
+                </p>
+              </div>
+            </div>
+            
+            {/* Duration Selection */}
+            <div className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]">
+              <div className="flex flex-col justify-center items-start gap-2 w-full">
+                {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
+                  <>
+                    <div className="flex items-center gap-2 w-full">
+                      {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
+                        <button
+                          key={option.value}
+                          className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1 px-2.5 cursor-pointer whitespace-nowrap text-xs md:text-sm ${
+                            selectedDuration === option.value ? "opacity-100" : "opacity-50"
+                          }`}
+                          onClick={() => setSelectedDuration(option.value)}
+                        >
+                          {option.label}
+                        </button>
                       ))}
-                    </>
-                  ) : vpnInstances.length > 0 ? (
-                    vpnInstances.map((instance) => (
-                      <VpnInstance
-                        key={instance.id}
-                        region={instance.region}
-                        duration={instance.duration}
-                        status={instance.status}
-                        expires={instance.expires}
-                        onDelete={() => handleDelete(instance.id)}
-                        onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-white/60 text-sm">No VPN instances found</p>
-                  )}
-                </div>
+                    </div>
+                    <div className="flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-2 px-2.5">
+                      {selectedOption?.timeDisplay}
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-20 w-full bg-gray-300/20 rounded animate-pulse"></div>
+                )}
               </div>
             </div>
-            <div className="flex flex-col items-start gap-4 w-full">
-              <TransactionHistory />
+            
+            {/* Region Selection and Purchase */}
+            <div className="flex flex-row gap-2 w-full justify-between items-center">
+              <div className="flex items-center gap-2">
+                <p className="font-light text-white text-md">Regions:</p>
+                {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
+                  <select 
+                    value={selectedRegion}
+                    onChange={(e) => setSelectedRegion(e.target.value)}
+                    className="bg-transparent text-white text-sm border border-white/20 rounded px-2 py-1"
+                  >
+                    {refData.regions.map((region) => (
+                      <option key={region} value={region} className="text-black">
+                        {region.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
+                )}
+              </div>
+              {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
+                <button 
+                  className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm ${
+                    signupMutation.isPending || !isConnected 
+                      ? 'opacity-50 cursor-not-allowed bg-gray-500' 
+                      : 'cursor-pointer bg-[#9400FF]'
+                  }`}
+                  onClick={handlePurchase}
+                  disabled={signupMutation.isPending || !isConnected}
+                >
+                  <p className="font-light text-white text-sm">
+                    {signupMutation.isPending 
+                      ? 'Processing...' 
+                      : !isConnected 
+                        ? 'Connect Wallet' 
+                        : `Purchase ${currentPrice} ADA`
+                    }
+                  </p>
+                </button>
+              ) : (
+                <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
+              )}
             </div>
-          </>
-        )}
+          </div>
+          
+          {/* WALLET SECTION */}
+          <div className="flex flex-col items-center justify-center w-full md:flex-1">
+            <WalletModal
+              isOpen={true} // Always show the wallet modal
+              onDisconnect={handleDisconnect}
+            />
+          </div>
+        </div>
+        
+        {/* VPN INSTANCES SECTION */}
+        <div className="flex flex-col justify-center items-start gap-3 w-full">
+          <p className="text-white text-lg font-bold">VPN Instances</p>
+          <div className="flex flex-col items-start gap-2 w-full">
+            {!isConnected ? (
+              <p className="text-white/60 text-sm">Connect your wallet to view VPN instances</p>
+            ) : isLoadingClients ? (
+              <>
+                {/* Shimmer instances - show 3 loading placeholders */}
+                {[1, 2, 3].map((index) => (
+                  <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
+                    <div className="flex flex-col items-start gap-1 w-full">
+                      <div className="flex justify-between items-start w-full gap-2">
+                        <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                        <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
+                      </div>
+                      <div className="flex justify-between items-start w-full">
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
+                          <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+                        </div>
+                        <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center w-full">
+                      <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
+                      <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : vpnInstances.length > 0 ? (
+              vpnInstances.map((instance) => (
+                <VpnInstance
+                  key={instance.id}
+                  region={instance.region}
+                  duration={instance.duration}
+                  status={instance.status}
+                  expires={instance.expires}
+                  onDelete={() => handleDelete(instance.id)}
+                  onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
+                />
+              ))
+            ) : (
+              <p className="text-white/60 text-sm">No VPN instances found</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

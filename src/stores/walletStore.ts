@@ -21,7 +21,7 @@ interface WalletState {
 
   // Actions
   setWalletState: (state: Partial<WalletState>) => void
-  connect: (walletName: string) => Promise<void>
+  connect: (walletName: string) => Promise<boolean>
   disconnect: () => void
   signMessage: (message: string) => Promise<unknown>
   signTransaction: (txCbor: string) => Promise<string> // Returns signed transaction CBOR
@@ -66,7 +66,7 @@ export const useWalletStore = create<WalletState>()(
       connect: async (walletName: string) => {
         try {
           if (!window.cardano || !window.cardano[walletName]) {
-            throw new Error(`${walletName} wallet not found`)
+            return false // Return false instead of throwing
           }
 
           const walletApi = await window.cardano[walletName].enable()
@@ -84,11 +84,11 @@ export const useWalletStore = create<WalletState>()(
 
           const { getBalance, getWalletAddress } = get()
           await Promise.all([getBalance(), getWalletAddress()])
-
+          
+          return true
         } catch (error) {
           console.error(`Failed to connect to ${walletName}:`, error)
-          showError(`Failed to connect to ${walletName}: ${error instanceof Error ? error.message : 'Unknown error'}`)
-          throw error
+          return false
         }
       },
 
