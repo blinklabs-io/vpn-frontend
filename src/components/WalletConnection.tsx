@@ -1,4 +1,5 @@
 import { useWalletStore } from '../stores/walletStore'
+import { useNavigate } from 'react-router'
 
 interface WalletConnectionProps {
   variant?: 'default' | 'white'
@@ -12,18 +13,25 @@ const WalletConnection = ({
   showDescription = false
 }: WalletConnectionProps) => {
   const { isConnected, connect, disconnect } = useWalletStore()
+  const navigate = useNavigate()
 
   const handleConnect = async () => {
     try {
       const walletNames = ['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']
+      let connected = false
+      
       for (const walletName of walletNames) {
-        try {
-          await connect(walletName)
+        const success = await connect(walletName)
+        if (success) {
           console.log(`Connected to ${walletName}`)
+          connected = true
+          navigate('/account')
           break
-        } catch (error) {
-          console.log(`Failed to connect to ${walletName}:`, error)
         }
+      }
+      
+      if (!connected) {
+        console.warn('No compatible wallets found. Please install a supported Cardano wallet.')
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error)

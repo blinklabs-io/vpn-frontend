@@ -16,11 +16,10 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
       let connected = false
       
       for (const walletName of walletNames) {
-        try {
-          await connect(walletName)
+        const success = await connect(walletName)
+        if (success) {
           connected = true
-        } catch (error) {
-          console.log(`Failed to connect to ${walletName}:`, error)
+          break
         }
       }
       
@@ -55,7 +54,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
               </div>
               <button
                 onClick={handleConnect}
-                className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit self-center"
+                className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit"
               >
                 Connect Wallet
               </button>
