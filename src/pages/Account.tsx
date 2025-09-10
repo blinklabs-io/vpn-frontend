@@ -189,17 +189,29 @@ const Account = () => {
   const vpnInstances = useMemo(() => {
     if (!dedupedClientList) return []
     
-    return dedupedClientList.map((client: ClientInfo) => {
-      const isActive = new Date(client.expiration) > new Date()
-      
-      return {
-        id: client.id,
-        region: client.region,
-        duration: formatTimeRemaining(client.expiration),
-        status: isActive ? 'Active' as const : 'Expired' as const,
-        expires: new Date(client.expiration).toLocaleDateString()
-      }
-    })
+    return dedupedClientList
+      .map((client: ClientInfo) => {
+        const isActive = new Date(client.expiration) > new Date()
+        
+        return {
+          id: client.id,
+          region: client.region,
+          duration: formatTimeRemaining(client.expiration),
+          status: isActive ? 'Active' as const : 'Expired' as const,
+          expires: new Date(client.expiration).toLocaleDateString(),
+          expirationDate: new Date(client.expiration)
+        }
+      })
+      .sort((a, b) => {
+        if (a.status === 'Active' && b.status === 'Expired') return -1
+        if (a.status === 'Expired' && b.status === 'Active') return 1
+        
+        if (a.status === 'Active') {
+          return b.expirationDate.getTime() - a.expirationDate.getTime()
+        } else {
+          return b.expirationDate.getTime() - a.expirationDate.getTime()
+        }
+      })
   }, [dedupedClientList])
 
   return (

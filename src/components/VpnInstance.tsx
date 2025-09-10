@@ -29,13 +29,7 @@ const VpnInstance = ({ region, duration, status, expires, onDelete, onAction }: 
           <p className="text-sm md:text-base">Expires: {expires}</p>
         </div>
       </div>
-      <div className="flex justify-between items-center w-full">
-        <img
-          className="w-5 h-5 cursor-pointer"
-          src={trashIcon}
-          alt="trash icon"
-          onClick={onDelete}
-        />
+      <div className="flex justify-end items-center w-full">
         <button
           className="flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm cursor-pointer bg-white text-black"
           onClick={onAction}
