@@ -12,6 +12,7 @@ const Account = () => {
     isConnected, 
     disconnect, 
     closeWalletModal, 
+    isWalletModalOpen,
     balance, 
     walletAddress,
     signAndSubmitTransaction,
@@ -21,7 +22,7 @@ const Account = () => {
 
   const { data: refData } = useRefData({
     queryKey: ['refdata'],
-    enabled: true, // Always enabled, not dependent on wallet connection
+    enabled: true,
   })
 
   const signupMutation = useSignup({
@@ -29,14 +30,8 @@ const Account = () => {
       console.log('Transaction built successfully:', data)
       
       try {
-        // Option 1: Use the new combined method
         const txHash = await signAndSubmitTransaction(data.txCbor)
         showSuccess(`VPN purchase successful! Transaction: ${txHash}`)
-        
-        // Option 2: Use separate methods correctly
-        // const signedTxCbor = await signTransaction(data.txCbor)
-        // const txHash = await submitTransaction(signedTxCbor)
-        // showSuccess(`VPN purchase successful! Transaction: ${txHash}`)
         
       } catch (error) {
         console.error('Transaction error details:', error)
@@ -54,7 +49,6 @@ const Account = () => {
     { enabled: !!walletAddress && isConnected }
   )
 
-  // Dedupe client list by id to avoid duplicate keys and duplicate queries
   const dedupedClientList = useMemo(() => {
     const seenIds = new Set<string>()
     return (clientList || []).filter((client) => {
@@ -264,7 +258,7 @@ const Account = () => {
             {/* Region Selection and Purchase */}
             <div className="flex flex-row gap-2 w-full justify-between items-center">
               <div className="flex items-center gap-2">
-                <p className="font-light text-white text-md">Regions:</p>
+                <p className="font-medium text-white text-lg">Region:</p>
                 {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
                   <select 
                     value={selectedRegion}
@@ -285,8 +279,8 @@ const Account = () => {
                 <button 
                   className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm transition-all duration-200 ${
                     signupMutation.isPending || !isConnected 
-                      ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2 px-12' 
-                      : 'cursor-pointer bg-[#9400FF] py-2 px-12 hover:bg-[#7A00CC] hover:scale-102'
+                      ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2.5 px-12' 
+                      : 'cursor-pointer bg-[#9400FF] py-2.5 px-12 hover:bg-[#7A00CC] hover:scale-102'
                   }`}
                   onClick={handlePurchase}
                   disabled={signupMutation.isPending || !isConnected}
@@ -307,9 +301,11 @@ const Account = () => {
           </div>
           
           {/* WALLET SECTION */}
-          <div className="flex flex-col items-center justify-center w-full md:flex-1">
+          <div className={`flex flex-col items-center justify-center w-full md:flex-1 ${
+            !isConnected ? 'flex' : (!isWalletModalOpen ? 'hidden md:flex' : 'flex')
+          }`}>
             <WalletModal
-              isOpen={true} // Always show the wallet modal
+              isOpen={true}
               onDisconnect={handleDisconnect}
             />
           </div>
@@ -318,13 +314,12 @@ const Account = () => {
         {/* VPN INSTANCES SECTION */}
         <div className="flex flex-col justify-center items-start gap-3 w-full">
           <p className="text-white text-lg font-bold">VPN Instances</p>
-          <div className="flex flex-col items-start gap-2 w-full">
+          <div className="w-full">
             {!isConnected ? (
               <p className="text-white/60 text-sm">Connect your wallet to view VPN instances</p>
             ) : isLoadingClients ? (
-              <>
-                {/* Shimmer instances - show 3 loading placeholders */}
-                {[1, 2, 3].map((index) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                {[1, 2, 3, 4].map((index) => (
                   <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
                     <div className="flex flex-col items-start gap-1 w-full">
                       <div className="flex justify-between items-start w-full gap-2">
@@ -345,19 +340,21 @@ const Account = () => {
                     </div>
                   </div>
                 ))}
-              </>
+              </div>
             ) : vpnInstances.length > 0 ? (
-              vpnInstances.map((instance) => (
-                <VpnInstance
-                  key={instance.id}
-                  region={instance.region}
-                  duration={instance.duration}
-                  status={instance.status}
-                  expires={instance.expires}
-                  onDelete={() => handleDelete(instance.id)}
-                  onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
-                />
-              ))
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                {vpnInstances.map((instance) => (
+                  <VpnInstance
+                    key={instance.id}
+                    region={instance.region}
+                    duration={instance.duration}
+                    status={instance.status}
+                    expires={instance.expires}
+                    onDelete={() => handleDelete(instance.id)}
+                    onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
+                  />
+                ))}
+              </div>
             ) : (
               <p className="text-white/60 text-sm">No VPN instances found</p>
             )}

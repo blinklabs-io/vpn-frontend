@@ -33,7 +33,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
 
   return (
     <div className="w-full bg-transparent flex justify-center">
-      <div className="min-w-full px-4 py-14">
+      <div className="min-w-full py-10">
         <div className="border-1 border-white rounded-md bg-transparent p-6">
           {!isConnected ? (
             // Wallet not connected - show connection prompt
@@ -46,12 +46,12 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                 />
                 <div className="flex flex-col">
                   <h3 className="text-white font-medium text-lg">Connect Wallet</h3>
-                  <p className="text-white/70 text-sm">Connect your wallet to purchase VPN access</p>
+                  <p className="text-white/70 text-md py-2">Connect your wallet to purchase VPN access</p>
                 </div>
               </div>
               <button
                 onClick={handleConnect}
-                className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit"
+                className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit cursor-pointer hover:bg-[#f5f5f5] hover:scale-102"
               >
                 Connect Wallet
               </button>
@@ -69,7 +69,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                   />
                   <div className="flex flex-col">
                     <h3 className="text-white font-medium text-lg">Your Wallet</h3>
-                    <p className="text-white/70 text-sm max-w-[15rem] truncate">{enabledWallet}: {walletAddress}</p>
+                    <p className="text-white/70 text-md max-w-[15rem] py-1 truncate">{enabledWallet}: {walletAddress}</p>
                   </div>
                 </div>
                 <button
