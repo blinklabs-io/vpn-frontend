@@ -12,7 +12,7 @@ interface TooltipGuideProps {
   storageKey: string
   stepDuration?: number
   onComplete?: () => void
-  children: ReactNode
+  children: (showTooltips: boolean) => ReactNode
 }
 
 const TooltipGuide = ({ 
@@ -33,7 +33,6 @@ const TooltipGuide = ({
       localStorage.setItem(storageKey, 'true')
     }
   }, [storageKey])
-
 
   const handleNextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -64,8 +63,8 @@ const TooltipGuide = ({
 
   return (
     <>
-      {children}      
-      {steps.map((step, index) => (
+      {children(showTooltips)}      
+      {showTooltips && steps.map((step, index) => (
         <Tooltip
           key={step.id}
           id={step.id}
