@@ -117,7 +117,6 @@ const Account = () => {
   }, [refData?.regions, selectedRegion])
 
   const selectedOption = durationOptions.find((option: { value: number }) => option.value === selectedDuration)
-  const currentPrice = selectedOption ? formatPrice(selectedOption.price) : "0.00"
 
   const handlePurchase = () => {
     if (!walletAddress) {
@@ -213,8 +212,9 @@ const Account = () => {
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
       <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
         <LoadingOverlay 
-          isVisible={signupMutation.isPending} 
-          message="Processing Purchase..." 
+          isVisible={signupMutation.isPending}
+          messageTop={signupMutation.isPending ? 'Awaiting Transaction Confirmation' : ''}
+          messageBottom="Processing Purchase" 
         />
         
         {/* VPN PURCHASE SECTION */}
@@ -242,7 +242,7 @@ const Account = () => {
                       {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
                         <button
                           key={option.value}
-                          className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1 px-2.5 cursor-pointer whitespace-nowrap text-xs md:text-sm ${
+                          className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1.5 px-3 cursor-pointer whitespace-nowrap text-md md:text-md ${
                             selectedDuration === option.value ? "opacity-100" : "opacity-50"
                           }`}
                           onClick={() => setSelectedDuration(option.value)}
@@ -251,8 +251,8 @@ const Account = () => {
                         </button>
                       ))}
                     </div>
-                    <div className="flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-2 px-2.5">
-                      {selectedOption?.timeDisplay}
+                    <div className="text-lg flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-3 px-2.5">
+                      {selectedOption ? `${formatPrice(selectedOption.price)} ADA` : ''}
                     </div>
                   </>
                 ) : (
@@ -269,7 +269,7 @@ const Account = () => {
                   <select 
                     value={selectedRegion}
                     onChange={(e) => setSelectedRegion(e.target.value)}
-                    className="bg-transparent text-white text-sm border border-white/20 rounded px-2 py-1"
+                    className="bg-transparent text-white text-md border border-white/20 rounded px-2 py-3"
                   >
                     {refData.regions.map((region) => (
                       <option key={region} value={region} className="text-black">
@@ -283,20 +283,20 @@ const Account = () => {
               </div>
               {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
                 <button 
-                  className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm ${
+                  className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm transition-all duration-200 ${
                     signupMutation.isPending || !isConnected 
-                      ? 'opacity-50 cursor-not-allowed bg-gray-500' 
-                      : 'cursor-pointer bg-[#9400FF]'
+                      ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2 px-12' 
+                      : 'cursor-pointer bg-[#9400FF] py-2 px-12 hover:bg-[#7A00CC] hover:scale-102'
                   }`}
                   onClick={handlePurchase}
                   disabled={signupMutation.isPending || !isConnected}
                 >
-                  <p className="font-light text-white text-sm">
+                  <p className="font-medium text-white text-lg">
                     {signupMutation.isPending 
                       ? 'Processing...' 
                       : !isConnected 
                         ? 'Connect Wallet' 
-                        : `Purchase ${currentPrice} ADA`
+                        : `Purchase VPN`
                     }
                   </p>
                 </button>

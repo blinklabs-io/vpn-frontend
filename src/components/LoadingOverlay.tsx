@@ -2,10 +2,11 @@ import cardanoIcon from '/cardano-icon.svg'
 
 interface LoadingOverlayProps {
   isVisible: boolean
-  message?: string
+  messageTop?: string
+  messageBottom?: string
 }
 
-const LoadingOverlay = ({ isVisible, message }: LoadingOverlayProps) => {
+const LoadingOverlay = ({ isVisible, messageTop, messageBottom }: LoadingOverlayProps) => {
   if (!isVisible) return null
 
   return (
@@ -15,8 +16,11 @@ const LoadingOverlay = ({ isVisible, message }: LoadingOverlayProps) => {
           {/* Bigger White Cardano Icon */}
           <img src={cardanoIcon} alt="Cardano" className="w-16 h-16 animate-pulse brightness-0 invert" />
         </div>
-        {message && (
-          <div className="text-lg font-medium text-white">{message}</div>
+        {messageTop && (
+          <div className="text-lg font-medium text-white">{messageTop}</div>
+        )}
+        {messageBottom && (
+          <div className="text-lg font-medium text-white">{messageBottom}</div>
         )}
       </div>
     </div>
