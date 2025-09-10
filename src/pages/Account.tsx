@@ -338,8 +338,8 @@ const Account = () => {
                     <button 
                       className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm transition-all duration-200 ${
                         signupMutation.isPending || !isConnected 
-                          ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2.5 px-12' 
-                          : 'cursor-pointer bg-[#9400FF] py-2.5 px-12 hover:bg-[#7A00CC] hover:scale-102'
+                          ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2 px-10' 
+                          : 'cursor-pointer bg-[#9400FF] py-2 px-10 hover:bg-[#7A00CC] hover:scale-102'
                       }`}
                       onClick={handlePurchase}
                       disabled={signupMutation.isPending || !isConnected}
