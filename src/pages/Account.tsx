@@ -6,6 +6,7 @@ import WalletModal from "../components/WalletModal"
 import { showSuccess, showError } from "../utils/toast"
 import type { ClientInfo } from '../api/types'
 import LoadingOverlay from "../components/LoadingOverlay"
+import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide"
 
 const Account = () => {
   const { 
@@ -19,6 +20,39 @@ const Account = () => {
   } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
+
+  const tooltipSteps: TooltipStep[] = [
+    {
+      id: "duration-tooltip",
+      content: "Choose how long you want your VPN access to last. Longer durations offer better value!",
+      placement: "top"
+    },
+    {
+      id: "price-tooltip", 
+      content: "This shows the cost in ADA for your selected duration. Make sure you have enough balance!",
+      placement: "bottom"
+    },
+    {
+      id: "region-tooltip",
+      content: "Select the server region closest to you for the best performance, or choose a different region for location privacy.",
+      placement: "top"
+    },
+    {
+      id: "wallet-tooltip",
+      content: "Connect your Cardano wallet here to start purchasing VPN access. We support all major Cardano wallets!",
+      placement: "left"
+    },
+    {
+      id: "purchase-tooltip",
+      content: "Click here to purchase your VPN access! Make sure your wallet is connected and you have enough ADA balance.",
+      placement: "top"
+    },
+    {
+      id: "instances-tooltip",
+      content: "Your active VPN instances will appear here. Click 'Get Config' to download your VPN configuration files!",
+      placement: "top"
+    }
+  ]
 
   const { data: refData } = useRefData({
     queryKey: ['refdata'],
@@ -215,165 +249,185 @@ const Account = () => {
   }, [dedupedClientList])
 
   return (
-    <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
-      <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
-        <LoadingOverlay 
-          isVisible={signupMutation.isPending}
-          messageTop={signupMutation.isPending ? 'Awaiting Transaction Confirmation' : ''}
-          messageBottom="Processing Purchase" 
-        />
-        
-        {/* VPN PURCHASE SECTION */}
-        <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
-          {/* VPN PURCHASE OPTIONS */}
-          <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
-            <div className="flex justify-between items-start gap-3 pb-4 w-full">
-              <div className="flex flex-col justify-center items-start gap-3">
-                <p className="font-exo-2 text-white text-lg font-bold">Buy VPN Access</p>
-              </div>
-              <div className="flex flex-col justify-center items-end gap-3">
-                <p className="font-light text-white text-sm">Available Balance</p>
-                <p className="font-light text-white text-sm">
-                  <span className="font-bold text-2xl">{balance ? balance : "0.00"}</span> ADA
-                </p>
-              </div>
-            </div>
-            
-            {/* Duration Selection */}
-            <div className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]">
-              <div className="flex flex-col justify-center items-start gap-2 w-full">
-                {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
-                  <>
-                    <div className="flex items-center gap-2 w-full">
-                      {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
-                        <button
-                          key={option.value}
-                          className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1.5 px-3 cursor-pointer whitespace-nowrap text-md md:text-md ${
-                            selectedDuration === option.value ? "opacity-100" : "opacity-50"
-                          }`}
-                          onClick={() => setSelectedDuration(option.value)}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="text-lg flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-3 px-2.5">
-                      {selectedOption ? `${formatPrice(selectedOption.price)} ADA` : ''}
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-20 w-full bg-gray-300/20 rounded animate-pulse"></div>
-                )}
-              </div>
-            </div>
-            
-            {/* Region Selection and Purchase */}
-            <div className="flex flex-row gap-2 w-full justify-between items-center">
-              <div className="flex items-center gap-2">
-                <p className="font-medium text-white text-lg">Region:</p>
-                {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
-                  <select 
-                    value={selectedRegion}
-                    onChange={(e) => setSelectedRegion(e.target.value)}
-                    className="bg-transparent text-white text-md border border-white/20 rounded px-2 py-3"
-                  >
-                    {refData.regions.map((region) => (
-                      <option key={region} value={region} className="text-black">
-                        {region.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
-                )}
-              </div>
-              {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
-                <button 
-                  className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm transition-all duration-200 ${
-                    signupMutation.isPending || !isConnected 
-                      ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2.5 px-12' 
-                      : 'cursor-pointer bg-[#9400FF] py-2.5 px-12 hover:bg-[#7A00CC] hover:scale-102'
-                  }`}
-                  onClick={handlePurchase}
-                  disabled={signupMutation.isPending || !isConnected}
-                >
-                  <p className="font-medium text-white text-lg">
-                    {signupMutation.isPending 
-                      ? 'Processing...' 
-                      : !isConnected 
-                        ? 'Connect Wallet' 
-                        : `Purchase VPN`
-                    }
+    <TooltipGuide
+      steps={tooltipSteps}
+      storageKey="vpn-account-visited"
+      stepDuration={4000}
+    >
+      <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
+        <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
+          <LoadingOverlay 
+            isVisible={signupMutation.isPending}
+            messageTop={signupMutation.isPending ? 'Awaiting Transaction Confirmation' : ''}
+            messageBottom="Processing Purchase" 
+          />
+          
+          {/* VPN PURCHASE SECTION */}
+          <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
+            {/* VPN PURCHASE OPTIONS */}
+            <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
+              <div className="flex justify-between items-start gap-3 pb-4 w-full">
+                <div className="flex flex-col justify-center items-start gap-3">
+                  <p className="font-exo-2 text-white text-lg font-bold">Buy VPN Access</p>
+                </div>
+                <div className="flex flex-col justify-center items-end gap-3">
+                  <p className="font-light text-white text-sm">Available Balance</p>
+                  <p className="font-light text-white text-sm">
+                    <span className="font-bold text-2xl">{balance ? balance : "0.00"}</span> ADA
                   </p>
-                </button>
-              ) : (
-                <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
-              )}
+                </div>
+              </div>
+              
+              {/* Duration Selection */}
+              <div 
+                className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]"
+                data-tooltip-id="duration-tooltip"
+              >
+                <div className="flex flex-col justify-center items-start gap-2 w-full">
+                  {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
+                    <>
+                      <div className="flex items-center gap-2 w-full">
+                        {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
+                          <button
+                            key={option.value}
+                            className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1.5 px-3 cursor-pointer whitespace-nowrap text-md md:text-md ${
+                              selectedDuration === option.value ? "opacity-100" : "opacity-50"
+                            }`}
+                            onClick={() => setSelectedDuration(option.value)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div 
+                        className="text-lg flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-3 px-2.5"
+                        data-tooltip-id="price-tooltip"
+                      >
+                        {selectedOption ? `${formatPrice(selectedOption.price)} ADA` : ''}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="h-20 w-full bg-gray-300/20 rounded animate-pulse"></div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Region Selection and Purchase */}
+              <div className="flex flex-row gap-2 w-full justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-white text-lg">Region:</p>
+                  {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
+                    <select 
+                      value={selectedRegion}
+                      onChange={(e) => setSelectedRegion(e.target.value)}
+                      className="bg-transparent text-white text-md border border-white/20 rounded px-2 py-3"
+                      data-tooltip-id="region-tooltip"
+                    >
+                      {refData.regions.map((region) => (
+                        <option key={region} value={region} className="text-black">
+                          {region.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
+                  )}
+                </div>
+                {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
+                  <button 
+                    className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm transition-all duration-200 ${
+                      signupMutation.isPending || !isConnected 
+                        ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2.5 px-12' 
+                        : 'cursor-pointer bg-[#9400FF] py-2.5 px-12 hover:bg-[#7A00CC] hover:scale-102'
+                    }`}
+                    onClick={handlePurchase}
+                    disabled={signupMutation.isPending || !isConnected}
+                    data-tooltip-id="purchase-tooltip"
+                  >
+                    <p className="font-medium text-white text-lg">
+                      {signupMutation.isPending 
+                        ? 'Processing...' 
+                        : !isConnected 
+                          ? 'Connect Wallet' 
+                          : `Purchase VPN`
+                      }
+                    </p>
+                  </button>
+                ) : (
+                  <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
+                )}
+              </div>
+            </div>
+            
+            {/* WALLET SECTION */}
+            <div 
+              className={`flex flex-col items-center justify-center w-full md:flex-1 ${
+                !isConnected ? 'flex' : (!isWalletModalOpen ? 'hidden md:flex' : 'flex')
+              }`}
+              data-tooltip-id="wallet-tooltip"
+            >
+              <WalletModal
+                isOpen={true}
+                onDisconnect={handleDisconnect}
+              />
             </div>
           </div>
           
-          {/* WALLET SECTION */}
-          <div className={`flex flex-col items-center justify-center w-full md:flex-1 ${
-            !isConnected ? 'flex' : (!isWalletModalOpen ? 'hidden md:flex' : 'flex')
-          }`}>
-            <WalletModal
-              isOpen={true}
-              onDisconnect={handleDisconnect}
-            />
-          </div>
-        </div>
-        
-        {/* VPN INSTANCES SECTION */}
-        <div className="flex flex-col justify-center items-start gap-3 w-full">
-          <p className="text-white text-lg font-bold">VPN Instances</p>
-          <div className="w-full">
-            {!isConnected ? (
-              <p className="text-white/60 text-sm">Connect your wallet to view VPN instances</p>
-            ) : isLoadingClients ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                {[1, 2, 3, 4].map((index) => (
-                  <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
-                    <div className="flex flex-col items-start gap-1 w-full">
-                      <div className="flex justify-between items-start w-full gap-2">
-                        <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                        <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
-                      </div>
-                      <div className="flex justify-between items-start w-full">
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
-                          <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+          {/* VPN INSTANCES SECTION */}
+          <div className="flex flex-col justify-center items-start gap-3 w-full">
+            <p className="text-white text-lg font-bold">VPN Instances</p>
+            <div className="w-full">
+              {!isConnected ? (
+                <p className="text-white/60 text-sm">Connect your wallet to view VPN instances</p>
+              ) : isLoadingClients ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  {[1, 2, 3, 4].map((index) => (
+                    <div key={index} className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]">
+                      <div className="flex flex-col items-start gap-1 w-full">
+                        <div className="flex justify-between items-start w-full gap-2">
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
                         </div>
-                        <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                        <div className="flex justify-between items-start w-full">
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
+                            <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+                          </div>
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
+                        <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center w-full">
-                      <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
-                      <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : vpnInstances.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                {vpnInstances.map((instance) => (
-                  <VpnInstance
-                    key={instance.id}
-                    region={instance.region}
-                    duration={instance.duration}
-                    status={instance.status}
-                    expires={instance.expires}
-                    onDelete={() => handleDelete(instance.id)}
-                    onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-white/60 text-sm">No VPN instances found</p>
-            )}
+                  ))}
+                </div>
+              ) : vpnInstances.length > 0 ? (
+                <div 
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
+                  data-tooltip-id="instances-tooltip"
+                >
+                  {vpnInstances.map((instance) => (
+                    <VpnInstance
+                      key={instance.id}
+                      region={instance.region}
+                      duration={instance.duration}
+                      status={instance.status}
+                      expires={instance.expires}
+                      onDelete={() => handleDelete(instance.id)}
+                      onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/60 text-sm">No VPN instances found</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </TooltipGuide>
   )
 }
 
