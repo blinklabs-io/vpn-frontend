@@ -1,5 +1,3 @@
-import trashIcon from '/trash-icon.svg'
-
 interface VpnInstanceProps {
   region: string
   duration: string
@@ -9,7 +7,7 @@ interface VpnInstanceProps {
   onAction?: () => void
 }
 
-const VpnInstance = ({ region, duration, status, expires, onDelete, onAction }: VpnInstanceProps) => {
+const VpnInstance = ({ region, duration, status, expires, onAction }: VpnInstanceProps) => {
   return (
     <div className={`flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs ${
         status === "Active"
