@@ -47,7 +47,7 @@ const FloatingWalletButton = () => {
 
   return (
     <>
-      <LoadingOverlay isVisible={isLoading} message="Connecting Wallet..." />
+      <LoadingOverlay isVisible={isLoading} messageTop="Connecting Wallet..." />
       <button
         onClick={handleConnect}
         disabled={isLoading}
