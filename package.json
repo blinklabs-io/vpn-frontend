@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@cardano-foundation/cardano-connect-with-wallet": "^0.2.14",
+    "@cardano-foundation/cardano-connect-with-wallet": "^0.2.15",
     "@harmoniclabs/cardano-ledger-ts": "^0.4.0-dev16",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.83.0",
