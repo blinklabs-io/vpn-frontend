@@ -50,12 +50,11 @@ const WalletConnection = ({
     setConnectionError(`Error with ${walletName}: ${error.message}`)
   }
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowWalletList(false)
-        setConnectionError(null) // Clear error when closing dropdown
+        setConnectionError(null);
       }
     }
 
