@@ -111,8 +111,12 @@ export const useWalletStore = create<WalletState>()(
             walletApi,
           })
 
-          const { getBalance, getWalletAddress } = get()
-          await Promise.all([getBalance(), getWalletAddress()])
+          try {
+            const { getBalance, getWalletAddress } = get()
+            await Promise.all([getBalance(), getWalletAddress()])
+          } catch (error) {
+            console.warn('Failed to get balance or address, but wallet is connected:', error)
+          }
           
           return true
         } catch (error) {
