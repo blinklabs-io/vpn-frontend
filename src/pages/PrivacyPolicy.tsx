@@ -3,195 +3,226 @@ import { Link } from "react-router";
 const PrivacyPolicy = () => {
   return (
     <div className="flex flex-col bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] relative pt-16 min-h-screen overflow-hidden">
-      <div className="max-w-4xl mx-auto px-4 py-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6">
-            <svg
-              className="w-10 h-10 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
-          </div>
           <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-4">
             Privacy Policy
           </h1>
-          <p className="text-gray-300 text-lg font-mono">
-            Know your assumptions
-          </p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
-          <div className="space-y-8 text-gray-300">
-            <section className="p-4 rounded-xl">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center mr-4">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
-                  Our Commitment to Privacy
-                </h2>
+        <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-10 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
+          <div className="space-y-10 text-gray-300">
+            {/* Introduction */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-4">
+                1. Introduction
+              </h2>
+              <div className="space-y-4">
+                <p className="leading-relaxed text-gray-300">
+                  This Privacy Policy describes how NABU VPN ("we," "our," or "us") 
+                  collects, uses, and protects information when you use our VPN service 
+                  and website. By accessing or using our services, you agree to the 
+                  terms outlined in this Privacy Policy.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  We are committed to protecting your privacy and maintaining the 
+                  confidentiality of your personal information. This policy explains 
+                  our data practices and your rights regarding your information.
+                </p>
               </div>
-              <p className="leading-relaxed font-mono text-sm">
-                Privacy is a right. This policy describes the terms for use of
-                this website and the NABU VPN service. By accessing or using
-                this website and the NABU VPN service, you agree to be bound by
-                the terms of this Privacy Policy and any applicable law,
-                regulation, legal process, or enforceable governmental request
-                of the United States.
-              </p>
-              <br />
-              <p className="leading-relaxed font-mono text-sm">
-                NABU VPN does not collect, log, store, or track any data related
-                to VPN usage other than machine aggregate network bandwidth
-                usage. No VPN data is persisted. All VPN traffic is encrypted.
-                We make a best effort to ensure your privacy and ensure our
-                ability to comply with legal requirements. This is best
-                accomplished by not spying on our users or collecting data on
-                their activity.
-              </p>
             </section>
 
-            <section className="p-4 rounded-xl">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-4">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent">
-                  Account Information
-                </h2>
+            {/* Our Commitment */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent mb-4">
+                2. Our Commitment to Privacy
+              </h2>
+              <div className="space-y-4">
+                <p className="leading-relaxed text-gray-300">
+                  Privacy is a fundamental right. NABU VPN operates on the principle 
+                  of minimal data collection and maximum user privacy protection. 
+                  We have designed our service to collect as little information as 
+                  possible while maintaining operational functionality.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  NABU VPN does not collect, log, store, or track any data related 
+                  to VPN usage other than machine aggregate network bandwidth usage. 
+                  No VPN data is persisted beyond what is necessary for service 
+                  operation. All VPN traffic is encrypted end-to-end.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  We make every reasonable effort to ensure your privacy and maintain 
+                  our ability to comply with legal requirements. This is best 
+                  accomplished by not collecting unnecessary data on our users' 
+                  activities.
+                </p>
               </div>
-              <p className="leading-relaxed font-mono text-sm">
-                NABU VPN accounts use the public key address of a Cardano
-                mainnet wallet. This provides a pseudoanonymous unique
-                identifier for the ownership of an account without collecting
-                information such as social media login IDs or email addresses.
-                All account information is sourced from public data published to
-                the Cardano blockchain, so there is no expectation of privacy on
-                account existence or expiration. No personal data is collected
-                about users or accounts.
-              </p>
             </section>
 
-            <section className="p-4 rounded-xl">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mr-4">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                  Data Collection
-                </h2>
+            {/* Account Information */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent mb-4">
+                3. Account Information
+              </h2>
+              <div className="space-y-4">
+                <p className="leading-relaxed text-gray-300">
+                  NABU VPN accounts are created using the public key address of a 
+                  Cardano mainnet wallet. This approach provides a pseudoanonymous 
+                  unique identifier for account ownership without requiring traditional 
+                  personal information such as email addresses or social media accounts.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  All account information is derived from publicly available data 
+                  published to the Cardano blockchain. As such, there is no expectation 
+                  of privacy regarding account existence or expiration dates, as this 
+                  information is publicly verifiable on the blockchain.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  We do not collect, store, or process any personal data about our 
+                  users beyond what is necessary for account identification and 
+                  service provision.
+                </p>
               </div>
-              <p className="leading-relaxed font-mono text-sm">
-                We collect the minimal amount of data required to keep our
-                services operational. Our services are "no log" services, which
-                means we commit to not tracking and storing any persistent data
-                on user activity. Data we do not collect and store cannot be
-                leaked or stolen. We cannot share what we do not have. While we
-                operate within the United States and will comply with any law
-                enforcement or other legal requirements, we can only confirm
-                that we have no data.
-              </p>
-              <br />
-              <p className="leading-relaxed font-mono text-sm">
-                We do not collect VPN traffic logs. We do not collect VPC flow
-                logs. We do not collect load balancer logs. Any operational
-                session data is ephemeral and only used to keep services active.
-                There are no persistent log files stored on any of our servers.
-              </p>
             </section>
 
-            <section className="p-4 rounded-xl">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-4">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                  Intermediary Services
-                </h2>
+            {/* Data Collection */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-4">
+                4. Data Collection Practices
+              </h2>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white mb-3">
+                  4.1 Minimal Data Collection
+                </h3>
+                <p className="leading-relaxed text-gray-300">
+                  We collect only the minimal amount of data required to maintain 
+                  operational services. Our VPN service operates as a "no-log" service, 
+                  meaning we commit to not tracking or storing persistent data on 
+                  user activity or traffic.
+                </p>
+                
+                <h3 className="text-lg font-medium text-white mb-3">
+                  4.2 What We Do Not Collect
+                </h3>
+                <ul className="list-disc list-inside text-gray-300 leading-relaxed space-y-2 ml-4">
+                  <li>VPN traffic logs or content</li>
+                  <li>VPC flow logs</li>
+                  <li>Load balancer logs</li>
+                  <li>User browsing history or destinations</li>
+                  <li>Personal identification information</li>
+                  <li>Email addresses or contact information</li>
+                </ul>
+                
+                <p className="leading-relaxed text-gray-300">
+                  Any operational session data is ephemeral and used solely to 
+                  maintain active services. No persistent log files are stored on 
+                  our servers.
+                </p>
+                
+                <h3 className="text-lg font-medium text-white mb-3">
+                  4.3 Legal Compliance
+                </h3>
+                <p className="leading-relaxed text-gray-300">
+                  While we operate within the United States and will comply with 
+                  applicable law enforcement or legal requirements, we can only 
+                  provide information that we actually possess. Our no-log policy 
+                  means we have minimal data to share with authorities.
+                </p>
               </div>
-              <p className="leading-relaxed font-mono text-sm">
-                Services along the way may be able to track certain details from
-                you. Actors such as your Internet service provider (ISP) and
-                ours (AWS for the VPN, Cloudflare for this website) can track
-                information such as your IP address or your connection to us.
-                Coarse HTTP traffic analytics such as aggregate traffic and
-                country of origin derived from your IP address is tracked by
-                Cloudflare for 30 days for this website, but not the NABU VPN
-                service. Deep packet inspection or other techniques will detect
-                your use of our VPN. However, they will be unable to see what
-                you are doing. Your traffic is encrypted at your client.
-              </p>
-              <br />
-              <p className="leading-relaxed font-mono text-sm">
-                Logging into online accounts while using the VPN could expose
-                additional information. Avoid using services with the same
-                accounts both on and off the VPN to avoid leaking data allowing
-                the service to correlate your real and VPN addresses.
-              </p>
-              <br />
-              <p className="leading-relaxed font-mono text-sm">
-                While NABU VPN operates a secure and private service, it makes
-                no guaratees of complete security or privacy of our offering.
-                Users are responsible for ensuring they are compliant with any
-                applicable laws and have the ultimate responsibility for their
-                own data and privacy.
-              </p>
+            </section>
+
+            {/* Third-Party Services */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-4">
+                5. Third-Party Services and Intermediaries
+              </h2>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white mb-3">
+                  5.1 Service Providers
+                </h3>
+                <p className="leading-relaxed text-gray-300">
+                  Our services rely on third-party infrastructure providers, including 
+                  AWS for VPN services and Cloudflare for website hosting. These 
+                  providers may have access to certain technical information such as 
+                  IP addresses and connection metadata.
+                </p>
+                
+                <h3 className="text-lg font-medium text-white mb-3">
+                  5.2 Website Analytics
+                </h3>
+                <p className="leading-relaxed text-gray-300">
+                  Cloudflare provides basic website analytics including aggregate 
+                  traffic data and country of origin (derived from IP addresses) 
+                  for this website only. This data is retained for 30 days and 
+                  does not include VPN service usage.
+                </p>
+                
+                <h3 className="text-lg font-medium text-white mb-3">
+                  5.3 ISP and Network Monitoring
+                </h3>
+                <p className="leading-relaxed text-gray-300">
+                  Your Internet Service Provider (ISP) and other network intermediaries 
+                  may be able to detect your connection to our VPN service through 
+                  traffic analysis. However, they cannot see the content of your 
+                  encrypted traffic or your browsing activities.
+                </p>
+                
+                <h3 className="text-lg font-medium text-white mb-3">
+                  5.4 User Responsibility
+                </h3>
+                <p className="leading-relaxed text-gray-300">
+                  Users should be aware that logging into online accounts while using 
+                  the VPN may expose additional information. To maintain maximum 
+                  privacy, consider using different accounts for VPN and non-VPN 
+                  activities to prevent correlation of your real and VPN IP addresses.
+                </p>
+              </div>
+            </section>
+
+            {/* Limitations and Disclaimers */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-orange-200 bg-clip-text text-transparent mb-4">
+                6. Limitations and Disclaimers
+              </h2>
+              <div className="space-y-4">
+                <p className="leading-relaxed text-gray-300">
+                  While NABU VPN operates a secure and private service, we cannot 
+                  guarantee complete security or absolute privacy. Users are 
+                  responsible for ensuring compliance with applicable laws and 
+                  regulations in their jurisdiction.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  Users have the ultimate responsibility for their own data and 
+                  privacy practices. We recommend that users educate themselves 
+                  about privacy best practices and use our service in accordance 
+                  with their local laws.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  This service is provided "as is" without warranties of any kind, 
+                  either express or implied, including but not limited to warranties 
+                  of merchantability, fitness for a particular purpose, or 
+                  non-infringement.
+                </p>
+              </div>
+            </section>
+
+            {/* Contact Information */}
+            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+              <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-pink-200 bg-clip-text text-transparent mb-4">
+                7. Contact Information
+              </h2>
+              <div className="space-y-4">
+                <p className="leading-relaxed text-gray-300">
+                  If you have questions about this Privacy Policy or our data 
+                  practices, please contact us through our website or support channels.
+                </p>
+                <p className="leading-relaxed text-gray-300">
+                  We reserve the right to update this Privacy Policy at any time. 
+                  Changes will be posted on this page with an updated "Last Modified" 
+                  date. Continued use of our services after changes constitutes 
+                  acceptance of the updated policy.
+                </p>
+              </div>
             </section>
           </div>
         </div>
@@ -199,7 +230,7 @@ const PrivacyPolicy = () => {
         <div className="text-center mt-8">
           <Link
             to="/"
-            className="inline-flex items-center px-8 py-4 bg-white text-[#1C246E] font-semibold rounded-xl shadow-lg"
+            className="inline-flex items-center px-8 py-4 text-white border border-white/20 backdrop-blur-sm font-semibold rounded-xl shadow-lg hover:bg-gray-800 transition-colors"
           >
             <span className="mr-2">Back Home</span>
             <svg
