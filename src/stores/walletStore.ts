@@ -71,7 +71,36 @@ export const useWalletStore = create<WalletState>()(
 
           const walletApi = await window.cardano[walletName].enable()
           
-          const stakeAddresses = await walletApi.getRewardAddresses()
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
+          let stakeAddresses: string[] = []
+          let retries = 3
+          
+          while (retries > 0) {
+            try {
+              stakeAddresses = await walletApi.getRewardAddresses()
+              break
+            } catch (error: unknown) {
+              retries--
+              
+              if (error instanceof Error && (error.message.includes('account changed') || error.message.includes('Account changed'))) {
+                console.warn(`Account changed error for ${walletName}, retrying... (${retries} attempts left)`)
+                
+                if (retries > 0) {
+                  await new Promise(resolve => setTimeout(resolve, 500))
+                  continue
+                } else {
+                  const newWalletApi = await window.cardano[walletName].enable()
+                  await new Promise(resolve => setTimeout(resolve, 200))
+                  stakeAddresses = await newWalletApi.getRewardAddresses()
+                  break
+                }
+              } else {
+                throw error
+              }
+            }
+          }
+          
           const stakeAddress = stakeAddresses?.[0] || null
 
           set({
