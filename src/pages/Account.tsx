@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react"
-import { useNavigate } from "react-router"
 import { useWalletStore } from "../stores/walletStore"
 import { useRefData, useSignup, useClientList, useClientProfile, useClientPolling } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
@@ -10,7 +9,6 @@ import LoadingOverlay from "../components/LoadingOverlay"
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide"
 
 const Account = () => {
-  const navigate = useNavigate()
   const { 
     isConnected, 
     disconnect, 
@@ -72,7 +70,7 @@ const Account = () => {
       console.log('Transaction built successfully:', data)
       
       try {
-        const txHash = await signAndSubmitTransaction(data.txCbor)
+        await signAndSubmitTransaction(data.txCbor)
         showSuccess(`VPN purchase successful! Setting up your instance...`)
         
         // Add pending client to the list
