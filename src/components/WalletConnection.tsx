@@ -131,7 +131,7 @@ const WalletConnection = ({
                   primaryColor="#000000"
                   onConnect={onConnectWallet}
                   onConnectError={onConnectError}
-                  supportedWallets={['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']}
+                  supportedWallets={['eternl', 'yoroi', 'gerowallet', 'begin', 'nufi', 'lace', 'vespr']}
                   showUnavailableWallets={0}
                   peerConnectEnabled={false}
                   limitNetwork={NetworkType.TESTNET}
@@ -187,7 +187,7 @@ const WalletConnection = ({
             primaryColor="#000000"
             onConnect={onConnectWallet}
             onConnectError={onConnectError}
-            supportedWallets={['nami', 'eternl', 'flint', 'yoroi']}
+            supportedWallets={['eternl', 'yoroi', 'begin', 'nufi', 'lace', 'vespr']}
             showUnavailableWallets={0}
             peerConnectEnabled={false}
             limitNetwork={NetworkType.TESTNET} // MUST BE CHANGED TO MAINNET to work on mainnet
@@ -219,6 +219,7 @@ const WalletConnection = ({
               & > span:nth-child(3) { animation-delay: 0.12s; }
               & > span:nth-child(4) { animation-delay: 0.17s; }
               & > span:nth-child(5) { animation-delay: 0.22s; }
+              & > span:nth-child(6) { animation-delay: 0.27s; }
               & > span:hover {
                 background: rgba(255, 255, 255, 0.1);
                 border-color: rgba(255, 255, 255, 0.3);
