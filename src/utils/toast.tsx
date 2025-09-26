@@ -28,8 +28,8 @@ export const showSuccess = (message: string, options?: ToastOptions) => {
             />
           </div>
           <div className="ml-3 flex-1">
-            <p className="text-sm font-medium text-white">
-              {message}
+            <p className="text-sm font-medium text-white break-words">
+              {message.length > 100 ? `${message.substring(0, 100)}...` : message}
             </p>
           </div>
         </div>
@@ -66,8 +66,8 @@ export const showError = (message: string, options?: ToastOptions) => {
             />
           </div>
           <div className="ml-3 flex-1">
-            <p className="text-sm font-medium text-white">
-              {message}
+            <p className="text-sm font-medium text-white break-words">
+              {message.length > 100 ? `${message.substring(0, 100)}...` : message}
             </p>
           </div>
         </div>
@@ -104,8 +104,8 @@ export const showInfo = (message: string, options?: ToastOptions) => {
             />
           </div>
           <div className="ml-3 flex-1">
-            <p className="text-sm font-medium text-white">
-              {message}
+            <p className="text-sm font-medium text-white break-words">
+              {message.length > 100 ? `${message.substring(0, 100)}...` : message}
             </p>
           </div>
         </div>

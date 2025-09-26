@@ -52,6 +52,12 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
           >
             How It Works
           </button>
+          <button
+            onClick={() => navigate('/docs-faqs')}
+            className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            FAQs
+          </button>
         </div>
       </div>
     </div>
