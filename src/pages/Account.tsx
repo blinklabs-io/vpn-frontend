@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
+import { useNavigate } from "react-router"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup, useClientList, useClientProfile } from "../api/hooks"
+import { useRefData, useSignup, useClientList, useClientProfile, useClientPolling } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import WalletModal from "../components/WalletModal"
 import { showSuccess, showError } from "../utils/toast"
@@ -9,6 +10,7 @@ import LoadingOverlay from "../components/LoadingOverlay"
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide"
 
 const Account = () => {
+  const navigate = useNavigate()
   const { 
     isConnected, 
     disconnect, 
@@ -20,6 +22,12 @@ const Account = () => {
   } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
+  const [pendingClients, setPendingClients] = useState<Array<{
+    id: string
+    region: string
+    duration: string
+    purchaseTime: Date
+  }>>([])
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -65,7 +73,19 @@ const Account = () => {
       
       try {
         const txHash = await signAndSubmitTransaction(data.txCbor)
-        showSuccess(`VPN purchase successful! Transaction: ${txHash}`)
+        showSuccess(`VPN purchase successful! Setting up your instance...`)
+        
+        // Add pending client to the list
+        const pendingClient = {
+          id: data.clientId,
+          region: selectedRegion,
+          duration: selectedOption ? formatDuration(selectedOption.value) : 'Unknown',
+          purchaseTime: new Date()
+        }
+        setPendingClients(prev => [...prev, pendingClient])
+        
+        // Start polling for this client
+        startPolling(data.clientId)
         
       } catch (error) {
         console.error('Transaction error details:', error)
@@ -144,6 +164,16 @@ const Account = () => {
     }
   }, [refData?.regions, selectedRegion])
 
+  // Remove pending clients when they become available in the client list
+  useEffect(() => {
+    if (dedupedClientList && pendingClients.length > 0) {
+      const availableClientIds = new Set(dedupedClientList.map(client => client.id))
+      setPendingClients(prev => 
+        prev.filter(pending => !availableClientIds.has(pending.id))
+      )
+    }
+  }, [dedupedClientList, pendingClients.length])
+
   const selectedOption = durationOptions.find((option: { value: number }) => option.value === selectedDuration)
 
   const handlePurchase = () => {
@@ -177,6 +207,7 @@ const Account = () => {
   }
 
   const clientProfileMutation = useClientProfile()
+  const { startPolling } = useClientPolling()
 
   const handleAction = async (instanceId: string, action: string) => {
     if (action === 'Get Config') {
@@ -221,9 +252,7 @@ const Account = () => {
   }
 
   const vpnInstances = useMemo(() => {
-    if (!dedupedClientList) return []
-    
-    return dedupedClientList
+    const activeInstances = dedupedClientList ? dedupedClientList
       .map((client: ClientInfo) => {
         const isActive = new Date(client.expiration) > new Date()
         
@@ -245,8 +274,32 @@ const Account = () => {
         } else {
           return b.expirationDate.getTime() - a.expirationDate.getTime()
         }
-      })
-  }, [dedupedClientList])
+      }) : []
+
+    // Add pending instances
+    const pendingInstances = pendingClients.map(pending => ({
+      id: pending.id,
+      region: pending.region,
+      duration: pending.duration,
+      status: 'Pending' as const,
+      expires: 'Setting up...',
+      expirationDate: new Date(pending.purchaseTime.getTime() + 24 * 60 * 60 * 1000) // Placeholder
+    }))
+
+    // Combine and sort: Pending first, then Active, then Expired
+    return [...pendingInstances, ...activeInstances].sort((a, b) => {
+      if (a.status === 'Pending' && b.status !== 'Pending') return -1
+      if (a.status !== 'Pending' && b.status === 'Pending') return 1
+      if (a.status === 'Active' && b.status === 'Expired') return -1
+      if (a.status === 'Expired' && b.status === 'Active') return 1
+      
+      if (a.status === 'Active') {
+        return b.expirationDate.getTime() - a.expirationDate.getTime()
+      } else {
+        return b.expirationDate.getTime() - a.expirationDate.getTime()
+      }
+    })
+  }, [dedupedClientList, pendingClients])
 
   return (
     <TooltipGuide
@@ -258,9 +311,21 @@ const Account = () => {
         <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
           <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
             <LoadingOverlay 
-              isVisible={signupMutation.isPending}
-              messageTop={signupMutation.isPending ? 'Awaiting Transaction Confirmation' : ''}
-              messageBottom="Processing Purchase" 
+              isVisible={signupMutation.isPending || clientProfileMutation.isPending}
+              messageTop={
+                signupMutation.isPending 
+                  ? 'Awaiting Transaction Confirmation' 
+                  : clientProfileMutation.isPending 
+                    ? 'Preparing VPN Configuration' 
+                    : ''
+              }
+              messageBottom={
+                signupMutation.isPending 
+                  ? 'Processing Purchase' 
+                  : clientProfileMutation.isPending 
+                    ? 'Downloading Config File' 
+                    : ''
+              } 
             />
             
             {/* VPN PURCHASE SECTION */}
