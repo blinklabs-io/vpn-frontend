@@ -112,16 +112,22 @@ const HowItWorks = () => {
                 <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                   1
                 </div>
-                <h2 className="text-2xl font-semibold text-white">Website Signup Process</h2>
+                <h2 className="text-2xl font-semibold text-white">Web Frontend</h2>
               </div>
               <p className="text-gray-300 leading-relaxed">
-                The signup process typically starts on our website. While it's not strictly necessary to use
-                our website to subscribe to our services, it does make things easier. Once you connect your
-                wallet, we will query our API for any existing subscriptions, as well as for current region and
-                plan information. Once you choose a plan and selection the option to purchase, the site will
-                call our API with your wallet address and chosen plan information. This will build a transaction
-                based on your wallet, which is then returned to the user to be signed by their wallet and
-                submitted.
+	      	Our{' '}
+                <a 
+                  href="https://github.com/blinklabs-io/vpn-frontend" 
+                  className="text-blue-400 hover:text-blue-300 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  web frontend
+                </a>{' '}
+		provides a convenient interface over our API for managing your VPN subscriptions. It allows connecting
+		a CIP-30 compatible wallet, which is used to determine the wallet address to query our backend API for
+		subscriptions, as well as for authentication and transaction signing. While we take special care to not
+		log your IP address, it will be visible to Cloudflare where the web frontend is hosted.
               </p>
             </div>
           </section>
@@ -132,12 +138,23 @@ const HowItWorks = () => {
                 <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                   2
                 </div>
-                <h2 className="text-2xl font-semibold text-white">Smart Contract Validation</h2>
+                <h2 className="text-2xl font-semibold text-white">Smart Contract</h2>
               </div>
               <p className="text-gray-300 leading-relaxed">
-                The signup transaction will be validated by a smart contract, checking that it conforms to
-                available regions and plans, the datum matches the expected shape, all funds are the correct amounts
-                and going to the correct places, and other various sanity checks.
+	      	Our{' '}
+                <a 
+                  href="https://github.com/blinklabs-io/vpn-contracts" 
+                  className="text-blue-400 hover:text-blue-300 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  smart contract
+                </a>{' '}
+		facilitates all on-chain operations, such as signups and renewals. It validates that all subscriptions
+		conform to available regions and plans, the datum matches the expected shape, all funds are the correct
+		amounts and going to the correct places, and other various sanity checks. All subscription information is
+		stored on-chain in the smart contract's address. Because all interactions with smart contracts are public,
+		the wallet address that you signed up with, as well as your chosen plan and region, are visible to anybody.
               </p>
             </div>
           </section>
@@ -148,7 +165,7 @@ const HowItWorks = () => {
                 <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                   3
                 </div>
-                <h2 className="text-2xl font-semibold text-white">Indexer Processing</h2>
+                <h2 className="text-2xl font-semibold text-white">Indexer and API</h2>
               </div>
               <p className="text-gray-300 leading-relaxed">
                 Once the signup TX makes it into a block and on-chain, it will get picked up by our{' '}
@@ -163,6 +180,12 @@ const HowItWorks = () => {
                 The client datum will be extracted and its information written to a SQLite database. A new client TLS
                 certificate is generated and signed by our CA certificate, and a new VPN client config built and
                 uploaded to a private S3 bucket.
+	      </p>
+
+              <p className="text-gray-300 leading-relaxed">
+		The on-chain data processed by our indexer is made available for querying via our API. We also provide
+		endpoints for building transactions (for operations such as signup and renewal) and fetching generated
+		client profiles. We explicitly do not log client IP addresses in our API.
               </p>
             </div>
           </section>
@@ -176,11 +199,12 @@ const HowItWorks = () => {
                 <h2 className="text-2xl font-semibold text-white">Profile Download Authentication</h2>
               </div>
               <p className="text-gray-300 leading-relaxed">
-                Once a profile has been uploaded to S3, our API will allow fetching it by validating ownership of the
-                wallet used to do the signup. This is done by generating a challenge string (the hex-encoded client
-                ID and the current UNIX epoch time), signing this message with your wallet, and passing it to our API.
-                We validate the signature of the challenge message against the wallet PKH provided at signup, and
-                respond with a pre-signed S3 URL to fetch the client config.
+                Once a client profile has been generated and uploaded to S3 by our indexer, our API will allow fetching it
+		by validating ownership of the wallet used to do the signup. This is done by generating a challenge string
+		(the hex-encoded client ID and the current UNIX epoch time), signing this message with your wallet using the
+		CIP-8 message signing format, and passing it to our API. We validate the signature of the challenge message
+		against the wallet PKH provided at signup, and respond with a pre-signed S3 URL to fetch the client config.
+		A particular signed challenge string is valid for a limited period of time to help prevent replay attacks.
               </p>
             </div>
           </section>
@@ -191,12 +215,28 @@ const HowItWorks = () => {
                 <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                   5
                 </div>
-                <h2 className="text-2xl font-semibold text-white">VPN Client Setup</h2>
+                <h2 className="text-2xl font-semibold text-white">OpenVPN Server</h2>
               </div>
               <p className="text-gray-300 leading-relaxed">
-                The downloaded VPN client config can be loaded into the OpenVPN client of your choice. The user's client
-                TLS certificate will be validated against our CA certificate when authenticating to the VPN
-                server.
+	      	We run our OpenVPN server instances from a{' '}
+                <a 
+                  href="https://github.com/blinklabs-io/docker-openvpn" 
+                  className="text-blue-400 hover:text-blue-300 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  custom docker image
+                </a>{' '}
+		running in Kubernetes. Our image explicit disables any logging from OpenVPN, which means that we cannot see
+		the IP address that you connect with.
+	      </p>
+
+              <p className="text-gray-300 leading-relaxed">
+	      	When connecting to the VPN server, the user's client TLS certificate from their downloaded profile
+                will be validated against our CA certificate when authenticating to the VPN server. The client certificate
+		will also be checked against a CRL (certificate revocation list) maintained by our custom indexer to enforce
+		expiration. By default, you will be provided with our hosted DNS servers a default route through the VPN, which
+		prevents your ISP from being able to see what you are doing on the VPN.
               </p>
             </div>
           </section>
