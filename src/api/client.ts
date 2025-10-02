@@ -86,6 +86,48 @@ export function checkClientAvailable(request: ClientAvailableRequest): Promise<C
   return post<ClientAvailableResponse>('/client/available', request)
 }
 
+export async function checkClientAvailableWithGraceful404(request: ClientAvailableRequest): Promise<ClientAvailableResponse | null> {
+  const url = `${API_BASE_URL}/client/available`
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+
+    // Handle 404 as expected response (client not available yet)
+    if (response.status === 404) {
+      return null
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      return response.json() as Promise<ClientAvailableResponse>
+    }
+
+    const text = await response.text()
+    try {
+      return JSON.parse(text) as ClientAvailableResponse
+    } catch {
+      return {} as ClientAvailableResponse
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('Network error: Unable to connect to the API')
+    }
+    throw error
+  }
+}
+
 export function getClientProfile(request: ClientProfileRequest): Promise<string> {
   const url = `${API_BASE_URL}/client/profile`
   
@@ -140,8 +182,8 @@ export function getClientProfile(request: ClientProfileRequest): Promise<string>
 export function submitTransaction(signedTxCbor: string): Promise<string> {
   const url = `${API_BASE_URL}/tx/submit`
 
-  var arr = [];
-  for (var i = 0, len = signedTxCbor.length; i < len; i+=2) {
+  const arr = [];
+  for (let i = 0, len = signedTxCbor.length; i < len; i+=2) {
     arr.push(parseInt(signedTxCbor.substr(i,2),16));
   }
   const bodyBytes = new Uint8Array(arr);

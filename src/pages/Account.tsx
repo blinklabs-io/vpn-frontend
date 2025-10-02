@@ -26,6 +26,7 @@ const Account = () => {
     duration: string
     purchaseTime: Date
   }>>([])
+  const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false)
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -67,7 +68,6 @@ const Account = () => {
 
   const signupMutation = useSignup({
     onSuccess: async (data) => {
-      console.log('Transaction built successfully:', data)
       
       try {
         await signAndSubmitTransaction(data.txCbor)
@@ -85,14 +85,19 @@ const Account = () => {
         // Start polling for this client
         startPolling(data.clientId)
         
+        // Clear loading state after successful purchase
+        setIsPurchaseLoading(false)
+        
       } catch (error) {
         console.error('Transaction error details:', error)
         showError('Failed to sign and submit transaction')
+        setIsPurchaseLoading(false)
       }
     },
     onError: (error) => {
       console.error('Signup failed:', error)
       showError('Failed to sign and submit transaction')
+      setIsPurchaseLoading(false)
     }
   })
 
@@ -166,11 +171,15 @@ const Account = () => {
   useEffect(() => {
     if (dedupedClientList && pendingClients.length > 0) {
       const availableClientIds = new Set(dedupedClientList.map(client => client.id))
-      setPendingClients(prev => 
-        prev.filter(pending => !availableClientIds.has(pending.id))
-      )
+      const removedClients = pendingClients.filter(pending => availableClientIds.has(pending.id))
+      
+      if (removedClients.length > 0) {
+        setPendingClients(prev => 
+          prev.filter(pending => !availableClientIds.has(pending.id))
+        )
+      }
     }
-  }, [dedupedClientList, pendingClients.length])
+  }, [dedupedClientList, pendingClients])
 
   const selectedOption = durationOptions.find((option: { value: number }) => option.value === selectedDuration)
 
@@ -190,6 +199,9 @@ const Account = () => {
       return
     }
 
+    // Start loading state for entire purchase process
+    setIsPurchaseLoading(true)
+
     const payload = {
       clientAddress: walletAddress,
       duration: selectedDuration,
@@ -200,10 +212,6 @@ const Account = () => {
     signupMutation.mutate(payload)
   }
 
-  const handleDelete = (instanceId: string) => {
-    console.log('Delete instance:', instanceId)
-  }
-
   const clientProfileMutation = useClientProfile()
   const { startPolling } = useClientPolling()
 
@@ -212,13 +220,20 @@ const Account = () => {
       try {
         const s3Url = await clientProfileMutation.mutateAsync(instanceId)
         
-        window.open(s3Url, '_blank')
+        const link = document.createElement('a')
+        link.href = s3Url
+        link.download = `vpn-config-${instanceId}.conf`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        showSuccess('VPN config downloaded successfully!')
       } catch (error) {
         console.error('Failed to get config:', error)
         showError('Failed to get VPN config. Please try again.')
       }
     } else if (action === 'Renew Access') {
-      console.log('Renew access for instance:', instanceId)
+      // TODO: Implement renew access
     }
   }
 
@@ -309,21 +324,9 @@ const Account = () => {
         <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
           <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
             <LoadingOverlay 
-              isVisible={signupMutation.isPending || clientProfileMutation.isPending}
-              messageTop={
-                signupMutation.isPending 
-                  ? 'Awaiting Transaction Confirmation' 
-                  : clientProfileMutation.isPending 
-                    ? 'Preparing VPN Configuration' 
-                    : ''
-              }
-              messageBottom={
-                signupMutation.isPending 
-                  ? 'Processing Purchase' 
-                  : clientProfileMutation.isPending 
-                    ? 'Downloading Config File' 
-                    : ''
-              } 
+              isVisible={isPurchaseLoading}
+              messageTop="Awaiting Transaction Confirmation"
+              messageBottom="Processing Purchase"
             />
             
             {/* VPN PURCHASE SECTION */}
@@ -479,7 +482,6 @@ const Account = () => {
                         duration={instance.duration}
                         status={instance.status}
                         expires={instance.expires}
-                        onDelete={() => handleDelete(instance.id)}
                         onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
                       />
                     ))}
