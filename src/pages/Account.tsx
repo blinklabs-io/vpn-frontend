@@ -27,6 +27,7 @@ const Account = () => {
     purchaseTime: Date
   }>>([])
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false)
+  const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false)
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -218,6 +219,7 @@ const Account = () => {
   const handleAction = async (instanceId: string, action: string) => {
     if (action === 'Get Config') {
       try {
+        setIsConfigLoading(true)
         const s3Url = await clientProfileMutation.mutateAsync(instanceId)
         
         const link = document.createElement('a')
@@ -228,9 +230,11 @@ const Account = () => {
         document.body.removeChild(link)
         
         showSuccess('VPN config downloaded successfully!')
+        setIsConfigLoading(false)
       } catch (error) {
         console.error('Failed to get config:', error)
         showError('Failed to get VPN config. Please try again.')
+        setIsConfigLoading(false)
       }
     } else if (action === 'Renew Access') {
       // TODO: Implement renew access
@@ -324,9 +328,9 @@ const Account = () => {
         <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
           <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
             <LoadingOverlay 
-              isVisible={isPurchaseLoading}
-              messageTop="Awaiting Transaction Confirmation"
-              messageBottom="Processing Purchase"
+              isVisible={isPurchaseLoading || isConfigLoading}
+              messageTop={isPurchaseLoading ? "Awaiting Transaction Confirmation" : "Preparing VPN Configuration"}
+              messageBottom={isPurchaseLoading ? "Processing Purchase" : "Downloading Config File"}
             />
             
             {/* VPN PURCHASE SECTION */}
