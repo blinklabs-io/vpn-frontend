@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { checkClientAvailable } from '../client'
+import { checkClientAvailableWithGraceful404 } from '../client'
   
 interface PollingState {
   isPolling: boolean
@@ -50,20 +50,20 @@ export function useClientPolling() {
 
     const pollClient = async () => {
       try {
-        const response = await checkClientAvailable({ id: pollingState.clientId! })
+        const response = await checkClientAvailableWithGraceful404({ id: pollingState.clientId! })
         
-        // Check if client is available (assuming success means available)
-        if (response && !response.msg) {
-          // Client is available, stop polling and refresh client list
+        
+        if (response !== null) {
           stopPolling()
           
-          // Invalidate and refetch client list to get the new instance
           await queryClient.invalidateQueries({ queryKey: ['clientList'] })
+          
+          await queryClient.refetchQueries({ queryKey: ['clientList'] })
           
           return
         }
         
-        // Increment attempts
+        
         setPollingState(prev => ({
           ...prev,
           attempts: prev.attempts + 1
@@ -71,10 +71,12 @@ export function useClientPolling() {
         
         // Stop polling if max attempts reached
         if (pollingState.attempts >= pollingState.maxAttempts) {
+          console.log('Max polling attempts reached, stopping...')
           stopPolling()
         }
         
       } catch (error) {
+        // Only log actual errors, not expected 404s
         console.error('Error polling client availability:', error)
         
         // Increment attempts even on error
@@ -90,12 +92,13 @@ export function useClientPolling() {
       }
     }
 
-    // Poll immediately, then every 60 seconds
-    pollClient()
-    
-    intervalRef.current = setInterval(pollClient, 60000) // 60 seconds
+    const initialTimeout = setTimeout(() => {
+      pollClient()
+      intervalRef.current = setInterval(pollClient, 40000)
+    }, 20000)
 
     return () => {
+      clearTimeout(initialTimeout)
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null

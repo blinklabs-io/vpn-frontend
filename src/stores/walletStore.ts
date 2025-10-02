@@ -191,7 +191,6 @@ export const useWalletStore = create<WalletState>()(
             .map(byte => byte.toString(16).padStart(2, '0'))
             .join('')
           
-          console.log('Signing with address: ----->', address, 'payload:', payload)
           return await walletApi.signData(address, payload)
         } catch (error) {
           console.error('Failed to sign message:', error)
@@ -221,9 +220,7 @@ export const useWalletStore = create<WalletState>()(
 
       submitTransaction: async (signedTxCbor: string) => {
         try {
-          console.log('Submitting transaction via API...')
           const txHash = await submitTransactionApi(signedTxCbor)
-          console.log('Transaction submitted successfully via API:', txHash)
           return txHash
         } catch (error) {
           console.error('Failed to submit transaction via API:', error)
@@ -236,13 +233,9 @@ export const useWalletStore = create<WalletState>()(
         const { signTransaction, submitTransaction } = get()
         
         try {
-          console.log('Signing transaction...')
           const signedTxCbor = await signTransaction(txCbor)
-          console.log('Transaction signed successfully')
           
-          console.log('Submitting transaction...')
           const txHash = await submitTransaction(signedTxCbor)
-          console.log('Transaction submitted! Hash:', txHash)
           
           return txHash
         } catch (error) {
