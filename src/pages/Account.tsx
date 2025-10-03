@@ -7,6 +7,9 @@ import { showSuccess, showError } from "../utils/toast"
 import type { ClientInfo } from '../api/types'
 import LoadingOverlay from "../components/LoadingOverlay"
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide"
+import InstanceFilter from "../components/InstanceFilter"
+import RegionSelect from "../components/RegionSelect"
+import { sortVpnInstances, filterOptions, type SortOption } from "../utils/instanceSort"
 
 const Account = () => {
   const { 
@@ -28,6 +31,7 @@ const Account = () => {
   }>>([])
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false)
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false)
+  const [filterOption, setFilterOption] = useState<{value: string, label: string}>(filterOptions[0])
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -279,44 +283,25 @@ const Account = () => {
           duration: formatTimeRemaining(client.expiration),
           status: isActive ? 'Active' as const : 'Expired' as const,
           expires: new Date(client.expiration).toLocaleDateString(),
-          expirationDate: new Date(client.expiration)
-        }
-      })
-      .sort((a, b) => {
-        if (a.status === 'Active' && b.status === 'Expired') return -1
-        if (a.status === 'Expired' && b.status === 'Active') return 1
-        
-        if (a.status === 'Active') {
-          return b.expirationDate.getTime() - a.expirationDate.getTime()
-        } else {
-          return b.expirationDate.getTime() - a.expirationDate.getTime()
+          expirationDate: new Date(client.expiration),
+          originalDuration: client.duration || 0
         }
       }) : []
 
-    // Add pending instances
     const pendingInstances = pendingClients.map(pending => ({
       id: pending.id,
       region: pending.region,
       duration: pending.duration,
       status: 'Pending' as const,
       expires: 'Setting up...',
-      expirationDate: new Date(pending.purchaseTime.getTime() + 24 * 60 * 60 * 1000) // Placeholder
+      expirationDate: new Date(pending.purchaseTime.getTime() + 24 * 60 * 60 * 1000),
+      originalDuration: 0
     }))
 
-    // Combine and sort: Pending first, then Active, then Expired
-    return [...pendingInstances, ...activeInstances].sort((a, b) => {
-      if (a.status === 'Pending' && b.status !== 'Pending') return -1
-      if (a.status !== 'Pending' && b.status === 'Pending') return 1
-      if (a.status === 'Active' && b.status === 'Expired') return -1
-      if (a.status === 'Expired' && b.status === 'Active') return 1
-      
-      if (a.status === 'Active') {
-        return b.expirationDate.getTime() - a.expirationDate.getTime()
-      } else {
-        return b.expirationDate.getTime() - a.expirationDate.getTime()
-      }
-    })
-  }, [dedupedClientList, pendingClients])
+    const allInstances = [...pendingInstances, ...activeInstances]
+    
+    return sortVpnInstances(allInstances, filterOption.value as SortOption)
+  }, [dedupedClientList, pendingClients, filterOption])
 
   return (
     <TooltipGuide
@@ -388,18 +373,12 @@ const Account = () => {
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-white text-lg">Region:</p>
                     {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
-                      <select 
+                      <RegionSelect
                         value={selectedRegion}
-                        onChange={(e) => setSelectedRegion(e.target.value)}
-                        className="bg-transparent text-white text-md border border-white/20 rounded px-2 py-3"
-                        {...(showTooltips && { 'data-tooltip-id': 'region-tooltip' })}
-                      >
-                        {refData.regions.map((region) => (
-                          <option key={region} value={region} className="text-black">
-                            {region.toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setSelectedRegion}
+                        regions={refData.regions}
+                        showTooltips={showTooltips}
+                      />
                     ) : (
                       <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
                     )}
@@ -446,7 +425,15 @@ const Account = () => {
             
             {/* VPN INSTANCES SECTION */}
             <div className="flex flex-col justify-center items-start gap-3 w-full">
-              <p className="text-white text-lg font-bold">VPN Instances</p>
+              <div className="flex justify-between items-center w-full">
+                <p className="text-white text-lg font-bold">VPN Instances</p>
+                {isConnected && vpnInstances.length > 0 && (
+                  <InstanceFilter
+                    value={filterOption}
+                    onChange={(option) => setFilterOption(option || filterOptions[0])}
+                  />
+                )}
+              </div>
               <div className="w-full">
                 {!isConnected ? (
                   <p className="text-white/60 text-sm">Connect your wallet to view VPN instances</p>
