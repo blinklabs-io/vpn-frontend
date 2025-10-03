@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useWalletStore } from "../stores/walletStore"
-import { useRefData, useSignup, useClientList, useClientProfile, useClientPolling } from "../api/hooks"
+import { useRefData, useSignup, useClientList, useClientProfile, useClientPolling, useRenewVpn } from "../api/hooks"
 import VpnInstance from "../components/VpnInstance"
 import WalletModal from "../components/WalletModal"
 import { showSuccess, showError } from "../utils/toast"
@@ -33,6 +33,9 @@ const Account = () => {
   const [pendingClientsFromStorage, setPendingClientsFromStorage] = useState(() => 
     getPendingTransactions().filter(tx => tx.status === 'pending')
   )
+  // Renewal state
+  const [renewingInstanceId, setRenewingInstanceId] = useState<string | null>(null)
+  const [selectedRenewDuration, setSelectedRenewDuration] = useState<number | null>(null)
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -72,6 +75,10 @@ const Account = () => {
     enabled: true,
   })
 
+  // Initialize hooks first
+  const clientProfileMutation = useClientProfile()
+  const { startPolling } = useClientPolling()
+
   const signupMutation = useSignup({
     onSuccess: async (data) => {
       
@@ -103,6 +110,34 @@ const Account = () => {
     onError: (error) => {
       console.error('Signup failed:', error)
       showError('Failed to sign and submit transaction')
+      setIsPurchaseLoading(false)
+    }
+  })
+  
+
+  const renewMutation = useRenewVpn({
+    onSuccess: async (data, variables) => {
+      try {
+        await signAndSubmitTransaction(data.txCbor)
+        showSuccess('VPN renewal successful! Activating your instance...')
+        const pendingClient = {
+          id: variables.clientId,
+          region: variables.region,
+          duration: formatDuration(variables.duration),
+          purchaseTime: new Date()
+        }
+        setPendingClients(prev => [...prev, pendingClient])
+        startPolling(variables.clientId)
+        setIsPurchaseLoading(false)
+      } catch (error) {
+        console.error('Transaction error details:', error)
+        showError('Failed to sign and submit transaction')
+        setIsPurchaseLoading(false)
+      }
+    },
+    onError: (error) => {
+      console.error('Renew failed:', error)
+      showError('Failed to build renewal transaction')
       setIsPurchaseLoading(false)
     }
   })
@@ -231,9 +266,6 @@ const Account = () => {
     signupMutation.mutate(payload)
   }
 
-  const clientProfileMutation = useClientProfile()
-  const { startPolling } = useClientPolling()
-
   const handleAction = async (instanceId: string, action: string) => {
     if (action === 'Get Config') {
       try {
@@ -255,8 +287,52 @@ const Account = () => {
         setIsConfigLoading(false)
       }
     } else if (action === 'Renew Access') {
-      // TODO: Implement renew access
+      // Toggle renewal expansion for this instance
+      setRenewingInstanceId(instanceId)
+      setSelectedRenewDuration(null)
     }
+  }
+
+  const handleCancelRenewal = () => {
+    setRenewingInstanceId(null)
+    setSelectedRenewDuration(null)
+  }
+
+  const handleConfirmRenewal = () => {
+    if (!walletAddress) {
+      showError('No wallet address available')
+      return
+    }
+    
+    if (!renewingInstanceId || !selectedRenewDuration) {
+      showError('Please select a renewal duration')
+      return
+    }
+
+    const renewOption = durationOptions.find(opt => opt.value === selectedRenewDuration)
+    if (!renewOption) {
+      showError('Invalid duration selected')
+      return
+    }
+
+    const instanceRegion = dedupedClientList?.find(c => c.id === renewingInstanceId)?.region || selectedRegion
+    if (!instanceRegion) {
+      showError('Could not determine region for renewal')
+      return
+    }
+
+    setIsPurchaseLoading(true)
+    renewMutation.mutate({
+      clientAddress: walletAddress,
+      clientId: renewingInstanceId,
+      duration: selectedRenewDuration,
+      price: renewOption.price,
+      region: instanceRegion,
+    })
+    
+    // Reset renewal state
+    setRenewingInstanceId(null)
+    setSelectedRenewDuration(null)
   }
 
   const handleDisconnect = () => {
@@ -504,6 +580,12 @@ const Account = () => {
                         status={instance.status}
                         expires={instance.expires}
                         onAction={() => handleAction(instance.id, instance.status === 'Active' ? 'Get Config' : 'Renew Access')}
+                        isRenewExpanded={renewingInstanceId === instance.id}
+                        renewDurationOptions={durationOptions}
+                        selectedRenewDuration={selectedRenewDuration}
+                        onSelectRenewDuration={setSelectedRenewDuration}
+                        onConfirmRenewal={handleConfirmRenewal}
+                        onCancelRenewal={handleCancelRenewal}
                       />
                     ))}
                   </div>
