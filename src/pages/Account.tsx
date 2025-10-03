@@ -7,6 +7,12 @@ import { showSuccess, showError } from "../utils/toast"
 import type { ClientInfo } from '../api/types'
 import LoadingOverlay from "../components/LoadingOverlay"
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide"
+import { 
+  getPendingTransactions, 
+  addPendingTransaction, 
+  removePendingTransaction,
+  cleanupCompletedTransactions 
+} from "../utils/pendingTransactions"
 
 const Account = () => {
   const { 
@@ -20,14 +26,13 @@ const Account = () => {
   } = useWalletStore()
   const [selectedDuration, setSelectedDuration] = useState<number>(0)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
-  const [pendingClients, setPendingClients] = useState<Array<{
-    id: string
-    region: string
-    duration: string
-    purchaseTime: Date
-  }>>([])
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false)
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false)
+  
+  // Get pending clients from localStorage (will be reactive to changes)
+  const [pendingClientsFromStorage, setPendingClientsFromStorage] = useState(() => 
+    getPendingTransactions().filter(tx => tx.status === 'pending')
+  )
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -74,19 +79,19 @@ const Account = () => {
         await signAndSubmitTransaction(data.txCbor)
         showSuccess(`VPN purchase successful! Setting up your instance...`)
         
-        // Add pending client to the list
+        // Add pending client to localStorage
         const pendingClient = {
           id: data.clientId,
           region: selectedRegion,
           duration: selectedOption ? formatDuration(selectedOption.value) : 'Unknown',
-          purchaseTime: new Date()
+          purchaseTime: new Date().toISOString()
         }
-        setPendingClients(prev => [...prev, pendingClient])
+        addPendingTransaction(pendingClient)
         
-        // Start polling for this client
+        setPendingClientsFromStorage(getPendingTransactions().filter(tx => tx.status === 'pending'))
+        
         startPolling(data.clientId)
         
-        // Clear loading state after successful purchase
         setIsPurchaseLoading(false)
         
       } catch (error) {
@@ -168,19 +173,32 @@ const Account = () => {
     }
   }, [refData?.regions, selectedRegion])
 
-  // Remove pending clients when they become available in the client list
   useEffect(() => {
-    if (dedupedClientList && pendingClients.length > 0) {
+    cleanupCompletedTransactions()
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPendingClientsFromStorage(getPendingTransactions().filter(tx => tx.status === 'pending'))
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (dedupedClientList && pendingClientsFromStorage.length > 0) {
       const availableClientIds = new Set(dedupedClientList.map(client => client.id))
-      const removedClients = pendingClients.filter(pending => availableClientIds.has(pending.id))
       
-      if (removedClients.length > 0) {
-        setPendingClients(prev => 
-          prev.filter(pending => !availableClientIds.has(pending.id))
-        )
-      }
+      pendingClientsFromStorage.forEach(pending => {
+        if (availableClientIds.has(pending.id)) {
+          console.log(`Removing completed transaction ${pending.id} from localStorage`)
+          removePendingTransaction(pending.id)
+        }
+      })
+      
+      setPendingClientsFromStorage(getPendingTransactions().filter(tx => tx.status === 'pending'))
     }
-  }, [dedupedClientList, pendingClients])
+  }, [dedupedClientList, pendingClientsFromStorage])
 
   const selectedOption = durationOptions.find((option: { value: number }) => option.value === selectedDuration)
 
@@ -293,14 +311,13 @@ const Account = () => {
         }
       }) : []
 
-    // Add pending instances
-    const pendingInstances = pendingClients.map(pending => ({
+    const pendingInstances = pendingClientsFromStorage.map(pending => ({
       id: pending.id,
       region: pending.region,
       duration: pending.duration,
       status: 'Pending' as const,
       expires: 'Setting up...',
-      expirationDate: new Date(pending.purchaseTime.getTime() + 24 * 60 * 60 * 1000) // Placeholder
+      expirationDate: new Date(new Date(pending.purchaseTime).getTime() + 24 * 60 * 60 * 1000)
     }))
 
     // Combine and sort: Pending first, then Active, then Expired
@@ -316,7 +333,7 @@ const Account = () => {
         return b.expirationDate.getTime() - a.expirationDate.getTime()
       }
     })
-  }, [dedupedClientList, pendingClients])
+  }, [dedupedClientList, pendingClientsFromStorage])
 
   return (
     <TooltipGuide

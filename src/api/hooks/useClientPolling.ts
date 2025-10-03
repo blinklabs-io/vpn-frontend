@@ -1,6 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { checkClientAvailableWithGraceful404 } from '../client'
+import { 
+  updateTransactionStatus, 
+  updateTransactionAttempts,
+  getActivePendingTransactions 
+} from '../../utils/pendingTransactions'
   
 interface PollingState {
   isPolling: boolean
@@ -20,28 +25,45 @@ export function useClientPolling() {
   const queryClient = useQueryClient()
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const startPolling = (clientId: string) => {
+  const startPolling = useCallback((clientId: string, initialAttempts: number = 0) => {
     setPollingState({
       isPolling: true,
       clientId,
-      attempts: 0,
+      attempts: initialAttempts,
       maxAttempts: 20
     })
-  }
+  }, [])
 
-  const stopPolling = () => {
-    setPollingState(prev => ({
-      ...prev,
-      isPolling: false,
-      clientId: null,
-      attempts: 0
-    }))
+  const stopPolling = useCallback((markComplete: boolean = false) => {
+    setPollingState(prev => {
+      const currentClientId = prev.clientId
+      
+      if (markComplete && currentClientId) {
+        updateTransactionStatus(currentClientId, 'complete')
+      }
+      
+      return {
+        ...prev,
+        isPolling: false,
+        clientId: null,
+        attempts: 0
+      }
+    })
     
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    const pendingTransactions = getActivePendingTransactions()
+    
+    if (pendingTransactions.length > 0) {
+      const firstPending = pendingTransactions[0]
+      startPolling(firstPending.id, firstPending.attempts)
+    }
+  }, [startPolling])
 
   useEffect(() => {
     if (!pollingState.isPolling || !pollingState.clientId) {
@@ -54,7 +76,7 @@ export function useClientPolling() {
         
         
         if (response !== null) {
-          stopPolling()
+          stopPolling(true)
           
           await queryClient.invalidateQueries({ queryKey: ['clientList'] })
           
@@ -64,30 +86,35 @@ export function useClientPolling() {
         }
         
         
+        const newAttempts = pollingState.attempts + 1
         setPollingState(prev => ({
           ...prev,
-          attempts: prev.attempts + 1
+          attempts: newAttempts
         }))
         
-        // Stop polling if max attempts reached
-        if (pollingState.attempts >= pollingState.maxAttempts) {
-          console.log('Max polling attempts reached, stopping...')
-          stopPolling()
+        if (pollingState.clientId) {
+          updateTransactionAttempts(pollingState.clientId, newAttempts)
+        }
+        
+        if (newAttempts >= pollingState.maxAttempts) {
+          stopPolling(false)
         }
         
       } catch (error) {
-        // Only log actual errors, not expected 404s
         console.error('Error polling client availability:', error)
         
-        // Increment attempts even on error
+        const newAttempts = pollingState.attempts + 1
         setPollingState(prev => ({
           ...prev,
-          attempts: prev.attempts + 1
+          attempts: newAttempts
         }))
         
-        // Stop polling if max attempts reached
-        if (pollingState.attempts >= pollingState.maxAttempts) {
-          stopPolling()
+        if (pollingState.clientId) {
+          updateTransactionAttempts(pollingState.clientId, newAttempts)
+        }
+              
+        if (newAttempts >= pollingState.maxAttempts) {
+          stopPolling(false)
         }
       }
     }
@@ -104,7 +131,7 @@ export function useClientPolling() {
         intervalRef.current = null
       }
     }
-  }, [pollingState.isPolling, pollingState.clientId, pollingState.attempts, pollingState.maxAttempts, queryClient])
+  }, [pollingState.isPolling, pollingState.clientId, pollingState.attempts, pollingState.maxAttempts, queryClient, stopPolling])
 
   return {
     isPolling: pollingState.isPolling,
