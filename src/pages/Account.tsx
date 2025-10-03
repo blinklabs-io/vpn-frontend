@@ -8,6 +8,7 @@ import type { ClientInfo } from '../api/types'
 import LoadingOverlay from "../components/LoadingOverlay"
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide"
 import InstanceFilter from "../components/InstanceFilter"
+import RegionSelect from "../components/RegionSelect"
 import { sortVpnInstances, filterOptions, type SortOption } from "../utils/instanceSort"
 
 const Account = () => {
@@ -372,18 +373,12 @@ const Account = () => {
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-white text-lg">Region:</p>
                     {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
-                      <select 
+                      <RegionSelect
                         value={selectedRegion}
-                        onChange={(e) => setSelectedRegion(e.target.value)}
-                        className="bg-transparent text-white text-md border border-white/20 rounded px-2 py-3"
-                        {...(showTooltips && { 'data-tooltip-id': 'region-tooltip' })}
-                      >
-                        {refData.regions.map((region) => (
-                          <option key={region} value={region} className="text-black">
-                            {region.toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setSelectedRegion}
+                        regions={refData.regions}
+                        showTooltips={showTooltips}
+                      />
                     ) : (
                       <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
                     )}
