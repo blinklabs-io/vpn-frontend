@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import type { ClientAvailableRequest, ClientAvailableResponse, ClientInfo, ClientListRequest, ClientProfileRequest } from './types'
+import type { ClientAvailableRequest, ClientAvailableResponse, ClientInfo, ClientListRequest, ClientProfileRequest, TxRenewRequest, TxRenewResponse } from './types'
 
 export const API_BASE_URL = import.meta.env.DEV 
   ? '/api'  
@@ -202,4 +202,8 @@ export function submitTransaction(signedTxCbor: string): Promise<string> {
     
     return response.text()
   })
+} 
+
+export function buildRenewTransaction(request: TxRenewRequest): Promise<TxRenewResponse> {
+  return post<TxRenewResponse>('/tx/renew', request)
 } 
