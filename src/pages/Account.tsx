@@ -124,9 +124,10 @@ const Account = () => {
           id: variables.clientId,
           region: variables.region,
           duration: formatDuration(variables.duration),
-          purchaseTime: new Date()
+          purchaseTime: new Date().toISOString()
         }
-        setPendingClients(prev => [...prev, pendingClient])
+        addPendingTransaction(pendingClient)
+        setPendingClientsFromStorage(getPendingTransactions().filter(tx => tx.status === 'pending'))
         startPolling(variables.clientId)
         setIsPurchaseLoading(false)
       } catch (error) {
