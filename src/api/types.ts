@@ -64,4 +64,16 @@ export interface ClientProfileRequest {
   id: string
   key: string
   signature: string
-} 
+}
+
+export interface TxRenewRequest {
+  clientAddress: string
+  clientId: string
+  duration: number
+  price: number
+  region: string
+}
+
+export interface TxRenewResponse {
+  txCbor: string
+}
