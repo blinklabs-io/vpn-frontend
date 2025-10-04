@@ -14,12 +14,27 @@ const DocsFaqs = () => {
     {
       id: "what-is-nabu",
       question: "What is NABU VPN?",
-      answer: ""
+      answer: "Nabu uses your Cardano wallet as your identity—no signup forms, no tracking cookies. Once connected, you're seconds away from spinning up a secure VPN tunnel that hides your IP, encrypts your traffic, and keeps your data yours."
     },
     {
       id: "how-does-it-work",
       question: "How does NABU VPN work?",
-      answer: ""
+      answer: "Simply connect your Cardano wallet, select a plan, download your profile and launch OpenVPN."
+    },
+    {
+      id: "why-use-vpn",
+      question: "What is a VPN and why do people use them?",
+      answer: "VPN stands for Virtual Private Network. A VPN has many benefits, for example a VPN can protect your privacy by encrypting your internet traffic and hiding your real IP address. It can also enhance security on public Wi-Fi, bypass geo-restrictions and government censorship to access blocked content. VPN can also be used to prevent your Internet Service Provider (ISP) from throttling your connection."
+    },
+    {
+      id: "profile-download-time",
+      question: "If I purchase a VPN plan, how long before I can download my profile?",
+      answer: "It only takes a few seconds to a few minutes for the transaction to get on-chain and for your profile to be created. You can always check the status of your VPN instances."
+    },
+    {
+      id: "wallet-needed-per-device",
+      question: "Will I need to connect my wallet on each device that I use OpenVPN on?",
+      answer: "No, you just need your profile .ovpn file to import onto your device."
     }
   ];
 
