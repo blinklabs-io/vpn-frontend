@@ -14,12 +14,62 @@ const DocsFaqs = () => {
     {
       id: "what-is-nabu",
       question: "What is NABU VPN?",
-      answer: ""
+      answer: "Nabu uses your Cardano wallet as your identity—no signup forms, no tracking cookies. Once connected, you're seconds away from spinning up a secure VPN tunnel that hides your IP, encrypts your traffic, and keeps your data yours."
     },
     {
       id: "how-does-it-work",
       question: "How does NABU VPN work?",
-      answer: ""
+      answer: "Simply connect your Cardano wallet, select a plan, download your profile and launch OpenVPN."
+    },
+    {
+      id: "why-use-vpn",
+      question: "What is a VPN and why do people use them?",
+      answer: "VPN stands for Virtual Private Network. A VPN has many benefits, for example a VPN can protect your privacy by encrypting your internet traffic and hiding your real IP address. It can also enhance security on public Wi-Fi, bypass geo-restrictions and government censorship to access blocked content. VPN can also be used to prevent your Internet Service Provider (ISP) from throttling your connection."
+    },
+    {
+      id: "profile-download-time",
+      question: "If I purchase a VPN plan, how long before I can download my profile?",
+      answer: "It only takes a few seconds to a few minutes for the transaction to get on-chain and for your profile to be created. You can always check the status of your VPN instances."
+    },
+    {
+      id: "wallet-needed-per-device",
+      question: "Will I need to connect my wallet on each device that I use OpenVPN on?",
+      answer: "No, you just need your profile .ovpn file to import onto your device."
+    },
+    {
+      id: "expire-notification",
+      question: "Will I get notified when my plan expires?",
+      answer: "No silly. The whole point of a VPN is to protect your personal data. It’s best that we don’t have your contact information."
+    },
+    {
+      id: "renew-plan-new-profile",
+      question: "Will I need to download a new profile when I renew my plan?",
+      answer: "No, as long as you renew before it expires."
+    },
+    {
+      id: "switch-wallets",
+      question: "What if I switch wallets?",
+      answer: "Your plan will continue to work but you won’t be able to renew your plan or redownload your profile. Plans are tied to your wallet address. We would also feel really sad for you if you lost your wallet."
+    },
+    {
+      id: "use-other-devices",
+      question: "Can I use other devices with the OpenVPN protocol?",
+      answer: "Maybe… probably… Give it a shot! You should be able to use lots of other devices that OpenVPN supports. See the OpenVPN Community page and open source repos here https://openvpn.net/community/"
+    },
+    {
+      id: "transaction-download-profile",
+      question: "Why do I have to sign a transaction to download my profile?",
+      answer: "This transaction verifies that your wallet is authorized to download this profile. This is an internal transaction that will not cost you any transaction fees."
+    },
+    {
+      id: "multiple-instances",
+      question: "Can I buy multiple VPN instances?",
+      answer: "Yes, but why?"
+    },
+    {
+      id: "ip-address-for-openvpn",
+      question: "Can NABU see the IP address that I use to connect to OpenVPN?",
+      answer: "No, to find out more about how NABU works, see our How it works page (https://nabuvpn.com/how-it-works)"
     }
   ];
 
