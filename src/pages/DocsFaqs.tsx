@@ -113,6 +113,48 @@ const DocsFaqs = () => {
               <span className="text-white font-medium">Step 3</span>
             </div>
           </div>
+          1) Install OpenVPN
+
+On Windows: 
+Download here: https://openvpn.net/client/
+
+		Still have questions? See OpenVPN documentation here 
+	https://openvpn.net/connect-docs/connect-for-windows.html
+
+On Linux:
+sudo apt install openvpn
+
+On Mac:
+Download here: https://openvpn.net/client/
+
+Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html
+
+Android/iOS: 
+Download here: https://play.google.com/store/apps/details?id=net.openvpn.openvpn
+
+	Still have questions? See OpenVPN documentation here
+https://openvpn.net/connect-docs/connect-for-android.html
+
+
+2) Download your VPN Profile
+Go to this link and connect your wallet to purchase your VPN profile.
+		(link url https://nabuvpn.com/account)
+
+
+3) Configuring the VPN Client
+Windows: Place the .ovpn file in: C:\Program Files\OpenVPN\config\
+Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn
+Android/iOS: Import into OpenVPN Connect.
+
+
+4) Connecting to the VPN
+Windows: Right-click the GUI and select "Connect."
+Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn
+Android/iOS: Tap "Connect" in the app.
+
+Still have questions on how to use OpenVPN?
+See the OpenVPN user guides here https://openvpn.net/connect-docs/user-guide.html
+
         </div>
 
         <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
