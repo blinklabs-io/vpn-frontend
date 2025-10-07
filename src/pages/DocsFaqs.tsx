@@ -113,7 +113,9 @@ const DocsFaqs = () => {
               <span className="text-white font-medium">Step 3</span>
             </div>
           </div>
-<div className="text-lg font-semibold text-white pr-4">      
+        </div>
+
+		  <div className="text-lg font-semibold text-white pr-4">      
 	<p> 
 		1. Install OpenVPN
 	<ul>
@@ -163,7 +165,6 @@ Android/iOS: Tap "Connect" in the app.
 Still have questions on how to use OpenVPN?
 See the OpenVPN user guides here https://openvpn.net/connect-docs/user-guide.html
 </div>
-        </div>
 
         <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
           <div className="space-y-4">
