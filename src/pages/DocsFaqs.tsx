@@ -114,7 +114,8 @@ const DocsFaqs = () => {
             </div>
           </div>
 <div style="color: white;">      
-	<p>1) Install OpenVPN
+	<p> 
+		1) Install OpenVPN
 	<ul>
 		<li>
 		On Windows: 
