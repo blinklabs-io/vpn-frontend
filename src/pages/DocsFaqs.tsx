@@ -120,50 +120,53 @@ const DocsFaqs = () => {
 		1. Install OpenVPN
 	<ul>
 		<li>
-		On Windows: 
-		Download here: https://openvpn.net/client/
+		On Windows: <br>
+		Download here: https://openvpn.net/client/ <br><br>
 
-		Still have questions? See OpenVPN documentation here 
+		Still have questions? See OpenVPN documentation here <br>
 		https://openvpn.net/connect-docs/connect-for-windows.html
 		</li>
 		<li>
-		On Linux:
+		On Linux: <br>
 		sudo apt install openvpn
 		</li>
 		<li>
-		On Mac:
-		Download here: https://openvpn.net/client/
+		On Mac:<br>
+		Download here: https://openvpn.net/client/ <br><br>
 
-		Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html
+		Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html <br>
 		</li>
 		<li>
-		Android/iOS: 
-		Download here: https://play.google.com/store/apps/details?id=net.openvpn.openvpn
+		Android/iOS: <br>
+		Download here: https://play.google.com/store/apps/details?id=net.openvpn.openvpn <br><br>
 
-		Still have questions? See OpenVPN documentation here
+		Still have questions? See OpenVPN documentation here <br>
 		https://openvpn.net/connect-docs/connect-for-android.html
 		</li>
 	</ul>
 </p>
 
-2) Download your VPN Profile
-Go to this link and connect your wallet to purchase your VPN profile.
+<p>
+2. Download your VPN Profile <br>
+Go to this link and connect your wallet to purchase your VPN profile. <br>
 		(link url https://nabuvpn.com/account)
+</p>
+<p>
+3) Configuring the VPN Client <br>
+Windows: Place the .ovpn file in: C:\Program Files\OpenVPN\config\ <br>
+Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn <br>
+Android/iOS: Import into OpenVPN Connect. <br>
 
+</p>
+<p>
+4) Connecting to the VPN <br>
+Windows: Right-click the GUI and select "Connect." <br>
+Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn <br>
+Android/iOS: Tap "Connect" in the app. <br><br>
 
-3) Configuring the VPN Client
-Windows: Place the .ovpn file in: C:\Program Files\OpenVPN\config\
-Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn
-Android/iOS: Import into OpenVPN Connect.
-
-
-4) Connecting to the VPN
-Windows: Right-click the GUI and select "Connect."
-Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn
-Android/iOS: Tap "Connect" in the app.
-
-Still have questions on how to use OpenVPN?
+Still have questions on how to use OpenVPN? <br>
 See the OpenVPN user guides here https://openvpn.net/connect-docs/user-guide.html
+</p>
 </div>
 
         <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
