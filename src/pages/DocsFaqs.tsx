@@ -113,9 +113,9 @@ const DocsFaqs = () => {
               <span className="text-white font-medium">Step 3</span>
             </div>
           </div>
-<div style="color: white;">      
+<div className="text-white font-medium">      
 	<p> 
-		1) Install OpenVPN
+		1. Install OpenVPN
 	<ul>
 		<li>
 		On Windows: 
