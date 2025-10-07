@@ -113,28 +113,35 @@ const DocsFaqs = () => {
               <span className="text-white font-medium">Step 3</span>
             </div>
           </div>
-          1) Install OpenVPN
-
-On Windows: 
-Download here: https://openvpn.net/client/
+<div style="color: white;">      
+	<p>1) Install OpenVPN
+	<ul>
+		<li>
+		On Windows: 
+		Download here: https://openvpn.net/client/
 
 		Still have questions? See OpenVPN documentation here 
-	https://openvpn.net/connect-docs/connect-for-windows.html
+		https://openvpn.net/connect-docs/connect-for-windows.html
+		</li>
+		<li>
+		On Linux:
+		sudo apt install openvpn
+		</li>
+		<li>
+		On Mac:
+		Download here: https://openvpn.net/client/
 
-On Linux:
-sudo apt install openvpn
+		Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html
+		</li>
+		<li>
+		Android/iOS: 
+		Download here: https://play.google.com/store/apps/details?id=net.openvpn.openvpn
 
-On Mac:
-Download here: https://openvpn.net/client/
-
-Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html
-
-Android/iOS: 
-Download here: https://play.google.com/store/apps/details?id=net.openvpn.openvpn
-
-	Still have questions? See OpenVPN documentation here
-https://openvpn.net/connect-docs/connect-for-android.html
-
+		Still have questions? See OpenVPN documentation here
+		https://openvpn.net/connect-docs/connect-for-android.html
+		</li>
+	</ul>
+</p>
 
 2) Download your VPN Profile
 Go to this link and connect your wallet to purchase your VPN profile.
@@ -154,7 +161,7 @@ Android/iOS: Tap "Connect" in the app.
 
 Still have questions on how to use OpenVPN?
 See the OpenVPN user guides here https://openvpn.net/connect-docs/user-guide.html
-
+</div>
         </div>
 
         <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
