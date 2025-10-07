@@ -117,45 +117,39 @@ const DocsFaqs = () => {
 
 		  <div className="text-lg font-semibold text-white pr-4">      
 	<p> 
-		1. Install OpenVPN
-	<ul>
-		<li>
+		1. Install OpenVPN <br/><br/>
+	
 		On Windows: <br/>
 		Download here: https://openvpn.net/client/ <br/><br/>
 
 		Still have questions? See OpenVPN documentation here <br/>
-		https://openvpn.net/connect-docs/connect-for-windows.html
-		</li>
-		<li>
+		https://openvpn.net/connect-docs/connect-for-windows.html <br/><br/>
+		
 		On Linux: <br/>
-		sudo apt install openvpn
-		</li>
-		<li>
+		sudo apt install openvpn <br/><br/>
+		
 		On Mac: <br/>
 		Download here: https://openvpn.net/client/ <br/><br/>
 
-		Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html <br/>
-		</li>
-		<li>
+		Still have questions? See OpenVPN documentation here https://openvpn.net/connect-docs/macos-installation-guide.html <br/><br/>
+		
 		Android/iOS: <br/>
 		Download here: https://play.google.com/store/apps/details?id=net.openvpn.openvpn <br/><br/>
 
 		Still have questions? See OpenVPN documentation here <br/>
-		https://openvpn.net/connect-docs/connect-for-android.html
-		</li>
-	</ul>
+		https://openvpn.net/connect-docs/connect-for-android.html <br/><br/>
 </p>
 
 <p>
 2. Download your VPN Profile <br/>
 Go to this link and connect your wallet to purchase your VPN profile. <br/>
-		(link url https://nabuvpn.com/account)
+		(link url https://nabuvpn.com/account) <br/><br/>
 </p>
 <p>
 3) Configuring the VPN Client <br/>
 Windows: Place the .ovpn file in: C:\Program Files\OpenVPN\config\ <br/>
 Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn <br/>
-Android/iOS: Import into OpenVPN Connect. <br/>
+Android/iOS: Import into OpenVPN Connect. <br/><br/>
 
 </p>
 <p>
@@ -165,7 +159,7 @@ Linux/Mac: sudo openvpn --config /path/to/your-profile.ovpn <br/>
 Android/iOS: Tap "Connect" in the app. <br/><br/>
 
 Still have questions on how to use OpenVPN? <br/>
-See the OpenVPN user guides here https://openvpn.net/connect-docs/user-guide.html
+See the OpenVPN user guides here https://openvpn.net/connect-docs/user-guide.html <br/><br/>
 </p>
 </div>
 
