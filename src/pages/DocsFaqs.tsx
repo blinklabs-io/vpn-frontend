@@ -36,6 +36,11 @@ const DocsFaqs = () => {
       question: "Will I need to connect my wallet on each device that I use OpenVPN on?",
       answer: "No, you just need your profile .ovpn file to import onto your device."
     },
+     {
+      id: "mulitple-device-same-time",
+      question: "Can I use the same VPN on more than one device at the same time?",
+      answer: "No. Each profile is a single concurrent connection. But... you can buy more profiles."
+    },
     {
       id: "expire-notification",
       question: "Will I get notified when my plan expires?",
@@ -44,7 +49,7 @@ const DocsFaqs = () => {
     {
       id: "renew-plan-new-profile",
       question: "Will I need to download a new profile when I renew my plan?",
-      answer: "No, as long as you renew before it expires."
+      answer: "No, renewing your plan lets you keep enjoying your current profile. A new profile is needed after 10 years from initial plan purchase. So, you have ample time before that happens."
     },
     {
       id: "switch-wallets",
@@ -64,7 +69,7 @@ const DocsFaqs = () => {
     {
       id: "multiple-instances",
       question: "Can I buy multiple VPN instances?",
-      answer: "Yes, but why?"
+      answer: "Yes, you can buy multiple instances that give you different profiles per instance."
     },
     {
       id: "ip-address-for-openvpn",
