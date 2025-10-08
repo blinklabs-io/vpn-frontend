@@ -69,7 +69,7 @@ const DocsFaqs = () => {
     {
       id: "multiple-instances",
       question: "Can I buy multiple VPN instances?",
-      answer: "Yes, you can buy multiple instances that give you different profiles per instance."
+      answer: "Yes, you can buy multiple instances that give you a different profile per instance."
     },
     {
       id: "ip-address-for-openvpn",
