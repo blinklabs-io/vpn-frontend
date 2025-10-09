@@ -27,7 +27,7 @@ export interface QueryOptions {
 }
 
 export interface TxSignupRequest {
-  clientAddress: string
+  paymentAddress: string
   duration: number
   price: number
   region: string
@@ -39,7 +39,7 @@ export interface TxSignupResponse {
 }
 
 export interface ClientListRequest {
-  clientAddress: string
+  ownerAddress: string
 }
 
 export interface ClientInfo {
@@ -67,7 +67,7 @@ export interface ClientProfileRequest {
 }
 
 export interface TxRenewRequest {
-  clientAddress: string
+  paymentAddress: string
   clientId: string
   duration: number
   price: number
