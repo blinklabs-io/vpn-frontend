@@ -144,7 +144,7 @@ const Account = () => {
   })
 
   const { data: clientList, isLoading: isLoadingClients } = useClientList(
-    { clientAddress: walletAddress || '' },
+    { ownerAddress: walletAddress || '' },
     { enabled: !!walletAddress && isConnected }
   )
 
@@ -258,7 +258,7 @@ const Account = () => {
     setIsPurchaseLoading(true)
 
     const payload = {
-      clientAddress: walletAddress,
+      paymentAddress: walletAddress,
       duration: selectedDuration,
       price: selectedOption.price,
       region: selectedRegion
@@ -324,7 +324,7 @@ const Account = () => {
 
     setIsPurchaseLoading(true)
     renewMutation.mutate({
-      clientAddress: walletAddress,
+      paymentAddress: walletAddress,
       clientId: renewingInstanceId,
       duration: selectedRenewDuration,
       price: renewOption.price,
