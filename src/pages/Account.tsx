@@ -388,14 +388,18 @@ const Account = () => {
         }
       }) : []
 
-    const pendingInstances = pendingClientsFromStorage.map(pending => ({
-      id: pending.id,
-      region: pending.region,
-      duration: pending.duration,
-      status: 'Pending' as const,
-      expires: 'Setting up...',
-      expirationDate: new Date(new Date(pending.purchaseTime).getTime() + 24 * 60 * 60 * 1000)
-    }))
+    const activeClientIds = new Set(activeInstances.map(instance => instance.id))
+    
+    const pendingInstances = pendingClientsFromStorage
+      .filter(pending => !activeClientIds.has(pending.id))
+      .map(pending => ({
+        id: pending.id,
+        region: pending.region,
+        duration: pending.duration,
+        status: 'Pending' as const,
+        expires: 'Setting up...',
+        expirationDate: new Date(new Date(pending.purchaseTime).getTime() + 24 * 60 * 60 * 1000)
+      }))
 
     // Combine and sort: Pending first, then Active, then Expired
     return [...pendingInstances, ...activeInstances].sort((a, b) => {
