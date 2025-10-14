@@ -24,12 +24,12 @@ const DocsFaqs = () => {
     {
       id: "why-use-vpn",
       question: "What is a VPN and why do people use them?",
-      answer: "VPN stands for Virtual Private Network. A VPN has many benefits, for example a VPN can protect your privacy by encrypting your internet traffic and hiding your real IP address. It can also enhance security on public Wi-Fi, bypass geo-restrictions and government censorship to access blocked content. VPN can also be used to prevent your Internet Service Provider (ISP) from throttling your connection."
+      answer: "VPN stands for Virtual Private Network. A VPN has many benefits, for example a VPN can protect your privacy by encrypting your internet traffic and hiding your real IP address. It can also enhance security on public Wi-Fi and bypass geo-restrictions and government censorship to access blocked content. VPN can also be used to prevent your Internet Service Provider (ISP) from throttling your connection when visiting certain sites."
     },
     {
       id: "profile-download-time",
       question: "If I purchase a VPN plan, how long before I can download my profile?",
-      answer: "It only takes a few seconds to a few minutes for the transaction to get on-chain and for your profile to be created. You can always check the status of your VPN instances."
+      answer: "It only takes a few seconds to a few minutes for the transaction to get on-chain and for your profile to be created. You can always check the status of your VPN instances on our site."
     },
     {
       id: "wallet-needed-per-device",
@@ -39,42 +39,42 @@ const DocsFaqs = () => {
      {
       id: "mulitple-device-same-time",
       question: "Can I use the same VPN on more than one device at the same time?",
-      answer: "No. Each profile is a single concurrent connection. But... you can buy more profiles."
+      answer: "No. Each profile is a single concurrent connection. You can purchase additional subscriptions if you need to support more than one device at the same time."
     },
     {
       id: "expire-notification",
       question: "Will I get notified when my plan expires?",
-      answer: "No silly. The whole point of a VPN is to protect your personal data. It’s best that we don’t have your contact information."
+      answer: "The whole point of a VPN is to protect your personal data. We do not ask for your contact information, so we have no way to notify you."
     },
     {
       id: "renew-plan-new-profile",
       question: "Will I need to download a new profile when I renew my plan?",
-      answer: "No, renewing your plan lets you keep enjoying your current profile. A new profile is needed after 10 years from initial plan purchase. So, you have ample time before that happens."
+      answer: "No, renewing your plan lets you keep enjoying your current profile."
     },
     {
       id: "switch-wallets",
       question: "What if I switch wallets?",
-      answer: "Your plan will continue to work but you won’t be able to renew your plan or redownload your profile. Plans are tied to your wallet address. We would also feel really sad for you if you lost your wallet."
+      answer: "Your plan will continue to work but you won’t be able to renew your plan or redownload your profile. Plans are tied to your wallet address, and you must have access to the original wallet for any management actions."
     },
     {
       id: "use-other-devices",
       question: "Can I use other devices with the OpenVPN protocol?",
-      answer: "Maybe… probably… Give it a shot! You should be able to use lots of other devices that OpenVPN supports. See the OpenVPN Community page and open source repos here https://openvpn.net/community/"
+      answer: "The VPN should be usable with any device that supports the OpenVPN client and importing an OVPN file to configure it. This includes common platforms such as Linux, Windows, macOS, iOS, and Android. See the OpenVPN Community page and open source repos here https://openvpn.net/community/"
     },
     {
       id: "transaction-download-profile",
-      question: "Why do I have to sign a transaction to download my profile?",
-      answer: "This transaction verifies that your wallet is authorized to download this profile. This is an internal transaction that will not cost you any transaction fees."
+      question: "Why do I have to sign a message with my wallet to download my profile?",
+      answer: "The message signing process verifies that your wallet is the owner of the specified profile. There are no transactions generated and therefore no transaction fees."
     },
     {
       id: "multiple-instances",
       question: "Can I buy multiple VPN instances?",
-      answer: "Yes, you can buy multiple instances that give you a different profile per instance."
+      answer: "Yes, you can purchase multiple subscriptions that give you a different profile per instance."
     },
     {
       id: "ip-address-for-openvpn",
       question: "Can NABU see the IP address that I use to connect to OpenVPN?",
-      answer: "No, to find out more about how NABU works, see our How it works page (https://nabuvpn.com/how-it-works)"
+      answer: "No, we purposely do not log this information for your privacy. To find out more about how NABU works, see our How it works page (https://nabuvpn.com/how-it-works)"
     }
   ];
 
