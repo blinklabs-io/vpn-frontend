@@ -156,6 +156,16 @@ const HowItWorks = () => {
 		stored on-chain in the smart contract's address. Because all interactions with smart contracts are public,
 		the wallet address that you signed up with, as well as your chosen plan and region, are visible to anybody.
               </p>
+
+              <p className="text-gray-300 leading-relaxed">
+              The current regions and plans are provided by a reference input containing an asset with an attached datum (refdata)
+	      in the TX output. Signups consist of a mint operation for a client asset with an associated datum containing
+	      the owner's payment PKH, the chosen region, and the subscription expiration in UNIX epoch time. This asset
+              stays within the contract and further operations on it are validated by signing the TX with the owner's
+	      payment PKH. A subscription renewal involves spending the current client asset from the contract and sending
+	      it back to the contract with an updated datum. Any updates to the expiration in the client datum are validated against
+	      any current expiration and the plans defined in the refdata.
+	      </p>
             </div>
           </section>
 
@@ -237,6 +247,32 @@ const HowItWorks = () => {
 		will also be checked against a CRL (certificate revocation list) maintained by our custom indexer to enforce
 		expiration. By default, you will be provided with our hosted DNS servers a default route through the VPN, which
 		prevents your ISP from being able to see what you are doing on the VPN.
+              </p>
+            </div>
+          </section>
+
+          <section id="infrastructure" className="mb-16">
+            <div className="bg-[#00000020] rounded-lg p-8 border border-[#ffffff10]">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                  6
+                </div>
+                <h2 className="text-2xl font-semibold text-white">Infrastructure</h2>
+              </div>
+              <p className="text-gray-300 leading-relaxed">
+	        Our infrastructure is based in AWS and is managed via a{' '}
+                <a 
+                  href="https://github.com/blinklabs-io/vpn-infrastructure" 
+                  className="text-blue-400 hover:text-blue-300 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+		  custom Terraform and helmfile setup
+                </a>.
+                Secrets are encrypted at rest using SOPS and stored within the git repo. We utilize EKS
+                for running containers, with the AWS load balancer controller for managing ingress. We use
+                S3 for storage of generated client configs. We purposely do not configure access logging on any
+                load balancer or S3 bucket to prevent storing information about people accessing our services.
               </p>
             </div>
           </section>
