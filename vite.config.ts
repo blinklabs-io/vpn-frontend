@@ -21,7 +21,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://api.b7s.services',
+        // TODO: make this configurable
+        target: 'https://preprod-api.b7s.services',
         changeOrigin: true,
         secure: true,
       }

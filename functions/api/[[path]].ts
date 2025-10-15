@@ -10,7 +10,8 @@ export async function onRequest({ request, params }) {
   }
 
   const url = new URL(request.url);
-  const apiUrl = `https://api.b7s.services/api/${params.path.join('/')}${url.search}`;
+  // TODO: make this hostname configurable
+  const apiUrl = `https://preprod-api.b7s.services/api/${params.path.join('/')}${url.search}`;
   
   console.log('Proxying request to:', apiUrl);
   console.log('Request method:', request.method);
