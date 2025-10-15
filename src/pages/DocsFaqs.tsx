@@ -37,6 +37,11 @@ const DocsFaqs = () => {
       answer: "No, you just need your profile .ovpn file to import onto your device."
     },
      {
+      id: "payments-accepted",
+      question: "Can I pay in another payment method besides ADA?",
+      answer: "No, ADA (Cardano) is the only accepted payment method at this time."
+    },
+     {
       id: "mulitple-device-same-time",
       question: "Can I use the same VPN on more than one device at the same time?",
       answer: "No. Each profile is a single concurrent connection. You can purchase additional subscriptions if you need to support more than one device at the same time."
