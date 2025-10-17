@@ -484,7 +484,7 @@ const Account = () => {
                   </div>
                   {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
                     <button 
-                      className={`flex items-center justify-center gap-2.5 rounded-md py-2 px-4 backdrop-blur-sm transition-all duration-200 w-full md:w-auto md:px-10 ${
+                      className={`flex items-center justify-center gap-2.5 rounded-md py-2 px-6 backdrop-blur-sm transition-all duration-200 w-full md:w-auto ${
                         signupMutation.isPending || !isConnected 
                           ? 'opacity-50 cursor-not-allowed bg-gray-500' 
                           : 'cursor-pointer bg-[#9400FF] hover:bg-[#7A00CC] hover:scale-102'
@@ -493,7 +493,7 @@ const Account = () => {
                       disabled={signupMutation.isPending || !isConnected}
                       {...(showTooltips && { 'data-tooltip-id': 'purchase-tooltip' })}
                     >
-                      <p className="font-medium text-white text-lg">
+                      <p className="font-medium text-white text-md">
                         {signupMutation.isPending 
                           ? 'Processing...' 
                           : !isConnected 
