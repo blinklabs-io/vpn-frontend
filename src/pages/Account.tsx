@@ -410,7 +410,7 @@ const Account = () => {
     >
       {(showTooltips) => (
         <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
-          <div className="flex flex-col items-center justify-center pt-8 gap-6 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-4 md:px-8">
+          <div className="flex flex-col items-center justify-center pt-4 gap-4 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-3 md:px-8">
             <LoadingOverlay 
               isVisible={isPurchaseLoading || isConfigLoading}
               messageTop={isPurchaseLoading ? "Awaiting Transaction Confirmation" : "Preparing VPN Configuration"}
@@ -418,7 +418,7 @@ const Account = () => {
             />
             
             {/* VPN PURCHASE SECTION */}
-            <div className="flex flex-col gap-6 w-full md:flex-row md:gap-8 md:items-start">
+            <div className="flex flex-col gap-4 w-full md:flex-row md:gap-8 md:items-start">
               {/* VPN PURCHASE OPTIONS */}
               <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
                 <div className="flex justify-between items-start gap-3 pb-4 w-full">
@@ -441,11 +441,11 @@ const Account = () => {
                   <div className="flex flex-col justify-center items-start gap-2 w-full">
                     {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
                       <>
-                        <div className="flex items-center gap-2 w-full">
+                        <div className="flex flex-wrap items-center gap-2 w-full">
                           {durationOptions.map((option: { value: number; label: string; timeDisplay: string }) => (
                             <button
                               key={option.value}
-                              className={`flex items-center justify-center gap-2.5 flex-1 rounded-sm bg-white text-black py-1.5 px-3 cursor-pointer whitespace-nowrap text-md md:text-md ${
+                              className={`flex items-center justify-center gap-2.5 flex-1 min-w-0 rounded-sm bg-white text-black py-1.5 px-2 cursor-pointer whitespace-nowrap text-sm md:text-md md:px-3 ${
                                 selectedDuration === option.value ? "opacity-100" : "opacity-50"
                               }`}
                               onClick={() => setSelectedDuration(option.value)}
@@ -468,7 +468,7 @@ const Account = () => {
                 </div>
                 
                 {/* Region Selection and Purchase */}
-                <div className="flex flex-row gap-2 w-full justify-between items-center">
+                <div className="flex flex-col gap-3 w-full md:flex-row md:gap-2 md:justify-between md:items-center">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-white text-lg">Region:</p>
                     {Array.isArray(refData?.regions) && refData.regions.length > 0 ? (
@@ -484,10 +484,10 @@ const Account = () => {
                   </div>
                   {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
                     <button 
-                      className={`flex items-center justify-center gap-2.5 rounded-md py-1 px-2.5 backdrop-blur-sm transition-all duration-200 ${
+                      className={`flex items-center justify-center gap-2.5 rounded-md py-2 px-4 backdrop-blur-sm transition-all duration-200 w-full md:w-auto md:px-10 ${
                         signupMutation.isPending || !isConnected 
-                          ? 'opacity-50 cursor-not-allowed bg-gray-500 py-2 px-10' 
-                          : 'cursor-pointer bg-[#9400FF] py-2 px-10 hover:bg-[#7A00CC] hover:scale-102'
+                          ? 'opacity-50 cursor-not-allowed bg-gray-500' 
+                          : 'cursor-pointer bg-[#9400FF] hover:bg-[#7A00CC] hover:scale-102'
                       }`}
                       onClick={handlePurchase}
                       disabled={signupMutation.isPending || !isConnected}
@@ -503,7 +503,7 @@ const Account = () => {
                       </p>
                     </button>
                   ) : (
-                    <div className="h-8 w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
+                    <div className="h-8 w-full md:w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
                   )}
                 </div>
               </div>
@@ -523,7 +523,7 @@ const Account = () => {
             </div>
             
             {/* VPN INSTANCES SECTION */}
-            <div className="flex flex-col justify-center items-start gap-3 w-full">
+            <div className="flex flex-col justify-center items-start gap-3 w-full mt-4 md:mt-0">
               <div className="flex justify-between items-center w-full">
                 <p className="text-white text-lg font-bold">VPN Instances</p>
                 {isConnected && vpnInstances.length > 0 && (
