@@ -46,6 +46,7 @@ export interface ClientInfo {
   expiration: string
   id: string
   region: string
+  duration?: number
 }
 
 export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
