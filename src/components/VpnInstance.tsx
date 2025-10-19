@@ -113,7 +113,7 @@ const VpnInstance = ({
               onClick={onConfirmRenewal}
               disabled={!selectedRenewDuration}
             >
-              <p className="font-light text-sm">Confirm Renewal</p>
+              <p className="font-light text-sm">Renew</p>
             </button>
           </div>
         )}
