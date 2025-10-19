@@ -458,7 +458,7 @@ const Account = () => {
                           className="text-lg flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-3 px-2.5"
                           {...(showTooltips && { 'data-tooltip-id': 'price-tooltip' })}
                         >
-                          {selectedOption ? `${formatPrice(selectedOption.price)} ADA` : ''}
+                          {selectedOption ? `${formatPrice(selectedOption.price)} ADA + 1.7 ADA setup fee` : ''}
                         </div>
                       </>
                     ) : (
