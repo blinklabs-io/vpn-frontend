@@ -1,35 +1,38 @@
-import { useWalletStore } from '../stores/walletStore'
+import { useWalletStore } from "../stores/walletStore";
 
 interface WalletModalProps {
-  isOpen: boolean
-  onDisconnect: () => void
+  isOpen: boolean;
+  onDisconnect: () => void;
 }
 
 const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
-  const { enabledWallet, walletAddress, isConnected, connect } = useWalletStore()
-  
-  if (!isOpen) return null
+  const { enabledWallet, walletAddress, isConnected, connect } =
+    useWalletStore();
+
+  if (!isOpen) return null;
 
   const handleConnect = async () => {
     try {
-      const walletNames = ['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']
-      let connected = false
-      
+      const walletNames = ["nami", "eternl", "flint", "yoroi", "gerowallet"];
+      let connected = false;
+
       for (const walletName of walletNames) {
-        const success = await connect(walletName)
+        const success = await connect(walletName);
         if (success) {
-          connected = true
-          break
+          connected = true;
+          break;
         }
       }
-      
+
       if (!connected) {
-        console.warn('No compatible wallets found. Please install a supported Cardano wallet.')
+        console.warn(
+          "No compatible wallets found. Please install a supported Cardano wallet.",
+        );
       }
     } catch (error) {
-      console.error('Failed to connect wallet:', error)
+      console.error("Failed to connect wallet:", error);
     }
-  }
+  };
 
   return (
     <div className="w-full bg-transparent flex justify-center">
@@ -45,8 +48,12 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                   className="w-10 h-10 brightness-0 invert"
                 />
                 <div className="flex flex-col">
-                  <h3 className="text-white font-medium text-lg">Connect Wallet</h3>
-                  <p className="text-white/70 text-md py-2">Connect your wallet to purchase VPN access</p>
+                  <h3 className="text-white font-medium text-lg">
+                    Connect Wallet
+                  </h3>
+                  <p className="text-white/70 text-md py-2">
+                    Connect your wallet to purchase VPN access
+                  </p>
                 </div>
               </div>
               <button
@@ -68,8 +75,12 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                     className="w-10 h-10 brightness-0 invert"
                   />
                   <div className="flex flex-col">
-                    <h3 className="text-white font-medium text-lg">Your Wallet</h3>
-                    <p className="text-white/70 text-md max-w-[15rem] py-1 truncate">{enabledWallet}: {walletAddress}</p>
+                    <h3 className="text-white font-medium text-lg">
+                      Your Wallet
+                    </h3>
+                    <p className="text-white/70 text-md max-w-[15rem] py-1 truncate">
+                      {enabledWallet}: {walletAddress}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -84,7 +95,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WalletModal
+export default WalletModal;

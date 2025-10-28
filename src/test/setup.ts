@@ -1,7 +1,7 @@
-import '@testing-library/jest-dom'
-import { afterEach, vi } from 'vitest'
+import "@testing-library/jest-dom";
+import { afterEach, vi } from "vitest";
 
-Object.defineProperty(window, 'cardano', {
+Object.defineProperty(window, "cardano", {
   value: {
     nami: {
       enable: vi.fn(),
@@ -25,25 +25,25 @@ Object.defineProperty(window, 'cardano', {
     },
   },
   writable: true,
-})
+});
 
-global.fetch = vi.fn()
+global.fetch = vi.fn();
 
 global.console = {
   ...console,
   log: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
-}
+};
 
-vi.mock('@emurgo/cardano-serialization-lib-browser', () => ({
+vi.mock("@emurgo/cardano-serialization-lib-browser", () => ({
   Address: {
     from_bytes: vi.fn().mockReturnValue({
-      to_bech32: vi.fn().mockReturnValue('addr_test1mock...')
-    })
-  }
-}))
+      to_bech32: vi.fn().mockReturnValue("addr_test1mock..."),
+    }),
+  },
+}));
 
 afterEach(() => {
-  vi.resetAllMocks()
-}) 
+  vi.resetAllMocks();
+});

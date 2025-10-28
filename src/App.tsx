@@ -1,8 +1,8 @@
-import Navigation from './components/Navigation'
-import AppRoutes from './routes'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClient } from './api'
-import { Toaster } from 'react-hot-toast'
+import Navigation from "./components/Navigation";
+import AppRoutes from "./routes";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./api";
+import { Toaster } from "react-hot-toast";
 
 const VpnApp = () => {
   return (
@@ -13,7 +13,7 @@ const VpnApp = () => {
         <Toaster />
       </div>
     </QueryClientProvider>
-  )
-}
+  );
+};
 
-export default VpnApp
+export default VpnApp;

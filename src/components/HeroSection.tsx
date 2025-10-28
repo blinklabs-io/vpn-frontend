@@ -1,13 +1,13 @@
-import heroBackdrop from '/hero-backdrop.png'
-import heroCenter from '/hero-center-graphic.png'
-import { useNavigate } from 'react-router'
+import heroBackdrop from "/hero-backdrop.png";
+import heroCenter from "/hero-center-graphic.png";
+import { useNavigate } from "react-router";
 
 interface HeroSectionProps {
-  onGetStarted: () => void
+  onGetStarted: () => void;
 }
 
 const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col items-center justify-end min-h-[calc(100vh-4rem)] px-4 relative z-20 pointer-events-none">
@@ -31,7 +31,13 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
           Private. Transparent. Yours.
         </h1>
         <p className="font-ibm-plex text-white text-base sm:text-lg md:text-xl text-center max-w-4xl leading-relaxed">
-         <span className="font-ibm-plex">Take back control of your online privacy with Nabu</span>-<span className="font-ibm-plex">a fully transparent VPN powered by Cardano.</span>
+          <span className="font-ibm-plex">
+            Take back control of your online privacy with Nabu
+          </span>
+          -
+          <span className="font-ibm-plex">
+            a fully transparent VPN powered by Cardano.
+          </span>
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-6 sm:py-8">
           <button
@@ -41,19 +47,19 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
             Get Started
           </button>
           <button
-            onClick={() => navigate('/privacy-policy')}
+            onClick={() => navigate("/privacy-policy")}
             className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
           >
             Privacy Policy
           </button>
           <button
-            onClick={() => navigate('/how-it-works')}
+            onClick={() => navigate("/how-it-works")}
             className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
           >
             How It Works
           </button>
           <button
-            onClick={() => navigate('/docs-faqs')}
+            onClick={() => navigate("/docs-faqs")}
             className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
           >
             FAQs
@@ -61,7 +67,7 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default HeroSection
+export default HeroSection;

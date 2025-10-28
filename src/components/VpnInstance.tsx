@@ -1,47 +1,49 @@
 interface VpnInstanceProps {
-  region: string
-  duration: string
-  status: "Active" | "Expired" | "Pending"
-  expires: string
-  onDelete?: () => void
-  onAction?: () => void
-  isRenewExpanded?: boolean
+  region: string;
+  duration: string;
+  status: "Active" | "Expired" | "Pending";
+  expires: string;
+  onDelete?: () => void;
+  onAction?: () => void;
+  isRenewExpanded?: boolean;
   renewDurationOptions?: Array<{
-    label: string
-    value: number
-    price: number
-  }>
-  selectedRenewDuration?: number | null
-  onSelectRenewDuration?: (duration: number) => void
-  onConfirmRenewal?: () => void
-  onCancelRenewal?: () => void
+    label: string;
+    value: number;
+    price: number;
+  }>;
+  selectedRenewDuration?: number | null;
+  onSelectRenewDuration?: (duration: number) => void;
+  onConfirmRenewal?: () => void;
+  onCancelRenewal?: () => void;
 }
 
-const VpnInstance = ({ 
-  region, 
-  duration, 
-  status, 
-  expires, 
+const VpnInstance = ({
+  region,
+  duration,
+  status,
+  expires,
   onAction,
   isRenewExpanded,
   renewDurationOptions,
   selectedRenewDuration,
   onSelectRenewDuration,
   onConfirmRenewal,
-  onCancelRenewal
+  onCancelRenewal,
 }: VpnInstanceProps) => {
   const formatPrice = (priceLovelace: number) => {
-    return (priceLovelace / 1000000).toFixed(2)
-  }
+    return (priceLovelace / 1000000).toFixed(2);
+  };
 
   return (
-    <div className={`flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs ${
+    <div
+      className={`flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs ${
         status === "Active"
           ? "bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]"
           : status === "Pending"
             ? "bg-[rgba(128,128,128,0.30)]"
             : "bg-[rgba(255,255,255,0.20)]"
-      }`}>
+      }`}
+    >
       <div className="flex flex-col items-start gap-1 w-full">
         <div className="flex justify-between items-start w-full gap-2">
           <p className="text-sm md:text-base">Region: {region}</p>
@@ -50,13 +52,15 @@ const VpnInstance = ({
         <div className="flex justify-between items-start w-full">
           <div className="flex items-center gap-2">
             <p className="text-sm md:text-base">Status: {status}</p>
-            <span className={`w-2 h-2 rounded-full ${
-              status === "Active" 
-                ? "bg-[#86EA64]" 
-                : status === "Pending"
-                  ? "bg-yellow-500 animate-pulse"
-                  : "bg-red-500"
-            }`}></span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                status === "Active"
+                  ? "bg-[#86EA64]"
+                  : status === "Pending"
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-red-500"
+              }`}
+            ></span>
           </div>
           <p className="text-sm md:text-base">Expires: {expires}</p>
         </div>
@@ -77,7 +81,9 @@ const VpnInstance = ({
                 }`}
                 onClick={() => onSelectRenewDuration?.(option.value)}
               >
-                <p className="text-xs font-medium whitespace-nowrap">{option.label} - {formatPrice(option.price)} ADA</p>
+                <p className="text-xs font-medium whitespace-nowrap">
+                  {option.label} - {formatPrice(option.price)} ADA
+                </p>
               </button>
             ))}
           </div>
@@ -126,7 +132,7 @@ const VpnInstance = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default VpnInstance
+export default VpnInstance;
