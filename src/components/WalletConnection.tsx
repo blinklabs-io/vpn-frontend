@@ -10,6 +10,11 @@ interface WalletConnectionProps {
   showDescription?: boolean
 }
 
+const getNetworkType = (): NetworkType => {
+  const network = import.meta.env.VITE_CARDANO_NETWORK || 'preprod'
+  return network === 'mainnet' ? NetworkType.MAINNET : NetworkType.TESTNET
+}
+
 const WalletConnection = ({
   variant = 'default',
   showTitle = false,
@@ -134,7 +139,7 @@ const WalletConnection = ({
                   supportedWallets={['eternl', 'yoroi', 'gerowallet', 'begin', 'nufi', 'lace', 'vespr']}
                   showUnavailableWallets={0}
                   peerConnectEnabled={false}
-                  limitNetwork={NetworkType.TESTNET}
+                  limitNetwork={getNetworkType()}
                   customCSS={`
                     font-family: Helvetica Light, sans-serif;
                     font-size: 1rem;
@@ -190,7 +195,7 @@ const WalletConnection = ({
             supportedWallets={['eternl', 'yoroi', 'begin', 'nufi', 'lace', 'vespr']}
             showUnavailableWallets={0}
             peerConnectEnabled={false}
-            limitNetwork={NetworkType.TESTNET} // MUST BE CHANGED TO MAINNET to work on mainnet
+            limitNetwork={getNetworkType()}
             customCSS={`
               font-family: Helvetica Light, sans-serif;
               font-size: 0.875rem;

@@ -1,4 +1,4 @@
-export async function onRequest({ request, params }) {
+export async function onRequest({ request, params, env }) {
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -10,11 +10,13 @@ export async function onRequest({ request, params }) {
   }
 
   const url = new URL(request.url);
-  // TODO: make this hostname configurable
-  const apiUrl = `https://preprod-api.b7s.services/api/${params.path.join('/')}${url.search}`;
+  const apiBaseUrl = env.API_URL || 'https://preprod-api.b7s.services';
+  const cardanoNetwork = env.CARDANO_NETWORK || 'preprod';
+  const apiUrl = `${apiBaseUrl}/api/${params.path.join('/')}${url.search}`;
   
   console.log('Proxying request to:', apiUrl);
   console.log('Request method:', request.method);
+  console.log('Cardano Network:', cardanoNetwork);
   
   const response = await fetch(apiUrl, {
     method: request.method,

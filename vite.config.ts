@@ -21,8 +21,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        // TODO: make this configurable
-        target: 'https://preprod-api.b7s.services',
+        target: process.env.VITE_API_URL || 'https://preprod-api.b7s.services',
         changeOrigin: true,
         secure: true,
       }
