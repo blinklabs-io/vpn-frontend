@@ -80,6 +80,11 @@ const DocsFaqs = () => {
       id: "ip-address-for-openvpn",
       question: "Can NABU see the IP address that I use to connect to OpenVPN?",
       answer: "No, we purposely do not log this information for your privacy. To find out more about how NABU works, see our How it works page (https://nabuvpn.com/how-it-works)"
+    },
+    {
+      id: "wallet-balance-difference",
+      question: "Why doesn't the wallet balance on the Account page match the balance shown by my wallet?",
+      answer: "Many wallets will automatically include any unclaimed staking rewards when displaying the overall balance, but NABU is only querying the current wallet balance without unclaimed staking rewards. This may result in a small difference in the balance displayed, but it has no effect on your ability to manage your VPN subscriptions or the funds available in your wallet."
     }
   ];
 
