@@ -1,4 +1,11 @@
-export async function onRequest({ request, params, env }) {
+export async function onRequest({ request, params, env }: {
+  request: Request;
+  params: { path: string[] };
+  env: {
+    API_URL?: string;
+    CARDANO_NETWORK?: string;
+  };
+}) {
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
