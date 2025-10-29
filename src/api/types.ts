@@ -1,80 +1,80 @@
 export interface RefDataResponse {
-  regions?: string[]
+  regions?: string[];
   prices?: Array<{
-    duration: number
-    price: number
-  }>
-  [key: string]: unknown
+    duration: number;
+    price: number;
+  }>;
+  [key: string]: unknown;
 }
 
 export interface ApiError {
-  message: string
-  status: number
-  code?: string
-  details?: unknown
+  message: string;
+  status: number;
+  code?: string;
+  details?: unknown;
 }
 
 export interface ApiResponse<T> {
-  data: T
-  success: boolean
-  message?: string
+  data: T;
+  success: boolean;
+  message?: string;
 }
 
 export interface QueryOptions {
-  enabled?: boolean
-  refetchInterval?: number
-  staleTime?: number
+  enabled?: boolean;
+  refetchInterval?: number;
+  staleTime?: number;
 }
 
 export interface TxSignupRequest {
-  paymentAddress: string
-  duration: number
-  price: number
-  region: string
+  paymentAddress: string;
+  duration: number;
+  price: number;
+  region: string;
 }
 
 export interface TxSignupResponse {
-  clientId: string
-  txCbor: string
+  clientId: string;
+  txCbor: string;
 }
 
 export interface ClientListRequest {
-  ownerAddress: string
+  ownerAddress: string;
 }
 
 export interface ClientInfo {
-  expiration: string
-  id: string
-  region: string
-  duration?: number
+  expiration: string;
+  id: string;
+  region: string;
+  duration?: number;
 }
 
 export interface ClientListResponse extends ApiResponse<ClientInfo[]> {
-  data: ClientInfo[]
+  data: ClientInfo[];
 }
 
 export interface ClientAvailableRequest {
-  id: string
+  id: string;
 }
 
 export interface ClientAvailableResponse {
-  msg?: string
+  msg?: string;
 }
 
 export interface ClientProfileRequest {
-  id: string
-  key: string
-  signature: string
+  id: string;
+  key: string;
+  signature: string;
 }
 
 export interface TxRenewRequest {
-  paymentAddress: string
-  clientId: string
-  duration: number
-  price: number
-  region: string
+  paymentAddress: string;
+  clientId: string;
+  duration: number;
+  price: number;
+  region: string;
 }
 
 export interface TxRenewResponse {
-  txCbor: string
+  txCbor: string;
 }

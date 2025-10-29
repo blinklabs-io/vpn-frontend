@@ -1,9 +1,15 @@
-import { QueryClient } from '@tanstack/react-query'
-import type { ClientAvailableRequest, ClientAvailableResponse, ClientInfo, ClientListRequest, ClientProfileRequest, TxRenewRequest, TxRenewResponse } from './types'
+import { QueryClient } from "@tanstack/react-query";
+import type {
+  ClientAvailableRequest,
+  ClientAvailableResponse,
+  ClientInfo,
+  ClientListRequest,
+  ClientProfileRequest,
+  TxRenewRequest,
+  TxRenewResponse,
+} from "./types";
 
-export const API_BASE_URL = import.meta.env.DEV 
-  ? '/api'  
-  : '/api'
+export const API_BASE_URL = import.meta.env.DEV ? "/api" : "/api";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,197 +19,219 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-})
+});
 
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`
-  
+  const url = `${API_BASE_URL}${endpoint}`;
+
   try {
-    const { headers, ...restOptions } = options
+    const { headers, ...restOptions } = options;
     const response = await fetch(url, {
       headers: {
-        'Content-Type': 'application/json',
-        'accept': 'application/json',
+        "Content-Type": "application/json",
+        accept: "application/json",
         ...headers,
       },
       ...restOptions,
-    })
+    });
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+      const errorText = await response.text();
+      throw new Error(
+        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
     }
 
     // Handle empty responses explicitly
     if (response.status === 204 || response.status === 205) {
-      return {} as T
+      return {} as T;
     }
 
-    const contentType = response.headers.get('content-type') || ''
-    if (contentType.includes('application/json')) {
-      return response.json() as Promise<T>
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return response.json() as Promise<T>;
     }
 
     // Fallback: try to parse text as JSON, else return empty object
-    const text = await response.text()
+    const text = await response.text();
     try {
-      return JSON.parse(text) as T
+      return JSON.parse(text) as T;
     } catch {
-      return {} as T
+      return {} as T;
     }
   } catch (error) {
     if (error instanceof TypeError) {
-      throw new Error('Network error: Unable to connect to the API')
+      throw new Error("Network error: Unable to connect to the API");
     }
-    throw error
+    throw error;
   }
 }
 
 export function get<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  return apiClient<T>(endpoint, { method: 'GET', ...options })
+  return apiClient<T>(endpoint, { method: "GET", ...options });
 }
 
-export function post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+export function post<T>(
+  endpoint: string,
+  data?: unknown,
+  options?: RequestInit,
+): Promise<T> {
   return apiClient<T>(endpoint, {
-    method: 'POST',
+    method: "POST",
     body: data ? JSON.stringify(data) : undefined,
     ...options,
-  })
-} 
-
-// Types moved to types.ts to avoid conflicts
-
-export function getClientList(request: ClientListRequest): Promise<ClientInfo[]> {
-  return post<ClientInfo[]>('/client/list', request)
-} 
-
-// Types moved to types.ts to avoid conflicts
-
-export function checkClientAvailable(request: ClientAvailableRequest): Promise<ClientAvailableResponse> {
-  return post<ClientAvailableResponse>('/client/available', request)
+  });
 }
 
-export async function checkClientAvailableWithGraceful404(request: ClientAvailableRequest): Promise<ClientAvailableResponse | null> {
-  const url = `${API_BASE_URL}/client/available`
-  
+// Types moved to types.ts to avoid conflicts
+
+export function getClientList(
+  request: ClientListRequest,
+): Promise<ClientInfo[]> {
+  return post<ClientInfo[]>("/client/list", request);
+}
+
+// Types moved to types.ts to avoid conflicts
+
+export function checkClientAvailable(
+  request: ClientAvailableRequest,
+): Promise<ClientAvailableResponse> {
+  return post<ClientAvailableResponse>("/client/available", request);
+}
+
+export async function checkClientAvailableWithGraceful404(
+  request: ClientAvailableRequest,
+): Promise<ClientAvailableResponse | null> {
+  const url = `${API_BASE_URL}/client/available`;
+
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'accept': 'application/json',
+        "Content-Type": "application/json",
+        accept: "application/json",
       },
       body: JSON.stringify(request),
-    })
+    });
 
     // Handle 404 as expected response (client not available yet)
     if (response.status === 404) {
-      return null
+      return null;
     }
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+      const errorText = await response.text();
+      throw new Error(
+        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
     }
 
-    const contentType = response.headers.get('content-type') || ''
-    if (contentType.includes('application/json')) {
-      return response.json() as Promise<ClientAvailableResponse>
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return response.json() as Promise<ClientAvailableResponse>;
     }
 
-    const text = await response.text()
+    const text = await response.text();
     try {
-      return JSON.parse(text) as ClientAvailableResponse
+      return JSON.parse(text) as ClientAvailableResponse;
     } catch {
-      return {} as ClientAvailableResponse
+      return {} as ClientAvailableResponse;
     }
   } catch (error) {
     if (error instanceof TypeError) {
-      throw new Error('Network error: Unable to connect to the API')
+      throw new Error("Network error: Unable to connect to the API");
     }
-    throw error
+    throw error;
   }
 }
 
-export function getClientProfile(request: ClientProfileRequest): Promise<string> {
-  const url = `${API_BASE_URL}/client/profile`
-  
+export function getClientProfile(
+  request: ClientProfileRequest,
+): Promise<string> {
+  const url = `${API_BASE_URL}/client/profile`;
+
   return fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'accept': 'application/json',
+      "Content-Type": "application/json",
+      accept: "application/json",
     },
     body: JSON.stringify(request),
-    redirect: 'manual'
+    redirect: "manual",
   }).then(async (response) => {
-    console.log('Profile response status:', response)
-    
+    console.log("Profile response status:", response);
+
     // Handle successful redirect
     if (response.status === 302) {
-      const location = response.headers.get('location')
+      const location = response.headers.get("location");
       if (location) {
-        return location
+        return location;
       }
-      throw new Error('No redirect location found')
+      throw new Error("No redirect location found");
     }
-    
-    if (response.type === 'opaqueredirect') {
-      console.log('Got opaque redirect, using follow approach...')
+
+    if (response.type === "opaqueredirect") {
+      console.log("Got opaque redirect, using follow approach...");
       return fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'accept': 'application/json',
+          "Content-Type": "application/json",
+          accept: "application/json",
         },
         body: JSON.stringify(request),
-        redirect: 'follow'
-      }).then(finalResponse => {
-        console.log('Final response URL:', finalResponse.url)
+        redirect: "follow",
+      }).then((finalResponse) => {
+        console.log("Final response URL:", finalResponse.url);
         if (finalResponse.url && finalResponse.url !== url) {
-          return finalResponse.url
+          return finalResponse.url;
         }
-        throw new Error('Could not get redirect URL')
-      })
+        throw new Error("Could not get redirect URL");
+      });
     }
-    
+
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+      const errorText = await response.text();
+      throw new Error(
+        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
     }
-    
-    return response.text()
-  })
+
+    return response.text();
+  });
 }
 
 export function submitTransaction(signedTxCbor: string): Promise<string> {
-  const url = `${API_BASE_URL}/tx/submit`
+  const url = `${API_BASE_URL}/tx/submit`;
 
   const arr = [];
-  for (let i = 0, len = signedTxCbor.length; i < len; i+=2) {
-    arr.push(parseInt(signedTxCbor.substr(i,2),16));
+  for (let i = 0, len = signedTxCbor.length; i < len; i += 2) {
+    arr.push(parseInt(signedTxCbor.substr(i, 2), 16));
   }
   const bodyBytes = new Uint8Array(arr);
   return fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/cbor',
-      'accept': 'application/json',
+      "Content-Type": "application/cbor",
+      accept: "application/json",
     },
     body: bodyBytes,
   }).then(async (response) => {
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Transaction submission failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+      const errorText = await response.text();
+      throw new Error(
+        `Transaction submission failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
     }
-    
-    return response.text()
-  })
-} 
 
-export function buildRenewTransaction(request: TxRenewRequest): Promise<TxRenewResponse> {
-  return post<TxRenewResponse>('/tx/renew', request)
-} 
+    return response.text();
+  });
+}
+
+export function buildRenewTransaction(
+  request: TxRenewRequest,
+): Promise<TxRenewResponse> {
+  return post<TxRenewResponse>("/tx/renew", request);
+}

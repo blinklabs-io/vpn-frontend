@@ -1,30 +1,30 @@
-import { useWalletStore } from '../stores/walletStore'
-import { useState } from 'react'
-import LoadingOverlay from './LoadingOverlay'
+import { useWalletStore } from "../stores/walletStore";
+import { useState } from "react";
+import LoadingOverlay from "./LoadingOverlay";
 
 const FloatingWalletButton = () => {
-  const { isConnected, stakeAddress, connect, disconnect } = useWalletStore()
-  const [isLoading, setIsLoading] = useState(false)
+  const { isConnected, stakeAddress, connect, disconnect } = useWalletStore();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleConnect = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const walletNames = ['nami', 'eternl', 'flint', 'yoroi', 'gerowallet']
+      const walletNames = ["nami", "eternl", "flint", "yoroi", "gerowallet"];
       for (const walletName of walletNames) {
         try {
-          await connect(walletName)
-          console.log(`Connected to ${walletName}`)
-          break
+          await connect(walletName);
+          console.log(`Connected to ${walletName}`);
+          break;
         } catch (error) {
-          console.log(`Failed to connect to ${walletName}:`, error)
+          console.log(`Failed to connect to ${walletName}:`, error);
         }
       }
     } catch (error) {
-      console.error('Failed to connect wallet:', error)
+      console.error("Failed to connect wallet:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isConnected) {
     return (
@@ -32,7 +32,9 @@ const FloatingWalletButton = () => {
         <div className="bg-white rounded-lg shadow-lg border p-4 min-w-[200px]">
           <div className="text-xs text-gray-500 mb-2">Connected Wallet</div>
           <div className="text-sm font-medium text-gray-900 mb-3">
-            {stakeAddress ? `${stakeAddress.slice(0, 8)}...${stakeAddress.slice(-8)}` : 'Connected'}
+            {stakeAddress
+              ? `${stakeAddress.slice(0, 8)}...${stakeAddress.slice(-8)}`
+              : "Connected"}
           </div>
           <button
             onClick={disconnect}
@@ -42,7 +44,7 @@ const FloatingWalletButton = () => {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -56,7 +58,7 @@ const FloatingWalletButton = () => {
         Connect Wallet
       </button>
     </>
-  )
-}
+  );
+};
 
-export default FloatingWalletButton
+export default FloatingWalletButton;

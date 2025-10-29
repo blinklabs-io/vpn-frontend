@@ -1,73 +1,82 @@
-import { ConnectWalletList } from '@cardano-foundation/cardano-connect-with-wallet'
-import { NetworkType } from '@cardano-foundation/cardano-connect-with-wallet-core'
-import { useWalletStore } from '../stores/walletStore'
-import { useNavigate } from 'react-router'
-import { useState, useRef, useEffect } from 'react'
+import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wallet";
+import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
+import { useWalletStore } from "../stores/walletStore";
+import { useNavigate } from "react-router";
+import { useState, useRef, useEffect } from "react";
 
 interface WalletConnectionProps {
-  variant?: 'default' | 'white'
-  showTitle?: boolean
-  showDescription?: boolean
+  variant?: "default" | "white";
+  showTitle?: boolean;
+  showDescription?: boolean;
 }
 
 const getNetworkType = (): NetworkType => {
-  const network = import.meta.env.VITE_CARDANO_NETWORK || 'preprod'
-  return network === 'mainnet' ? NetworkType.MAINNET : NetworkType.TESTNET
-}
+  const network = import.meta.env.VITE_CARDANO_NETWORK || "preprod";
+  return network === "mainnet" ? NetworkType.MAINNET : NetworkType.TESTNET;
+};
 
 const WalletConnection = ({
-  variant = 'default',
+  variant = "default",
   showTitle = false,
-  showDescription = false
+  showDescription = false,
 }: WalletConnectionProps) => {
-  const { isConnected, connect, disconnect } = useWalletStore()
-  const navigate = useNavigate()
-  const [showWalletList, setShowWalletList] = useState(false)
-  const [connectionError, setConnectionError] = useState<string | null>(null)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const { isConnected, connect, disconnect } = useWalletStore();
+  const navigate = useNavigate();
+  const [showWalletList, setShowWalletList] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const onConnectWallet = async (walletName: string) => {
-    setIsConnecting(true)
-    setConnectionError(null)
-    
+    setIsConnecting(true);
+    setConnectionError(null);
+
     try {
-      const success = await connect(walletName)
-      
+      const success = await connect(walletName);
+
       if (success) {
-        setShowWalletList(false)
-        navigate('/account')
+        setShowWalletList(false);
+        navigate("/account");
       } else {
-        console.error(`Failed to connect to ${walletName} - connect function returned false`)
-        setConnectionError(`Failed to connect to ${walletName}. Please try again.`)
+        console.error(
+          `Failed to connect to ${walletName} - connect function returned false`,
+        );
+        setConnectionError(
+          `Failed to connect to ${walletName}. Please try again.`,
+        );
       }
     } catch (error) {
-      console.error(`Error connecting to ${walletName}:`, error)
-      setConnectionError(`Error connecting to ${walletName}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error(`Error connecting to ${walletName}:`, error);
+      setConnectionError(
+        `Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
-      setIsConnecting(false)
+      setIsConnecting(false);
     }
-  }
+  };
 
   // Add error handler for ConnectWalletList
   const onConnectError = (walletName: string, error: Error) => {
-    console.error(`ConnectWalletList error for ${walletName}:`, error)
-    setConnectionError(`Error with ${walletName}: ${error.message}`)
-  }
+    console.error(`ConnectWalletList error for ${walletName}:`, error);
+    setConnectionError(`Error with ${walletName}: ${error.message}`);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowWalletList(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowWalletList(false);
         setConnectionError(null);
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   if (isConnected) {
     return (
@@ -79,12 +88,13 @@ const WalletConnection = ({
           Disconnect
         </button>
       </div>
-    )
+    );
   }
 
-  const buttonClasses = variant === 'white'
-    ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base"
-    : "flex py-2.5 px-10 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer"
+  const buttonClasses =
+    variant === "white"
+      ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base"
+      : "flex py-2.5 px-10 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer";
 
   if (showTitle || showDescription) {
     return (
@@ -110,7 +120,8 @@ const WalletConnection = ({
 
           {showDescription && (
             <p className="text-white text-base md:text-lg font-light leading-relaxed mb-8">
-              Any descriptive copy that can explain how this wallet linking system works.
+              Any descriptive copy that can explain how this wallet linking
+              system works.
             </p>
           )}
 
@@ -120,9 +131,9 @@ const WalletConnection = ({
               className="bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer"
               disabled={isConnecting}
             >
-              {isConnecting ? 'Connecting...' : 'Connect'}
+              {isConnecting ? "Connecting..." : "Connect"}
             </button>
-            
+
             {showWalletList && (
               <div className="absolute top-full left-0 mt-2 backdrop-blur-sm p-4 z-50 min-w-[200px]">
                 {connectionError && (
@@ -136,7 +147,15 @@ const WalletConnection = ({
                   primaryColor="#000000"
                   onConnect={onConnectWallet}
                   onConnectError={onConnectError}
-                  supportedWallets={['eternl', 'yoroi', 'gerowallet', 'begin', 'nufi', 'lace', 'vespr']}
+                  supportedWallets={[
+                    "eternl",
+                    "yoroi",
+                    "gerowallet",
+                    "begin",
+                    "nufi",
+                    "lace",
+                    "vespr",
+                  ]}
                   showUnavailableWallets={0}
                   peerConnectEnabled={false}
                   limitNetwork={getNetworkType()}
@@ -171,7 +190,7 @@ const WalletConnection = ({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -181,9 +200,9 @@ const WalletConnection = ({
         className={buttonClasses}
         disabled={isConnecting}
       >
-        {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+        {isConnecting ? "Connecting..." : "Connect Wallet"}
       </button>
-      
+
       {showWalletList && (
         <div className="absolute top-full left-0 right-0 pt-3 z-50 animate-in slide-in-from-top-2 duration-300">
           <ConnectWalletList
@@ -192,7 +211,14 @@ const WalletConnection = ({
             primaryColor="#000000"
             onConnect={onConnectWallet}
             onConnectError={onConnectError}
-            supportedWallets={['eternl', 'yoroi', 'begin', 'nufi', 'lace', 'vespr']}
+            supportedWallets={[
+              "eternl",
+              "yoroi",
+              "begin",
+              "nufi",
+              "lace",
+              "vespr",
+            ]}
             showUnavailableWallets={0}
             peerConnectEnabled={false}
             limitNetwork={getNetworkType()}
@@ -245,7 +271,7 @@ const WalletConnection = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default WalletConnection
+export default WalletConnection;
