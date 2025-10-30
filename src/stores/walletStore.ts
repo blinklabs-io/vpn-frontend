@@ -91,6 +91,13 @@ export const useWalletStore = create<WalletState>()(
           const walletApi = await window.cardano[walletName].enable();
           const walletNetworkId = await walletApi.getNetworkId();
 
+          console.log('=== Network Validation ===');
+          console.log('VITE_CARDANO_NETWORK (env):', APP_NETWORK);
+          console.log('Expected Network ID:', EXPECTED_NETWORK_ID);
+          console.log('Wallet Network ID:', walletNetworkId);
+          console.log('Wallet Network Label:', formatWalletNetworkLabel(walletNetworkId));
+          console.log('App Network Label:', APP_NETWORK_LABEL);
+
           if (walletNetworkId !== EXPECTED_NETWORK_ID) {
             const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
             showError(
