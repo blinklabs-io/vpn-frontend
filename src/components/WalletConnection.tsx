@@ -149,9 +149,22 @@ const WalletConnection = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [pendingWallet, setPendingWallet] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const lastErrorRef = useRef<{ message: string; timestamp: number } | null>(null);
   const isDropdownLayout = listLayout === "dropdown";
   const flexContainerBaseClasses =
     "relative mx-auto flex w-full max-w-[600px] flex-col min-h-[150px]";
+
+  // Helper function to show error with deduplication
+  const showErrorOnce = (message: string) => {
+    const now = Date.now();
+    const lastError = lastErrorRef.current;
+    
+    // Only show if it's a different message or more than 1 second has passed
+    if (!lastError || lastError.message !== message || now - lastError.timestamp > 1000) {
+      showError(message);
+      lastErrorRef.current = { message, timestamp: now };
+    }
+  };
 
   const openWalletList = () => {
     setConnectionError(null);
@@ -201,7 +214,7 @@ const WalletConnection = ({
         );
         // Check if wallet is not installed
         if (!window.cardano || !window.cardano[walletName]) {
-          showError(`${walletName} wallet is not installed. Please install it from the official website.`);
+          showErrorOnce(`${walletName} wallet is not installed. Please install it from the official website.`);
         } else {
           setConnectionError(
             `Failed to connect to ${walletName}. Please try again.`,
@@ -230,8 +243,20 @@ const WalletConnection = ({
       errorMessage.includes("not available") ||
       errorMessage.includes("no wallet")
     ) {
-      showError(`${walletName} wallet is not installed. Please install it from the official website.`);
+      showErrorOnce(`${walletName} wallet is not installed. Please install it from the official website.`);
+    } else if (
+      errorMessage.includes("wrong network") ||
+      errorMessage.includes("network type") ||
+      errorMessage.includes("mainnet") ||
+      errorMessage.includes("testnet")
+    ) {
+      const network = import.meta.env.VITE_CARDANO_NETWORK || "preprod";
+      const expectedNetwork = network === "mainnet" ? "Mainnet" : "Testnet";
+      const message = `Network mismatch: This app requires ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`;
+      showErrorOnce(message);
+      setConnectionError(message);
     } else {
+      showErrorOnce(`Error connecting to ${walletName}: ${error.message}`);
       setConnectionError(`Error with ${walletName}: ${error.message}`);
     }
     
