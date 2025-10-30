@@ -50,7 +50,7 @@ const DocsFaqs = () => {
         "No, ADA (Cardano) is the only accepted payment method at this time.",
     },
     {
-      id: "mulitple-device-same-time",
+      id: "multiple-devices-same-time",
       question:
         "Can I use the same VPN on more than one device at the same time?",
       answer:
