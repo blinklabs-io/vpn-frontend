@@ -7,8 +7,38 @@ import {
 } from "../../test/utils";
 import WalletConnection from "../WalletConnection";
 import { useWalletStore } from "../../stores/walletStore";
+import { showError } from "../../utils/toast";
+
+vi.mock("@cardano-foundation/cardano-connect-with-wallet", () => ({
+  ConnectWalletList: ({
+    supportedWallets,
+    onConnect,
+  }: {
+    supportedWallets: string[];
+    onConnect: (wallet: string) => void;
+  }) => (
+    <div data-testid="mock-wallet-list">
+      {supportedWallets.map((wallet) => (
+        <button
+          key={wallet}
+          data-testid={`wallet-option-${wallet}`}
+          type="button"
+          onClick={() => onConnect(wallet)}
+        >
+          {wallet}
+        </button>
+      ))}
+    </div>
+  ),
+}));
 
 vi.mock("../../stores/walletStore");
+
+vi.mock("../../utils/toast", () => ({
+  showError: vi.fn(),
+  showSuccess: vi.fn(),
+  showInfo: vi.fn(),
+}));
 
 const mockUseWalletStore = vi.mocked(useWalletStore);
 
@@ -19,6 +49,7 @@ describe("WalletConnection", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     setupWalletMocks();
+    mockConnect.mockResolvedValue(true);
 
     mockUseWalletStore.mockReturnValue({
       isConnected: false,
@@ -72,7 +103,7 @@ describe("WalletConnection", () => {
       ).toBeInTheDocument();
     });
 
-    it("should call connect function when button is clicked", async () => {
+    it("should open wallet list and call connect when an option is selected", async () => {
       const user = userEvent.setup();
       renderWithProviders(<WalletConnection />);
 
@@ -80,33 +111,16 @@ describe("WalletConnection", () => {
         name: /connect wallet/i,
       });
       await user.click(connectButton);
+      const walletOption = await screen.findByTestId("wallet-option-eternl");
+      await user.click(walletOption);
 
       await waitFor(() => {
-        expect(mockConnect).toHaveBeenCalledWith("nami");
-      });
-    });
-
-    it("should try multiple wallets if first one fails", async () => {
-      mockConnect
-        .mockRejectedValueOnce(new Error("Nami not available"))
-        .mockResolvedValueOnce(undefined);
-
-      const user = userEvent.setup();
-      renderWithProviders(<WalletConnection />);
-
-      const connectButton = screen.getByRole("button", {
-        name: /connect wallet/i,
-      });
-      await user.click(connectButton);
-
-      await waitFor(() => {
-        expect(mockConnect).toHaveBeenCalledWith("nami");
         expect(mockConnect).toHaveBeenCalledWith("eternl");
       });
     });
 
-    it("should handle wallet connection errors gracefully", async () => {
-      mockConnect.mockRejectedValue(new Error("No wallets available"));
+    it("should show error message when wallet connection fails", async () => {
+      mockConnect.mockResolvedValue(false);
 
       const user = userEvent.setup();
       renderWithProviders(<WalletConnection />);
@@ -115,10 +129,55 @@ describe("WalletConnection", () => {
         name: /connect wallet/i,
       });
       await user.click(connectButton);
+      const walletOption = await screen.findByTestId("wallet-option-eternl");
+      await user.click(walletOption);
 
       await waitFor(() => {
-        expect(mockConnect).toHaveBeenCalledTimes(5);
+        expect(
+          screen.getByText(/failed to connect to eternl/i),
+        ).toBeInTheDocument();
       });
+    });
+
+    it("should show toast when wallet is not installed", async () => {
+      mockConnect.mockResolvedValue(false);
+      
+      // Remove the wallet from window.cardano to simulate not installed
+      const originalCardano = window.cardano;
+      window.cardano = {};
+
+      const user = userEvent.setup();
+      renderWithProviders(<WalletConnection />);
+
+      const connectButton = screen.getByRole("button", {
+        name: /connect wallet/i,
+      });
+      await user.click(connectButton);
+      const walletOption = await screen.findByTestId("wallet-option-eternl");
+      await user.click(walletOption);
+
+      await waitFor(() => {
+        expect(showError).toHaveBeenCalledWith(
+          expect.stringContaining("wallet is not installed"),
+        );
+      });
+
+      // Restore the original window.cardano
+      window.cardano = originalCardano;
+    });
+
+    it("should display wallet options in flex layout after clicking connect", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<WalletConnection listLayout="flex" />);
+
+      const connectButton = screen.getByRole("button", {
+        name: /connect wallet/i,
+      });
+      await user.click(connectButton);
+
+      expect(
+        await screen.findByTestId("wallet-option-eternl"),
+      ).toBeInTheDocument();
     });
   });
 
