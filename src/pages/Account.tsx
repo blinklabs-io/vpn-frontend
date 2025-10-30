@@ -482,7 +482,7 @@ const Account = () => {
     >
       {(showTooltips) => (
         <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
-          <div className="flex flex-col items-center justify-center pt-4 gap-4 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-3 md:px-8">
+          <div className="flex flex-col items-center justify-center pt-14 gap-4 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-3 md:px-8">
             <LoadingOverlay
               isVisible={isPurchaseLoading || isConfigLoading}
               messageTop={
