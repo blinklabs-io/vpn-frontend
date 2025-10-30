@@ -45,7 +45,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                 </div>
                 <button
                   onClick={onDisconnect}
-                  className="bg-white text-black px-6 py-2 rounded-lg font-medium w-fit self-start cursor-pointer hover:bg-[#f5f5f5] hover:scale-102"
+                  className="border border-white/20 bg-white/10 backdrop-blur-md text-white px-6 py-2 rounded-lg font-medium w-fit self-start cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all"
                 >
                   Disconnect
                 </button>

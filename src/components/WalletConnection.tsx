@@ -304,8 +304,8 @@ const WalletConnection = ({
 
   const buttonClasses =
     variant === "white"
-      ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base"
-      : "flex py-2.5 px-10 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer";
+      ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base hover:bg-gray-100 transition-all"
+      : "flex py-2.5 px-10 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer hover:bg-white/10 hover:border-white/30 transition-all";
 
   if (showTitle || showDescription) {
     return (
@@ -341,7 +341,7 @@ const WalletConnection = ({
               <>
                 <button
                   onClick={openWalletList}
-                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer ${isConnecting ? 'animate-pulse' : ''}`}
+                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? 'animate-pulse' : ''}`}
                   disabled={isConnecting}
                 >
                   {isConnecting ? "Connecting..." : "Connect"}
@@ -378,7 +378,7 @@ const WalletConnection = ({
                 </div>
                 <button
                   onClick={openWalletList}
-                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer ${isConnecting ? 'animate-pulse' : ''}`}
+                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? 'animate-pulse' : ''}`}
                   disabled={isConnecting}
                 >
                   {isConnecting ? "Connecting..." : "Connect"}
@@ -422,7 +422,6 @@ const WalletConnection = ({
 
         {showWalletList && (
           <div className="absolute top-full left-0 right-0 pt-3 z-50 animate-in slide-in-from-top-2 duration-300">
-            {renderConnectionFeedback()}
             {renderWalletList()}
           </div>
         )}
