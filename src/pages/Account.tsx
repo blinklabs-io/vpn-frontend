@@ -39,7 +39,8 @@ const Account = () => {
     signAndSubmitTransaction,
   } = useWalletStore();
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
-  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedRegionOverride, setSelectedRegionOverride] =
+    useState<string | null>(null);
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false);
 
@@ -116,7 +117,7 @@ const Account = () => {
         // Add pending client to localStorage
         const pendingClient = {
           id: data.clientId,
-          region: selectedRegion,
+          region: resolvedSelectedRegion,
           duration: selectedOption
             ? formatDuration(selectedOption.value)
             : "Unknown",
@@ -193,8 +194,14 @@ const Account = () => {
     const days = Math.floor(hours / 24);
 
     if (days > 0) {
+      if (days % 365 === 0) {
+        const years = days / 365;
+        return years === 1 ? "1 year" : `${years} years`;
+      }
+
       return days === 1 ? "1 day" : `${days} days`;
     }
+
     return hours === 1 ? "1 hour" : `${hours} hours`;
   };
 
@@ -203,11 +210,21 @@ const Account = () => {
     const days = Math.floor(hours / 24);
 
     if (days > 0) {
+      if (days % 365 === 0) {
+        const years = days / 365;
+        return years === 1 ? "1 year" : `${years} years`;
+      }
+
       return `${days} day${days > 1 ? "s" : ""}`;
     }
 
     if (hours >= 24) {
-      return `${Math.floor(hours / 24)} day${Math.floor(hours / 24) > 1 ? "s" : ""}`;
+      const wholeDays = Math.floor(hours / 24);
+      if (wholeDays % 365 === 0 && wholeDays > 0) {
+        const years = wholeDays / 365;
+        return years === 1 ? "1 year" : `${years} years`;
+      }
+      return `${wholeDays} day${wholeDays > 1 ? "s" : ""}`;
     }
 
     return `${hours.toString().padStart(2, "0")}:00:00`;
@@ -217,34 +234,26 @@ const Account = () => {
     return (priceLovelace / 1000000).toFixed(2);
   };
 
-  const durationOptions = useMemo(() => {
-    if (!Array.isArray(refData?.prices)) return [];
-
-    return refData.prices.map(
-      (priceData: { duration: number; price: number }) => ({
+  const durationOptions = Array.isArray(refData?.prices)
+    ? refData.prices.map((priceData: { duration: number; price: number }) => ({
         label: formatDuration(priceData.duration),
         value: priceData.duration,
         timeDisplay: formatTimeDisplay(priceData.duration),
         price: priceData.price,
-      }),
-    );
-  }, [refData?.prices]);
+      }))
+    : [];
 
-  useEffect(() => {
-    if (durationOptions.length > 0 && selectedDuration === 0) {
-      setSelectedDuration(durationOptions[0].value);
-    }
-  }, [durationOptions, selectedDuration]);
+  const resolvedSelectedDuration =
+    selectedDuration !== 0 &&
+    durationOptions.some((option) => option.value === selectedDuration)
+      ? selectedDuration
+      : durationOptions[0]?.value ?? 0;
 
-  useEffect(() => {
-    if (
-      Array.isArray(refData?.regions) &&
-      refData.regions.length > 0 &&
-      !selectedRegion
-    ) {
-      setSelectedRegion(refData.regions[0]);
-    }
-  }, [refData?.regions, selectedRegion]);
+  const regions = Array.isArray(refData?.regions) ? refData.regions : [];
+  const resolvedSelectedRegion =
+    selectedRegionOverride && regions.includes(selectedRegionOverride)
+      ? selectedRegionOverride
+      : regions[0] ?? "";
 
   useEffect(() => {
     cleanupCompletedTransactions();
@@ -261,28 +270,37 @@ const Account = () => {
   }, []);
 
   useEffect(() => {
-    if (dedupedClientList && pendingClientsFromStorage.length > 0) {
-      const availableClientIds = new Set(
-        dedupedClientList.map((client) => client.id),
-      );
+    if (!dedupedClientList || pendingClientsFromStorage.length === 0) return;
 
-      pendingClientsFromStorage.forEach((pending) => {
-        if (availableClientIds.has(pending.id)) {
-          console.log(
-            `Removing completed transaction ${pending.id} from localStorage`,
-          );
-          removePendingTransaction(pending.id);
-        }
-      });
+    const availableClientIds = new Set(
+      dedupedClientList.map((client) => client.id),
+    );
 
-      setPendingClientsFromStorage(
-        getPendingTransactions().filter((tx) => tx.status === "pending"),
+    const hasCompleted = pendingClientsFromStorage.some((pending) =>
+      availableClientIds.has(pending.id),
+    );
+    if (!hasCompleted) return;
+
+    pendingClientsFromStorage.forEach((pending) => {
+      if (availableClientIds.has(pending.id)) {
+        console.log(
+          `Removing completed transaction ${pending.id} from localStorage`,
+        );
+        removePendingTransaction(pending.id);
+      }
+    });
+
+    const timeoutId = window.setTimeout(() => {
+      setPendingClientsFromStorage((prev) =>
+        prev.filter((pending) => !availableClientIds.has(pending.id)),
       );
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [dedupedClientList, pendingClientsFromStorage]);
 
   const selectedOption = durationOptions.find(
-    (option: { value: number }) => option.value === selectedDuration,
+    (option: { value: number }) => option.value === resolvedSelectedDuration,
   );
 
   const handlePurchase = () => {
@@ -296,7 +314,7 @@ const Account = () => {
       return;
     }
 
-    if (!selectedRegion) {
+    if (!resolvedSelectedRegion) {
       showError("Please select a region");
       return;
     }
@@ -306,9 +324,9 @@ const Account = () => {
 
     const payload = {
       paymentAddress: walletAddress,
-      duration: selectedDuration,
+      duration: resolvedSelectedDuration,
       price: selectedOption.price,
-      region: selectedRegion,
+      region: resolvedSelectedRegion,
     };
 
     signupMutation.mutate(payload);
@@ -367,7 +385,7 @@ const Account = () => {
 
     const instanceRegion =
       dedupedClientList?.find((c) => c.id === renewingInstanceId)?.region ||
-      selectedRegion;
+      resolvedSelectedRegion;
     if (!instanceRegion) {
       showError("Could not determine region for renewal");
       return;
@@ -523,7 +541,7 @@ const Account = () => {
                               <button
                                 key={option.value}
                                 className={`flex items-center justify-center gap-2.5 flex-1 min-w-0 rounded-sm bg-white text-black py-1.5 px-2 cursor-pointer whitespace-nowrap text-sm md:text-md md:px-3 ${
-                                  selectedDuration === option.value
+                                  resolvedSelectedDuration === option.value
                                     ? "opacity-100"
                                     : "opacity-50"
                                 }`}
@@ -560,8 +578,8 @@ const Account = () => {
                     {Array.isArray(refData?.regions) &&
                     refData.regions.length > 0 ? (
                       <RegionSelect
-                        value={selectedRegion}
-                        onChange={setSelectedRegion}
+                        value={resolvedSelectedRegion}
+                        onChange={setSelectedRegionOverride}
                         regions={refData.regions}
                         showTooltips={showTooltips}
                       />

@@ -5,6 +5,24 @@ import { Address, Value, Tx } from "@harmoniclabs/cardano-ledger-ts";
 import { showError } from "../utils/toast";
 import { submitTransaction as submitTransactionApi } from "../api/client";
 
+const APP_NETWORK = (
+  import.meta.env.VITE_CARDANO_NETWORK ?? "preprod"
+)
+  .toString()
+  .toLowerCase();
+const NETWORK_NAME_MAP: Record<string, string> = {
+  mainnet: "Cardano Mainnet",
+  preprod: "Cardano Preprod Testnet",
+  preview: "Cardano Preview Testnet",
+  testnet: "Cardano Testnet",
+};
+const APP_NETWORK_LABEL =
+  NETWORK_NAME_MAP[APP_NETWORK] ??
+  `Cardano ${APP_NETWORK.charAt(0).toUpperCase()}${APP_NETWORK.slice(1)} Network`;
+const EXPECTED_NETWORK_ID = APP_NETWORK === "mainnet" ? 1 : 0;
+const formatWalletNetworkLabel = (networkId: number) =>
+  networkId === 1 ? "Cardano Mainnet" : "a Cardano Testnet";
+
 interface WalletState {
   isConnected: boolean;
   isEnabled: boolean;
@@ -71,6 +89,15 @@ export const useWalletStore = create<WalletState>()(
           }
 
           const walletApi = await window.cardano[walletName].enable();
+          const walletNetworkId = await walletApi.getNetworkId();
+
+          if (walletNetworkId !== EXPECTED_NETWORK_ID) {
+            const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
+            showError(
+              `Wallet network mismatch. This app is configured for ${APP_NETWORK_LABEL}, but your wallet is connected to ${walletNetworkLabel}. Please switch networks in your wallet and try again.`,
+            );
+            return false;
+          }
 
           await new Promise((resolve) => setTimeout(resolve, 100));
 
