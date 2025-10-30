@@ -15,7 +15,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
   return (
     <div className="w-full bg-transparent flex justify-center">
       <div className="min-w-full py-6 md:py-10">
-        <div className="border-1 border-white rounded-md bg-transparent p-4 md:p-6 relative min-h-[160px]">
+        <div className="border border-white/10 rounded-md bg-white/3 backdrop-blur-md p-4 md:p-6 relative min-h-[160px]">
           {!isConnected ? (
             <div className="flex flex-col items-start gap-4">
               <WalletConnection

@@ -96,10 +96,30 @@ const FLEX_WALLET_LIST_CSS = `
     transition: all 0.2s ease;
     cursor: pointer;
     margin: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: cascadeIn 0.4s ease-out forwards;
   }
+  & > span:nth-child(1) { animation-delay: 0.05s; }
+  & > span:nth-child(2) { animation-delay: 0.1s; }
+  & > span:nth-child(3) { animation-delay: 0.15s; }
+  & > span:nth-child(4) { animation-delay: 0.2s; }
+  & > span:nth-child(5) { animation-delay: 0.25s; }
+  & > span:nth-child(6) { animation-delay: 0.3s; }
+  & > span:nth-child(7) { animation-delay: 0.35s; }
   & > span:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.3);
+  }
+  @keyframes cascadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @media (max-width: 1024px) {
     max-width: 480px;
@@ -249,7 +269,7 @@ const WalletConnection = ({
         <div className={errorClasses}>{connectionError}</div>
       )}
       {isConnecting && pendingWallet && (
-        <p className={statusClasses}>Connecting to {pendingWallet}...</p>
+        <p className={`${statusClasses} animate-pulse`}>Connecting to {pendingWallet}...</p>
       )}
     </>
   );
@@ -321,7 +341,7 @@ const WalletConnection = ({
               <>
                 <button
                   onClick={openWalletList}
-                  className="bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer"
+                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer ${isConnecting ? 'animate-pulse' : ''}`}
                   disabled={isConnecting}
                 >
                   {isConnecting ? "Connecting..." : "Connect"}
@@ -358,7 +378,7 @@ const WalletConnection = ({
                 </div>
                 <button
                   onClick={openWalletList}
-                  className="bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer"
+                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer ${isConnecting ? 'animate-pulse' : ''}`}
                   disabled={isConnecting}
                 >
                   {isConnecting ? "Connecting..." : "Connect"}
@@ -394,7 +414,7 @@ const WalletConnection = ({
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={openWalletList}
-          className={buttonClasses}
+          className={`${buttonClasses} ${isConnecting ? 'animate-pulse' : ''}`}
           disabled={isConnecting}
         >
           {isConnecting ? "Connecting..." : "Connect Wallet"}
@@ -415,10 +435,6 @@ const WalletConnection = ({
       className={`${flexContainerBaseClasses} items-center justify-start gap-3`}
       ref={dropdownRef}
     >
-      {renderConnectionFeedback(
-        "rounded-md border border-red-400 bg-red-500/10 px-3 py-2 text-sm text-red-200 max-w-[540px] w-full",
-        "text-sm text-white/80",
-      )}
       {renderWalletList()}
       <button
         type="button"
@@ -449,7 +465,7 @@ const WalletConnection = ({
       </div>
       <button
         onClick={openWalletList}
-        className={buttonClasses}
+        className={`${buttonClasses} ${isConnecting ? 'animate-pulse' : ''}`}
         disabled={isConnecting}
       >
         {isConnecting ? "Connecting..." : "Connect Wallet"}
