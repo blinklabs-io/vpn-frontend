@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { apiClient, get, post, API_BASE_URL } from "../client";
 
+const createHeaders = (contentType: string) => ({
+  get: (name: string) =>
+    name.toLowerCase() === "content-type" ? contentType : null,
+});
+
 describe("API Client", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -11,6 +16,8 @@ describe("API Client", () => {
       const mockData = { message: "success" };
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: createHeaders("application/json"),
         json: async () => mockData,
       });
 
@@ -30,6 +37,7 @@ describe("API Client", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
+        headers: createHeaders("text/plain"),
         text: async () => "Resource not found",
       });
 
@@ -52,6 +60,8 @@ describe("API Client", () => {
       const mockData = { data: "test" };
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: createHeaders("application/json"),
         json: async () => mockData,
       });
 
@@ -76,6 +86,8 @@ describe("API Client", () => {
       const mockData = { id: 1, name: "test" };
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: createHeaders("application/json"),
         json: async () => mockData,
       });
 
@@ -99,6 +111,8 @@ describe("API Client", () => {
 
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: createHeaders("application/json"),
         json: async () => mockData,
       });
 
@@ -120,6 +134,8 @@ describe("API Client", () => {
 
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
+        status: 200,
+        headers: createHeaders("application/json"),
         json: async () => mockData,
       });
 

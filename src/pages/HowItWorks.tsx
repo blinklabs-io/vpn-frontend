@@ -279,7 +279,7 @@ const HowItWorks = () => {
                 >
                   custom docker image
                 </a>{" "}
-                running in Kubernetes. Our image explicit disables any logging
+                running in Kubernetes. Our image explicitly disables any logging
                 from OpenVPN, which means that we cannot see the IP address that
                 you connect with.
               </p>

@@ -14,12 +14,28 @@ interface PollingState {
   maxAttempts: number;
 }
 
+const DEFAULT_MAX_ATTEMPTS = 20;
+
 export function useClientPolling() {
-  const [pollingState, setPollingState] = useState<PollingState>({
-    isPolling: false,
-    clientId: null,
-    attempts: 0,
-    maxAttempts: 20, // 20 minutes max (20 * 60 seconds)
+  const [pollingState, setPollingState] = useState<PollingState>(() => {
+    const pendingTransactions = getActivePendingTransactions();
+    const firstPending = pendingTransactions[0];
+
+    if (firstPending) {
+      return {
+        isPolling: true,
+        clientId: firstPending.id,
+        attempts: firstPending.attempts,
+        maxAttempts: DEFAULT_MAX_ATTEMPTS,
+      };
+    }
+
+    return {
+      isPolling: false,
+      clientId: null,
+      attempts: 0,
+      maxAttempts: DEFAULT_MAX_ATTEMPTS,
+    };
   });
 
   const queryClient = useQueryClient();
@@ -31,7 +47,7 @@ export function useClientPolling() {
         isPolling: true,
         clientId,
         attempts: initialAttempts,
-        maxAttempts: 20,
+        maxAttempts: DEFAULT_MAX_ATTEMPTS,
       });
     },
     [],
@@ -60,15 +76,6 @@ export function useClientPolling() {
   }, []);
 
   useEffect(() => {
-    const pendingTransactions = getActivePendingTransactions();
-
-    if (pendingTransactions.length > 0) {
-      const firstPending = pendingTransactions[0];
-      startPolling(firstPending.id, firstPending.attempts);
-    }
-  }, [startPolling]);
-
-  useEffect(() => {
     if (!pollingState.isPolling || !pollingState.clientId) {
       return;
     }
@@ -89,33 +96,45 @@ export function useClientPolling() {
           return;
         }
 
-        const newAttempts = pollingState.attempts + 1;
-        setPollingState((prev) => ({
-          ...prev,
-          attempts: newAttempts,
-        }));
+        let shouldStop = false;
+        setPollingState((prev) => {
+          const newAttempts = prev.attempts + 1;
 
-        if (pollingState.clientId) {
-          updateTransactionAttempts(pollingState.clientId, newAttempts);
-        }
+          if (prev.clientId) {
+            updateTransactionAttempts(prev.clientId, newAttempts);
+          }
 
-        if (newAttempts >= pollingState.maxAttempts) {
+          shouldStop = newAttempts >= prev.maxAttempts;
+
+          return {
+            ...prev,
+            attempts: newAttempts,
+          };
+        });
+
+        if (shouldStop) {
           stopPolling(false);
         }
       } catch (error) {
         console.error("Error polling client availability:", error);
 
-        const newAttempts = pollingState.attempts + 1;
-        setPollingState((prev) => ({
-          ...prev,
-          attempts: newAttempts,
-        }));
+        let shouldStop = false;
+        setPollingState((prev) => {
+          const newAttempts = prev.attempts + 1;
 
-        if (pollingState.clientId) {
-          updateTransactionAttempts(pollingState.clientId, newAttempts);
-        }
+          if (prev.clientId) {
+            updateTransactionAttempts(prev.clientId, newAttempts);
+          }
 
-        if (newAttempts >= pollingState.maxAttempts) {
+          shouldStop = newAttempts >= prev.maxAttempts;
+
+          return {
+            ...prev,
+            attempts: newAttempts,
+          };
+        });
+
+        if (shouldStop) {
           stopPolling(false);
         }
       }
