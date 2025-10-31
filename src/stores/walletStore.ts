@@ -96,6 +96,16 @@ export const useWalletStore = create<WalletState>()(
             showError(
               `Wallet network mismatch. This app is configured for ${APP_NETWORK_LABEL}, but your wallet is connected to ${walletNetworkLabel}. Please switch networks in your wallet and try again.`,
             );
+            set({
+              isConnected: false,
+              isEnabled: false,
+              enabledWallet: null,
+              stakeAddress: null,
+              walletAddress: null,
+              walletApi: null,
+              balance: null,
+              pendingTx: null,
+            });
             return false;
           }
 
