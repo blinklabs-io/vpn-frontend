@@ -33,6 +33,7 @@ interface WalletState {
   isWalletModalOpen: boolean;
   balance: string | null;
   pendingTx: string | null; // Store original transaction for signing
+  lastVpnConfigUrl: string | null; // Store the most recent VPN config download URL
 
   // Actions
   setWalletState: (state: Partial<WalletState>) => void;
@@ -47,6 +48,7 @@ interface WalletState {
   getWalletAddress: () => Promise<void>;
   reconnectWallet: () => Promise<void>;
   signAndSubmitTransaction: (txCbor: string) => Promise<string>; // New combined method
+  setVpnConfigUrl: (url: string) => void; // Store VPN config URL
 }
 
 const decodeHexAddress = (hexAddress: string): string | null => {
@@ -79,8 +81,11 @@ export const useWalletStore = create<WalletState>()(
       isWalletModalOpen: false,
       balance: null,
       pendingTx: null,
+      lastVpnConfigUrl: null,
 
       setWalletState: (newState) => set((state) => ({ ...state, ...newState })),
+
+      setVpnConfigUrl: (url: string) => set({ lastVpnConfigUrl: url }),
 
       connect: async (walletName: string) => {
         try {
@@ -223,6 +228,7 @@ export const useWalletStore = create<WalletState>()(
           isWalletModalOpen: false,
           balance: null,
           pendingTx: null,
+          lastVpnConfigUrl: null,
         });
       },
 

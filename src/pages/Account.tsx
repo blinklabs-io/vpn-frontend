@@ -10,7 +10,7 @@ import {
 } from "../api/hooks";
 import VpnInstance from "../components/VpnInstance";
 import WalletModal from "../components/WalletModal";
-import { showSuccess, showError } from "../utils/toast";
+import { showSuccess, showError, showCopyableUrl } from "../utils/toast";
 import type { ClientInfo } from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide";
@@ -37,6 +37,8 @@ const Account = () => {
     balance,
     walletAddress,
     signAndSubmitTransaction,
+    enabledWallet,
+    setVpnConfigUrl,
   } = useWalletStore();
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
   const [selectedRegionOverride, setSelectedRegionOverride] =
@@ -338,6 +340,14 @@ const Account = () => {
         setIsConfigLoading(true);
         const s3Url = await clientProfileMutation.mutateAsync(instanceId);
 
+        setVpnConfigUrl(s3Url);
+
+        const isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+          );
+        const isVespr = enabledWallet?.toLowerCase() === "vespr";
+
         const link = document.createElement("a");
         link.href = s3Url;
         link.download = `vpn-config-${instanceId}.conf`;
@@ -345,7 +355,24 @@ const Account = () => {
         link.click();
         document.body.removeChild(link);
 
-        showSuccess("VPN config downloaded successfully!");
+        // Show appropriate message based on device/wallet
+        if (isMobile || isVespr) {
+          showCopyableUrl(
+            s3Url,
+            isMobile && isVespr
+              ? "If download didn't start, copy this URL and paste it into your mobile browser:"
+              : isMobile
+                ? "If download didn't start on mobile, copy this URL and paste it into your browser:"
+                : "If download didn't start in Vespr, copy this URL and paste it into your browser:",
+          );
+        } else {
+          showSuccess("VPN config downloaded successfully!");
+          // Still show the copyable URL toast after a brief delay as a fallback
+          setTimeout(() => {
+            showCopyableUrl(s3Url, "Need the download link again? Copy it here:");
+          }, 2000);
+        }
+
         setIsConfigLoading(false);
       } catch (error) {
         console.error("Failed to get config:", error);
