@@ -1,6 +1,7 @@
 import { useWalletStore } from "../stores/walletStore";
 import { useState } from "react";
 import LoadingOverlay from "./LoadingOverlay";
+import { truncateAddress } from "../utils/formatAddress";
 
 const FloatingWalletButton = () => {
   const { isConnected, stakeAddress, connect, disconnect } = useWalletStore();
@@ -32,9 +33,7 @@ const FloatingWalletButton = () => {
         <div className="bg-white rounded-lg shadow-lg border p-4 min-w-[200px]">
           <div className="text-xs text-gray-500 mb-2">Connected Wallet</div>
           <div className="text-sm font-medium text-gray-900 mb-3">
-            {stakeAddress
-              ? `${stakeAddress.slice(0, 8)}...${stakeAddress.slice(-8)}`
-              : "Connected"}
+            {stakeAddress ? truncateAddress(stakeAddress) : "Connected"}
           </div>
           <button
             onClick={disconnect}
