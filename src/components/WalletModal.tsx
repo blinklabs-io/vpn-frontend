@@ -1,5 +1,6 @@
 import WalletConnection from "./WalletConnection";
 import { useWalletStore } from "../stores/walletStore";
+import { truncateAddress } from "../utils/formatAddress";
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
                       Your Wallet
                     </h3>
                     <p className="text-white/70 text-md max-w-[15rem] py-1 truncate">
-                      {enabledWallet}: {walletAddress}
+                      {enabledWallet}: {truncateAddress(walletAddress)}
                     </p>
                   </div>
                 </div>
