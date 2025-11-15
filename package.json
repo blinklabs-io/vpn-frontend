@@ -48,7 +48,7 @@
     "jsdom": "^27.0.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.2",
-    "vite": "^7.1.12",
+    "vite": "^7.2.2",
     "vite-plugin-imagemin": "^0.6.1",
     "vitest": "^4.0.6"
   }
