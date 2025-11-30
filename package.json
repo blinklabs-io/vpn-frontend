@@ -49,6 +49,6 @@
     "typescript-eslint": "^8.46.2",
     "vite": "^7.2.2",
     "vite-plugin-imagemin": "^0.6.1",
-    "vitest": "^4.0.6"
+    "vitest": "^4.0.14"
   }
 }
