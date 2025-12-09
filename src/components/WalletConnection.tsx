@@ -330,7 +330,7 @@ const WalletConnection = ({
   const buttonClasses =
     variant === "white"
       ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base hover:bg-gray-100 transition-all"
-      : "flex py-2.5 px-10 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium z-40 cursor-pointer hover:bg-white/10 hover:border-white/30 transition-all";
+      : "flex py-1.5 px-5 justify-center items-center gap-2.5 rounded-full border-2 border-white bg-white/80 text-black font-medium z-40 cursor-pointer hover:bg-white/90 transition-all";
 
   if (showTitle || showDescription) {
     return (
