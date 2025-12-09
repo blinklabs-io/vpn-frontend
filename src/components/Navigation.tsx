@@ -1,17 +1,14 @@
 import { Link, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import nabuLogo from "/nabu-logo.svg";
-import cardanoIcon from "/cardano-icon.svg";
 import WalletConnection from "./WalletConnection";
 import { useWalletStore } from "../stores/walletStore";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const isAccountPage = location.pathname === "/account";
   const {
     isWalletModalOpen,
-    toggleWalletModal,
     closeWalletModal,
     reconnectWallet,
   } = useWalletStore();

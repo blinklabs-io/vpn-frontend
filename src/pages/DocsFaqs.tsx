@@ -413,7 +413,7 @@ const DocsFaqs = () => {
                 purchase your VPN profile.
               </p>
               <Link
-                to="/account"
+                to="/"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200"
               >
                 <svg

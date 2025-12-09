@@ -194,7 +194,7 @@ const WalletConnection = ({
     if (onConnected) {
       onConnected();
     } else {
-      navigate("/account");
+      navigate("/");
     }
   };
 
