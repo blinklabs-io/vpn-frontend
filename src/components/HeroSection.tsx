@@ -1,14 +1,11 @@
 import heroBackdrop from "/hero-backdrop.png";
 import heroCenter from "/hero-center-graphic.png";
-import { useNavigate } from "react-router";
 
 interface HeroSectionProps {
   onGetStarted: () => void;
 }
 
 const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
-  const navigate = useNavigate();
-
   return (
     <div className="flex flex-col items-center justify-end min-h-[calc(100vh-4rem)] px-4 relative z-20 pointer-events-none">
       <img
@@ -39,30 +36,12 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
             a fully transparent VPN powered by Cardano.
           </span>
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-6 sm:py-8">
+        <div className="flex items-center justify-center py-6 sm:py-8">
           <button
             onClick={onGetStarted}
             className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full bg-gray-100 backdrop-blur-sm text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-200 transition-colors cursor-pointer"
           >
             Get Started
-          </button>
-          <button
-            onClick={() => navigate("/privacy-policy")}
-            className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            Privacy Policy
-          </button>
-          <button
-            onClick={() => navigate("/how-it-works")}
-            className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            How It Works
-          </button>
-          <button
-            onClick={() => navigate("/docs-faqs")}
-            className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full border border-white/20 backdrop-blur-sm text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            FAQs
           </button>
         </div>
       </div>
