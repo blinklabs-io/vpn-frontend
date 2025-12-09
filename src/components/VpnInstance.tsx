@@ -62,7 +62,7 @@ const VpnInstance = ({
               }`}
             ></span>
           </div>
-          <p className="text-sm md:text-base">Expires: {expires}</p>
+          <p className="text-sm md:text-base">Time Remaining: {expires}</p>
         </div>
       </div>
 

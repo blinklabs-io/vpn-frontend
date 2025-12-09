@@ -11,7 +11,7 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
       <img
         src={heroBackdrop}
         alt="Hero Backdrop"
-        className="absolute top-0 sm:top-30 inset-0 w-full h-full object-cover sm:object-contain object-center sm:object-top z-10 pointer-events-none"
+        className="absolute inset-0 w-full h-full object-cover object-center z-10 pointer-events-none"
         loading="eager"
         fetchPriority="high"
       />
