@@ -89,7 +89,7 @@ const Navigation = () => {
             aria-label="Toggle navigation menu"
             aria-expanded={isMenuOpen}
           >
-            <img src="/hamburger.svg" alt="Open menu" className="w-6 h-6" />
+            <img src="/hamburger.svg" alt="Open menu" className="w-7 h-7" />
           </button>
         </div>
         {isMenuOpen && (
