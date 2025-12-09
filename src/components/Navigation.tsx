@@ -45,30 +45,58 @@ const Navigation = () => {
             className="w-[10.75rem] h-[2.5rem]"
           />
         </Link>
-        {isAccountPage ? (
-          <button
-            onClick={toggleWalletModal}
-            className={`md:hidden flex items-center justify-center cursor-pointer transition-all duration-200 ${
-              isWalletModalOpen
-                ? "w-12 h-12 rounded-full border-[1px] border-white"
-                : "w-12 h-12"
-            }`}
-          >
-            <div
-              className={`flex items-center justify-center bg-white rounded-full transition-all duration-200 ${
-                isWalletModalOpen ? "w-9 h-9" : "w-12 h-12"
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
+            <Link
+              to="/"
+              className="font-ibm-plex text-white font-bold text-sm hover:text-gray-200 transition-colors"
+            >
+              VPN Access
+            </Link>
+            <Link
+              to="/how-it-works"
+              className="font-ibm-plex text-white font-normal text-sm hover:text-gray-200 transition-colors"
+            >
+              How It Works
+            </Link>
+            <Link
+              to="/docs-faqs"
+              className="font-ibm-plex text-white font-normal text-sm hover:text-gray-200 transition-colors"
+            >
+              FAQs
+            </Link>
+            <Link
+              to="/privacy-policy"
+              className="font-ibm-plex text-white font-normal text-sm hover:text-gray-200 transition-colors"
+            >
+              Privacy Policy
+            </Link>
+          </div>
+          {isAccountPage ? (
+            <button
+              onClick={toggleWalletModal}
+              className={`md:hidden flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                isWalletModalOpen
+                  ? "w-12 h-12 rounded-full border-[1px] border-white"
+                  : "w-12 h-12"
               }`}
             >
-              <img
-                src={cardanoIcon}
-                alt="Cardano"
-                className="w-[1.875rem] h-[1.725rem] shrink-0"
-              />
-            </div>
-          </button>
-        ) : (
-          <WalletConnection />
-        )}
+              <div
+                className={`flex items-center justify-center bg-white rounded-full transition-all duration-200 ${
+                  isWalletModalOpen ? "w-9 h-9" : "w-12 h-12"
+                }`}
+              >
+                <img
+                  src={cardanoIcon}
+                  alt="Cardano"
+                  className="w-[1.875rem] h-[1.725rem] shrink-0"
+                />
+              </div>
+            </button>
+          ) : (
+            <WalletConnection />
+          )}
+        </div>
       </div>
     </nav>
   );
