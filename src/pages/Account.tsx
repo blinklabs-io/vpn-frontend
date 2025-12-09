@@ -185,6 +185,11 @@ const Account = () => {
     });
   }, [clientList]);
 
+  const normalizeDurationMs = (duration?: number) => {
+    if (!duration) return 0;
+    return duration < 1000 * 60 * 60 ? duration * 1000 : duration;
+  };
+
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const days = Math.floor(hours / 24);
@@ -440,27 +445,35 @@ const Account = () => {
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
     if (days > 0) {
-      return `${days}d ${hours}h`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else {
-      return `${minutes}m`;
+      return `${days}d ${hours}h ${minutes}m`;
     }
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+
+    return `${minutes}m`;
   };
 
-  const vpnInstances = useMemo(() => {
+  const vpnInstances = (() => {
+    const now = new Date();
+
     const activeInstances = dedupedClientList
       ? dedupedClientList.map((client: ClientInfo) => {
-          const isActive = new Date(client.expiration) > new Date();
+          const expirationTime = new Date(client.expiration).getTime();
+          const isActive = expirationTime > now.getTime();
+          const normalizedDurationMs =
+            normalizeDurationMs(client.duration) ||
+            Math.max(expirationTime - now.getTime(), 0) as number;
 
           return {
             id: client.id,
             region: client.region,
-            duration: formatTimeRemaining(client.expiration),
+            duration: formatDuration(normalizedDurationMs),
             status: isActive ? ("Active" as const) : ("Expired" as const),
-            expires: new Date(client.expiration).toLocaleDateString(),
+            expires: formatTimeRemaining(client.expiration),
             expirationDate: new Date(client.expiration),
-            originalDuration: client.duration || 0,
+            originalDuration: normalizedDurationMs,
           };
         })
       : [];
@@ -486,7 +499,10 @@ const Account = () => {
     const allInstances = [...pendingInstances, ...activeInstances];
 
     return sortVpnInstances(allInstances, filterOption.value as SortOption);
-  }, [dedupedClientList, pendingClientsFromStorage, filterOption]);
+  })();
+
+  const hasActiveInstance =
+    vpnInstances.findIndex((instance) => instance.status === "Active") !== -1;
 
   return (
     <TooltipGuide
@@ -495,7 +511,7 @@ const Account = () => {
       stepDuration={4000}
     >
       {(showTooltips) => (
-        <div className="min-h-screen min-w-screen flex flex-col items-center bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16 pb-16">
+        <div className="min-h-screen min-w-screen flex flex-col items-center bg-[linear-gradient(180deg,rgba(28,36,110,0.6)_0%,rgba(4,6,23,0.6)_25%,rgba(4,6,23,0.85)_100%),url('/hero-backdrop.png')] bg-cover bg-top bg-no-repeat pt-16 pb-16">
           <LoadingOverlay
             isVisible={isPurchaseLoading || isConfigLoading}
             messageTop={
@@ -514,15 +530,46 @@ const Account = () => {
 
             {/* Hero */}
             <div className="flex flex-col items-center text-center gap-4 mt-16">
-              <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
-                Private, account-free VPN access
-              </h1>
-              <p className="font-ibm-plex font-normal text-[16px] leading-[100%] tracking-[0] text-center text-[#E1B8FF]">
-                Decentralized. No tracking. No subscriptions.
-              </p>
-              <p className="text-lg font-semibold mt-2">
-                Get NABU VPN Access Now
-              </p>
+              {isConnected && hasActiveInstance ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
+                      Connected &amp; Secure
+                    </h1>
+                    <img
+                      src="/checks.svg"
+                      alt="Connected and secure"
+                      className="h-8 w-8"
+                    />
+                  </div>
+                  <p className="font-ibm-plex font-normal text-[16px] leading-[120%] tracking-[0] text-center text-[#E1B8FF]">
+                    You're currently protected. Add more connections or renew to
+                    extend service.
+                  </p>
+                </>
+              ) : isConnected ? (
+                <>
+                  <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
+                    You’re no longer protected.
+                  </h1>
+                  <p className="font-ibm-plex font-normal text-[16px] leading-[120%] tracking-[0] text-center text-[#E1B8FF]">
+                    Restore your encrypted connection in seconds and keep your activity
+                    hidden.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
+                    Private, account-free VPN access
+                  </h1>
+                  <p className="font-ibm-plex font-normal text-[16px] leading-[100%] tracking-[0] text-center text-[#E1B8FF]">
+                    Decentralized. No tracking. No subscriptions.
+                  </p>
+                  <p className="text-lg font-semibold mt-2">
+                    Get NABU VPN Access Now
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Purchase cards */}
@@ -611,8 +658,8 @@ const Account = () => {
 
             {/* Instances */}
             <div className="bg-white/5 rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-5 md:p-6">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-lg font-bold">VPN Instances</p>
+              <div className="flex justify-between items-center">
+                <p className="font-exo-2 font-black text-sm leading-[100%] tracking-[0] text-center">No VPN Instances Yet</p>
                 {isConnected && vpnInstances.length > 0 && (
                   <InstanceFilter
                     value={filterOption}
@@ -623,12 +670,8 @@ const Account = () => {
                 )}
               </div>
 
-              {!isConnected ? (
-                <p className="text-white/60 text-sm">
-                  Connect your wallet to view VPN instances.
-                </p>
-              ) : isLoadingClients ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+              {isLoadingClients ? (
+                <div className="grid grid-cols-1 gap-4 w-full">
                   {[1, 2, 3, 4].map((index) => (
                     <div
                       key={index}
@@ -656,7 +699,7 @@ const Account = () => {
                 </div>
               ) : vpnInstances.length > 0 ? (
                 <div
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
+                  className="grid grid-cols-1 gap-4 w-full mt-4"
                   {...(showTooltips && {
                     "data-tooltip-id": "instances-tooltip",
                   })}
@@ -685,9 +728,7 @@ const Account = () => {
                     />
                   ))}
                 </div>
-              ) : (
-                <p className="text-white/60 text-sm">No VPN instances found.</p>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
