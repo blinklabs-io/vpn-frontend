@@ -9,7 +9,6 @@ import {
   useRenewVpn,
 } from "../api/hooks";
 import VpnInstance from "../components/VpnInstance";
-import WalletModal from "../components/WalletModal";
 import { showSuccess, showError, showCopyableUrl } from "../utils/toast";
 import type { ClientInfo } from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
@@ -31,16 +30,11 @@ import {
 const Account = () => {
   const {
     isConnected,
-    disconnect,
-    closeWalletModal,
-    isWalletModalOpen,
-    balance,
     walletAddress,
     signAndSubmitTransaction,
     enabledWallet,
     setVpnConfigUrl,
   } = useWalletStore();
-  const [selectedDuration, setSelectedDuration] = useState<number>(0);
   const [selectedRegionOverride, setSelectedRegionOverride] =
     useState<string | null>(null);
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
@@ -245,12 +239,6 @@ const Account = () => {
       }))
     : [];
 
-  const resolvedSelectedDuration =
-    selectedDuration !== 0 &&
-    durationOptions.some((option) => option.value === selectedDuration)
-      ? selectedDuration
-      : durationOptions[0]?.value ?? 0;
-
   const regions = Array.isArray(refData?.regions) ? refData.regions : [];
   const resolvedSelectedRegion =
     selectedRegionOverride && regions.includes(selectedRegionOverride)
@@ -301,17 +289,21 @@ const Account = () => {
     return () => window.clearTimeout(timeoutId);
   }, [dedupedClientList, pendingClientsFromStorage]);
 
-  const selectedOption = durationOptions.find(
-    (option: { value: number }) => option.value === resolvedSelectedDuration,
-  );
+  const selectedOption = durationOptions[0];
 
-  const handlePurchase = () => {
+  const handlePurchase = (durationOverride?: number) => {
     if (!walletAddress) {
       showError("No wallet address available");
       return;
     }
 
-    if (!selectedOption) {
+    const targetDuration =
+      durationOverride ?? selectedOption?.value ?? durationOptions[0]?.value ?? 0;
+    const option = durationOptions.find(
+      (opt: { value: number }) => opt.value === targetDuration,
+    );
+
+    if (!option) {
       showError("Please select a duration");
       return;
     }
@@ -326,8 +318,8 @@ const Account = () => {
 
     const payload = {
       paymentAddress: walletAddress,
-      duration: resolvedSelectedDuration,
-      price: selectedOption.price,
+      duration: targetDuration,
+      price: option.price,
       region: resolvedSelectedRegion,
     };
 
@@ -432,11 +424,6 @@ const Account = () => {
     setSelectedRenewDuration(null);
   };
 
-  const handleDisconnect = () => {
-    disconnect();
-    closeWalletModal();
-  };
-
   const formatTimeRemaining = (expirationDate: string) => {
     const now = new Date();
     const expiration = new Date(expirationDate);
@@ -508,159 +495,124 @@ const Account = () => {
       stepDuration={4000}
     >
       {(showTooltips) => (
-        <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
-          <div className="flex flex-col items-center justify-center pt-14 gap-4 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-3 md:px-8">
-            <LoadingOverlay
-              isVisible={isPurchaseLoading || isConfigLoading}
-              messageTop={
-                isPurchaseLoading
-                  ? "Awaiting Transaction Confirmation"
-                  : "Preparing VPN Configuration"
-              }
-              messageBottom={
-                isPurchaseLoading
-                  ? "Processing Purchase"
-                  : "Downloading Config File"
-              }
-            />
+        <div className="min-h-screen min-w-screen flex flex-col items-center bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16 pb-16">
+          <LoadingOverlay
+            isVisible={isPurchaseLoading || isConfigLoading}
+            messageTop={
+              isPurchaseLoading
+                ? "Awaiting Transaction Confirmation"
+                : "Preparing VPN Configuration"
+            }
+            messageBottom={
+              isPurchaseLoading
+                ? "Processing Purchase"
+                : "Downloading Config File"
+            }
+          />
 
-            {/* VPN PURCHASE SECTION */}
-            <div className="flex flex-col gap-4 w-full md:flex-row md:gap-8 md:items-start">
-              {/* VPN PURCHASE OPTIONS */}
-              <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
-                <div className="flex justify-between items-start gap-3 pb-4 w-full">
-                  <div className="flex flex-col justify-center items-start gap-3">
-                    <p className="font-exo-2 text-white text-lg font-bold">
-                      Buy VPN Access
-                    </p>
-                  </div>
-                  <div className="flex flex-col justify-center items-end gap-3">
-                    <p className="font-light text-white text-sm">
-                      Available Balance
-                    </p>
-                    <p className="font-light text-white text-sm">
-                      <span className="font-bold text-2xl">
-                        {balance ? balance : "0.00"}
-                      </span>{" "}
-                      ADA
-                    </p>
-                  </div>
-                </div>
+          <div className="w-full max-w-[1200px] px-4 md:px-6 text-white flex flex-col gap-8">
 
-                {/* Duration Selection */}
-                <div
-                  className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]"
-                  {...(showTooltips && {
-                    "data-tooltip-id": "duration-tooltip",
-                  })}
-                >
-                  <div className="flex flex-col justify-center items-start gap-2 w-full">
-                    {Array.isArray(refData?.prices) &&
-                    refData.prices.length > 0 ? (
-                      <>
-                        <div className="flex flex-wrap items-center gap-2 w-full">
-                          {durationOptions.map(
-                            (option: {
-                              value: number;
-                              label: string;
-                              timeDisplay: string;
-                            }) => (
-                              <button
-                                key={option.value}
-                                className={`flex items-center justify-center gap-2.5 flex-1 min-w-0 rounded-sm bg-white text-black py-1.5 px-2 cursor-pointer whitespace-nowrap text-sm md:text-md md:px-3 ${
-                                  resolvedSelectedDuration === option.value
-                                    ? "opacity-100"
-                                    : "opacity-50"
-                                }`}
-                                onClick={() =>
-                                  setSelectedDuration(option.value)
-                                }
-                              >
-                                {option.label}
-                              </button>
-                            ),
-                          )}
+            {/* Hero */}
+            <div className="flex flex-col items-center text-center gap-4 mt-16">
+              <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
+                Private, account-free VPN access
+              </h1>
+              <p className="font-ibm-plex font-normal text-[16px] leading-[100%] tracking-[0] text-center text-[#E1B8FF]">
+                Decentralized. No tracking. No subscriptions.
+              </p>
+              <p className="text-lg font-semibold mt-2">
+                Get NABU VPN Access Now
+              </p>
+            </div>
+
+            {/* Purchase cards */}
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-wrap justify-center gap-4">
+                {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
+                  durationOptions.map(
+                    (option: {
+                      value: number;
+                      label: string;
+                      timeDisplay: string;
+                      price: number;
+                    }) => (
+                      <div
+                        key={option.value}
+                        className="w-full sm:w-[320px] rounded-2xl p-[1px] bg-[linear-gradient(180deg,#9400FF_0%,rgba(0,0,0,0.5)_70%,rgba(0,0,0,1)_100%)] overflow-hidden"
+                        {...(showTooltips && {
+                          "data-tooltip-id": "duration-tooltip",
+                        })}
+                      >
+                        <div className="h-full w-full rounded-2xl bg-[linear-gradient(180deg,#9400FF_0%,rgba(0,0,0,0.5)_70%,rgba(0,0,0,1)_100%)] bg-clip-padding border border-[#FFFFFF40] shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-6 flex flex-col gap-3">
+                          <div className="text-center">
+                            <p className="text-sm font-semibold opacity-90">
+                              {option.label}
+                            </p>
+                            <p className="text-3xl font-extrabold mt-1">
+                              {formatPrice(option.price)}{" "}
+                              <span className="text-base font-semibold">ADA</span>
+                            </p>
+                            <p className="text-xs text-white/80 mt-1">
+                              + 1.7 ADA setup fee
+                            </p>
+                          </div>
+                          <button
+                            className={`mt-2 w-full rounded-full py-2 text-black font-semibold bg-white transition-all cursor-pointer ${
+                              signupMutation.isPending || !isConnected
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:scale-[1.01]"
+                            }`}
+                            onClick={() => handlePurchase(option.value)}
+                            disabled={signupMutation.isPending || !isConnected}
+                            {...(showTooltips && {
+                              "data-tooltip-id": "purchase-tooltip",
+                            })}
+                          >
+                            {signupMutation.isPending
+                              ? "Processing..."
+                              : !isConnected
+                                ? "Connect Wallet"
+                                : "Buy Now"}
+                          </button>
                         </div>
-                        <div
-                          className="text-lg flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-3 px-2.5"
-                          {...(showTooltips && {
-                            "data-tooltip-id": "price-tooltip",
-                          })}
-                        >
-                          {selectedOption
-                            ? `${formatPrice(selectedOption.price)} ADA + 1.7 ADA setup fee`
-                            : ""}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="h-20 w-full bg-gray-300/20 rounded animate-pulse"></div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Region Selection and Purchase */}
-                <div className="flex flex-col gap-3 w-full md:flex-row md:gap-2 md:justify-between md:items-center">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-white text-lg">Region:</p>
-                    {Array.isArray(refData?.regions) &&
-                    refData.regions.length > 0 ? (
-                      <RegionSelect
-                        value={resolvedSelectedRegion}
-                        onChange={setSelectedRegionOverride}
-                        regions={refData.regions}
-                        showTooltips={showTooltips}
-                      />
-                    ) : (
-                      <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
-                    )}
-                  </div>
-                  {Array.isArray(refData?.prices) &&
-                  refData.prices.length > 0 ? (
-                    <button
-                      className={`flex items-center justify-center gap-2.5 rounded-md py-2 px-6 backdrop-blur-sm transition-all duration-200 w-full md:w-auto ${
-                        signupMutation.isPending || !isConnected
-                          ? "opacity-50 cursor-not-allowed bg-gray-500"
-                          : "cursor-pointer bg-[#9400FF] hover:bg-[#7A00CC] hover:scale-102"
-                      }`}
-                      onClick={handlePurchase}
-                      disabled={signupMutation.isPending || !isConnected}
-                      {...(showTooltips && {
-                        "data-tooltip-id": "purchase-tooltip",
-                      })}
-                    >
-                      <p className="font-medium text-white text-md">
-                        {signupMutation.isPending
-                          ? "Processing..."
-                          : !isConnected
-                            ? "Connect Wallet"
-                            : `Purchase VPN`}
-                      </p>
-                    </button>
-                  ) : (
-                    <div className="h-8 w-full md:w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
-                  )}
-                </div>
+                      </div>
+                    ),
+                  )
+                ) : (
+                  <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                )}
               </div>
 
-              {/* WALLET SECTION */}
-              <div
-                className={`flex flex-col items-center justify-center w-full md:flex-1 ${
-                  !isConnected
-                    ? "flex"
-                    : !isWalletModalOpen
-                      ? "hidden md:flex"
-                      : "flex"
-                }`}
-                {...(showTooltips && { "data-tooltip-id": "wallet-tooltip" })}
-              >
-                <WalletModal isOpen={true} onDisconnect={handleDisconnect} />
+              <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 justify-center">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-white text-base">Region:</p>
+                  {Array.isArray(refData?.regions) &&
+                  refData.regions.length > 0 ? (
+                    <RegionSelect
+                      value={resolvedSelectedRegion}
+                      onChange={setSelectedRegionOverride}
+                      regions={refData.regions}
+                      showTooltips={showTooltips}
+                    />
+                  ) : (
+                    <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
+                  )}
+                </div>
+                {selectedOption && (
+                  <div
+                    className="text-sm text-white/80 px-3 py-2 rounded-full bg-white/10"
+                    {...(showTooltips && { "data-tooltip-id": "price-tooltip" })}
+                  >
+                    {formatPrice(selectedOption.price)} ADA + 1.7 ADA setup fee
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* VPN INSTANCES SECTION */}
-            <div className="flex flex-col justify-center items-start gap-3 w-full mt-4 md:mt-0">
-              <div className="flex justify-between items-center w-full">
-                <p className="text-white text-lg font-bold">VPN Instances</p>
+            {/* Instances */}
+            <div className="bg-white/5 rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-5 md:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-lg font-bold">VPN Instances</p>
                 {isConnected && vpnInstances.length > 0 && (
                   <InstanceFilter
                     value={filterOption}
@@ -670,75 +622,72 @@ const Account = () => {
                   />
                 )}
               </div>
-              <div className="w-full">
-                {!isConnected ? (
-                  <p className="text-white/60 text-sm">
-                    Connect your wallet to view VPN instances
-                  </p>
-                ) : isLoadingClients ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    {[1, 2, 3, 4].map((index) => (
-                      <div
-                        key={index}
-                        className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]"
-                      >
-                        <div className="flex flex-col items-start gap-1 w-full">
-                          <div className="flex justify-between items-start w-full gap-2">
-                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
-                          </div>
-                          <div className="flex justify-between items-start w-full">
-                            <div className="flex items-center gap-2">
-                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
-                              <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
-                            </div>
-                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                          </div>
+
+              {!isConnected ? (
+                <p className="text-white/60 text-sm">
+                  Connect your wallet to view VPN instances.
+                </p>
+              ) : isLoadingClients ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  {[1, 2, 3, 4].map((index) => (
+                    <div
+                      key={index}
+                      className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]"
+                    >
+                      <div className="flex flex-col items-start gap-1 w-full">
+                        <div className="flex justify-between items-start w-full gap-2">
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
                         </div>
-                        <div className="flex justify-between items-center w-full">
-                          <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
-                          <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                        <div className="flex justify-between items-start w-full">
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
+                            <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+                          </div>
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : vpnInstances.length > 0 ? (
-                  <div
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
-                    {...(showTooltips && {
-                      "data-tooltip-id": "instances-tooltip",
-                    })}
-                  >
-                    {vpnInstances.map((instance) => (
-                      <VpnInstance
-                        key={instance.id}
-                        region={instance.region}
-                        duration={instance.duration}
-                        status={instance.status}
-                        expires={instance.expires}
-                        onAction={() =>
-                          handleAction(
-                            instance.id,
-                            instance.status === "Active"
-                              ? "Get Config"
-                              : "Renew Access",
-                          )
-                        }
-                        isRenewExpanded={renewingInstanceId === instance.id}
-                        renewDurationOptions={durationOptions}
-                        selectedRenewDuration={selectedRenewDuration}
-                        onSelectRenewDuration={setSelectedRenewDuration}
-                        onConfirmRenewal={handleConfirmRenewal}
-                        onCancelRenewal={handleCancelRenewal}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-white/60 text-sm">
-                    No VPN instances found
-                  </p>
-                )}
-              </div>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
+                        <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : vpnInstances.length > 0 ? (
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
+                  {...(showTooltips && {
+                    "data-tooltip-id": "instances-tooltip",
+                  })}
+                >
+                  {vpnInstances.map((instance) => (
+                    <VpnInstance
+                      key={instance.id}
+                      region={instance.region}
+                      duration={instance.duration}
+                      status={instance.status}
+                      expires={instance.expires}
+                      onAction={() =>
+                        handleAction(
+                          instance.id,
+                          instance.status === "Active"
+                            ? "Get Config"
+                            : "Renew Access",
+                        )
+                      }
+                      isRenewExpanded={renewingInstanceId === instance.id}
+                      renewDurationOptions={durationOptions}
+                      selectedRenewDuration={selectedRenewDuration}
+                      onSelectRenewDuration={setSelectedRenewDuration}
+                      onConfirmRenewal={handleConfirmRenewal}
+                      onCancelRenewal={handleCancelRenewal}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/60 text-sm">No VPN instances found.</p>
+              )}
             </div>
           </div>
         </div>

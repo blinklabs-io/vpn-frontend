@@ -6,7 +6,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    navigate("/account");
+    navigate("/");
   };
 
   return (
