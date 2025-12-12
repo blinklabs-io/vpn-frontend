@@ -11,6 +11,7 @@ interface WalletConnectionProps {
   listLayout?: "dropdown" | "flex";
   initiallyOpen?: boolean;
   onConnected?: () => void;
+  theme?: "dark" | "light";
 }
 
 const SUPPORTED_WALLETS = [
@@ -140,6 +141,7 @@ const WalletConnection = ({
   listLayout = "dropdown",
   initiallyOpen = false,
   onConnected,
+  theme = "dark",
 }: WalletConnectionProps) => {
   const { isConnected, connect, disconnect } = useWalletStore();
   const navigate = useNavigate();
@@ -156,6 +158,15 @@ const WalletConnection = ({
     variant === "white"
       ? "flex py-3 px-8 min-w-[150px] justify-center items-center gap-2.5 rounded-md bg-white text-black font-semibold cursor-pointer text-sm hover:bg-gray-100 transition-all"
       : "flex py-1.5 px-5 min-w-[150px] justify-center items-center gap-2.5 rounded-full border-2 border-white bg-white/80 text-black font-semibold text-sm z-40 cursor-pointer hover:bg-white/90 transition-all";
+  const isLightTheme = theme === "light";
+  const headingTextClass = isLightTheme ? "text-gray-900" : "text-white";
+  const subTextClass = isLightTheme ? "text-gray-600" : "text-white/70";
+  const statusTextClass = isLightTheme
+    ? "mb-2 text-sm text-gray-700"
+    : "mb-2 text-sm text-white/80";
+  const closeButtonClasses = isLightTheme
+    ? "absolute bottom-0 right-0 text-sm text-gray-500 transition-colors hover:text-gray-800 disabled:cursor-not-allowed disabled:text-gray-300 mt-auto cursor-pointer px-4 py-3 z-50 hover:bg-gray-100 rounded"
+    : "absolute bottom-0 right-0 text-sm text-white/70 transition-colors hover:text-white disabled:cursor-not-allowed disabled:text-white/40 mt-auto cursor-pointer px-4 py-3 z-50 hover:bg-white/5 rounded";
 
   // Helper function to surface connection errors with deduplication
   const showErrorOnce = (message: string) => {
@@ -290,8 +301,10 @@ const WalletConnection = ({
   }, [isDropdownLayout]);
 
   const renderConnectionFeedback = (
-    errorClasses = "mb-3 rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200",
-    statusClasses = "mb-2 text-sm text-white/80",
+    errorClasses = isLightTheme
+      ? "mb-3 rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700"
+      : "mb-3 rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200",
+    statusClasses = statusTextClass,
   ) => (
     <>
       {connectionError && (
@@ -346,7 +359,7 @@ const WalletConnection = ({
 
             <div className="flex-1">
               {showTitle && (
-                <h1 className="text-white text-2xl md:text-3xl font-bold font-exo-2 mb-4">
+                <h1 className={`${headingTextClass} text-2xl md:text-3xl font-bold font-exo-2 mb-4`}>
                   Connect Your Wallet to Begin
                 </h1>
               )}
@@ -354,7 +367,7 @@ const WalletConnection = ({
           </div>
 
           {showDescription && (
-            <p className="text-white text-base md:text-lg font-light leading-relaxed mb-8">
+            <p className={`${headingTextClass} text-base md:text-lg font-light leading-relaxed mb-8`}>
               Any descriptive copy that can explain how this wallet linking
               system works.
             </p>
@@ -374,8 +387,10 @@ const WalletConnection = ({
                 {showWalletList && (
                   <div className="absolute top-full left-0 mt-2 backdrop-blur-sm p-4 z-50 min-w-[200px]">
                     {renderConnectionFeedback(
-                      "mb-3 rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200",
-                      "mb-2 text-sm text-white/80",
+                      isLightTheme
+                        ? "mb-3 rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700"
+                        : "mb-3 rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200",
+                      statusTextClass,
                     )}
                     {renderWalletList()}
                   </div>
@@ -392,10 +407,10 @@ const WalletConnection = ({
                     className="h-10 w-10 brightness-0 invert"
                   />
                   <div className="flex flex-col">
-                    <h3 className="text-white text-lg font-medium">
+                    <h3 className={`${headingTextClass} text-lg font-medium`}>
                       Connect Wallet
                     </h3>
-                    <p className="text-white/70 text-sm md:text-base">
+                    <p className={`${subTextClass} text-sm md:text-base`}>
                       Connect your wallet to purchase VPN access
                     </p>
                   </div>
@@ -413,15 +428,17 @@ const WalletConnection = ({
                 className={`${flexContainerBaseClasses} items-center justify-start`}
               >
                 {renderConnectionFeedback(
-                  "rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200 max-w-[540px] w-full",
-                  "text-sm text-white/80",
+                isLightTheme
+                  ? "rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700 max-w-[540px] w-full"
+                  : "rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200 max-w-[540px] w-full",
+                statusTextClass,
                 )}
                 {renderWalletList()}
                 <button
                   type="button"
                   onClick={closeWalletList}
                   disabled={isConnecting}
-                  className="absolute bottom-0 right-0 text-sm text-white/70 transition-colors hover:text-white disabled:cursor-not-allowed disabled:text-white/40 mt-auto cursor-pointer px-4 py-3 z-50 hover:bg-white/5 rounded"
+                  className={closeButtonClasses}
                 >
                   Close
                 </button>
@@ -463,7 +480,7 @@ const WalletConnection = ({
         type="button"
         onClick={closeWalletList}
         disabled={isConnecting}
-        className="absolute bottom-0 right-0 text-sm text-white/70 transition-colors hover:text-white disabled:cursor-not-allowed disabled:text-white/40 cursor-pointer px-4 py-3 z-50 hover:bg-white/5 rounded"
+        className={closeButtonClasses}
       >
         Close
       </button>
@@ -480,8 +497,8 @@ const WalletConnection = ({
           className="h-10 w-10 brightness-0 invert"
         />
         <div className="flex flex-col">
-          <h3 className="text-white text-lg font-medium">Connect Wallet</h3>
-          <p className="text-white/70 text-sm md:text-base">
+        <h3 className={`${headingTextClass} text-lg font-medium`}>Connect Wallet</h3>
+        <p className={`${subTextClass} text-sm md:text-base`}>
             Connect your wallet to purchase VPN access
           </p>
         </div>

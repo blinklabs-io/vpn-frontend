@@ -669,9 +669,15 @@ const Account = () => {
             )}
 
             {/* Instances */}
-            <div className="md:flex bg-white/5 rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-8 md:p-6">
-              <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-3 w-full">
-                <p className="flex-1 flex items-center font-exo-2 font-black text-sm leading-[100%] tracking-[0] text-left">
+            <div className="bg-[#00000080] rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-4 md:p-6">
+              <div className="flex flex-row items-center justify-between gap-3 w-full">
+                <p
+                  className={`flex-1 flex items-center font-exo-2 font-black text-sm leading-[100%] tracking-[0] ${
+                    vpnInstances.length > 0 && isConnected
+                      ? "justify-start text-left"
+                      : "justify-center text-center"
+                  } md:justify-start md:text-left`}
+                >
                   <span className="md:hidden">
                     {(vpnInstances.length > 0 && isConnected)
                       ? "VPN Instances"
