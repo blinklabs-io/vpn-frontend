@@ -153,6 +153,10 @@ const WalletConnection = ({
   const isDropdownLayout = listLayout === "dropdown";
   const flexContainerBaseClasses =
     "relative mx-auto flex w-full max-w-[600px] flex-col min-h-[150px]";
+  const buttonClasses =
+    variant === "white"
+      ? "flex py-3 px-8 min-w-[150px] justify-center items-center gap-2.5 rounded-md bg-white text-black font-semibold cursor-pointer text-sm hover:bg-gray-100 transition-all"
+      : "flex py-1.5 px-5 min-w-[150px] justify-center items-center gap-2.5 rounded-full border-2 border-white bg-white/80 text-black font-semibold text-sm z-40 cursor-pointer hover:bg-white/90 transition-all";
 
   // Helper function to show error with deduplication
   const showErrorOnce = (message: string) => {
@@ -319,18 +323,13 @@ const WalletConnection = ({
       <div className="flex items-center space-x-4">
         <button
           onClick={disconnect}
-          className="flex py-2.5 px-6 justify-center items-center gap-2.5 self-stretch rounded-md border border-white/20 backdrop-blur-sm text-white font-medium cursor-pointer"
+          className={buttonClasses}
         >
           Disconnect
         </button>
       </div>
     );
   }
-
-  const buttonClasses =
-    variant === "white"
-      ? "flex py-3 px-8 justify-center items-center gap-2.5 rounded-md bg-white text-black font-medium cursor-pointer text-lg md:text-base hover:bg-gray-100 transition-all"
-      : "flex py-1.5 px-5 justify-center items-center gap-2.5 rounded-full border-2 border-white bg-white/80 text-black font-medium z-40 cursor-pointer hover:bg-white/90 transition-all";
 
   if (showTitle || showDescription) {
     return (
