@@ -18,9 +18,9 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
       <img
         src={heroCenter}
         alt="Hero Center"
-        className="absolute top-1/4 sm:top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-36 sm:w-[16.375rem] sm:h-[11.9735rem] md:w-[27.4375rem] md:h-[20.0625rem] object-contain z-20 flex-shrink-0 pointer-events-none"
+        className="absolute top-1/4 sm:top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[clamp(11rem,45vw,27.5rem)] max-w-[90vw] h-auto aspect-[439/321] object-contain z-20 flex-shrink-0 pointer-events-none"
         loading="eager"
-        sizes="(max-width: 640px) 192px, (max-width: 768px) 262px, 439px"
+        sizes="(max-width: 640px) 70vw, (max-width: 1024px) 50vw, 30vw"
         fetchPriority="high"
       />
       <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 px-4 py-2 z-20 max-w-6xl mx-auto pointer-events-auto">
