@@ -41,6 +41,7 @@ const Account = () => {
     txCbor: string;
     clientId: string;
     durationLabel: string;
+    durationMs: number;
     region: string;
   } | null>(null);
   const [errorModal, setErrorModal] = useState<string | null>(null);
@@ -245,8 +246,6 @@ const Account = () => {
     return () => window.clearTimeout(timeoutId);
   }, [dedupedClientList, pendingClientsFromStorage]);
 
-  const selectedOption = durationOptions[0];
-
   const handlePurchase = async (durationOverride?: number) => {
     if (!walletAddress) {
       setErrorModal("No wallet address available");
@@ -254,10 +253,14 @@ const Account = () => {
     }
 
     const targetDuration =
-      durationOverride ?? selectedOption?.value ?? durationOptions[0]?.value ?? 0;
-    const option = durationOptions.find(
-      (opt: { value: number }) => opt.value === targetDuration,
-    );
+      durationOverride ??
+      selectedDurationOption?.value ??
+      durationOptions[0]?.value ??
+      0;
+    const option =
+      durationOptions.find(
+        (opt: { value: number }) => opt.value === targetDuration,
+      ) ?? selectedDurationOption ?? durationOptions[0];
 
     if (!option) {
       setErrorModal("Please select a duration");
@@ -284,6 +287,7 @@ const Account = () => {
         type: "purchase",
         txCbor: data.txCbor,
         clientId: data.clientId,
+        durationMs: targetDuration,
         durationLabel: formatDuration(targetDuration),
         region: payloadRegion,
       });
@@ -337,7 +341,7 @@ const Account = () => {
       const pendingClient = {
         id: pendingTx.clientId,
         region: pendingTx.region,
-        duration: pendingTx.durationLabel,
+        duration: pendingTx.durationMs,
         purchaseTime: new Date().toISOString(),
       };
       addPendingTransaction(pendingClient);
@@ -397,6 +401,7 @@ const Account = () => {
         type: "renew",
         txCbor: data.txCbor,
         clientId: renewingInstanceId,
+        durationMs: selectedRenewDuration,
         durationLabel: formatDuration(selectedRenewDuration),
         region: payloadRegion,
       });
@@ -465,13 +470,13 @@ const Account = () => {
       .map((pending) => ({
         id: pending.id,
         region: pending.region,
-        duration: pending.duration,
+        duration: formatDuration(pending.duration),
         status: "Pending" as const,
         expires: "Setting up...",
         expirationDate: new Date(
           new Date(pending.purchaseTime).getTime() + 24 * 60 * 60 * 1000,
         ),
-        originalDuration: 0,
+        originalDuration: pending.duration,
       }));
 
     const allInstances = [...pendingInstances, ...activeInstances];
@@ -487,6 +492,8 @@ const Account = () => {
     vpnInstances.findIndex((instance) => instance.status === "Active") !== -1;
   const shouldShowPurchaseCards =
     !isConnected || !hasAnyInstances || showAdditionalPurchaseCards;
+  const isHeroLoading = isLoadingClients;
+  const isInstancesLoading = isLoadingClients;
 
   return (
     <TooltipGuide
@@ -496,7 +503,7 @@ const Account = () => {
     >
       {(showTooltips) => (
         <div
-          className="min-h-screen w-full overflow-x-hidden flex flex-col items-center bg-black/30 pt-16 pb-16"
+          className="min-h-screen w-full overflow-x-hidden flex flex-col items-center  pt-16 pb-16"
         >
           <LoadingOverlay
             isVisible={isPurchaseLoading || isConfigLoading}
@@ -550,7 +557,13 @@ const Account = () => {
 
             {/* Hero */}
             <div className="flex flex-col items-center text-center gap-4 mt-16">
-              {!isConnected || !hasAnyInstances ? (
+              {isHeroLoading ? (
+                <>
+                  <div className="h-8 w-64 rounded-lg bg-white/20 animate-pulse md:w-80" />
+                  <div className="h-4 w-72 rounded-lg bg-white/10 animate-pulse md:w-96" />
+                  <div className="h-6 w-56 rounded-lg bg-white/20 animate-pulse md:w-72" />
+                </>
+              ) : !isConnected || !hasAnyInstances ? (
                 <>
                   <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
                     Private, account-free VPN access
@@ -663,7 +676,17 @@ const Account = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                  <>
+                    {/* Mobile loading skeleton */}
+                    <div className="flex md:hidden">
+                      <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                    </div>
+                    {/* Desktop loading skeletons */}
+                    <div className="hidden md:flex flex-wrap justify-center gap-5">
+                      <div className="w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                      <div className="w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -671,25 +694,29 @@ const Account = () => {
             {/* Instances */}
             <div className="bg-[#00000080] rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-4 md:p-6">
               <div className="flex flex-row items-center justify-between gap-3 w-full">
-                <p
-                  className={`flex-1 flex items-center font-exo-2 font-black text-sm leading-[100%] tracking-[0] ${
-                    vpnInstances.length > 0 && isConnected
-                      ? "justify-start text-left"
-                      : "justify-center text-center"
-                  } md:justify-start md:text-left`}
-                >
-                  <span className="md:hidden">
-                    {(vpnInstances.length > 0 && isConnected)
-                      ? "VPN Instances"
-                      : "No VPN Instances or Connected Wallet Found"}
-                  </span>
-                  <span className="hidden md:inline">
-                    {(vpnInstances.length > 0 && isConnected)
-                      ? "VPN Instances"
-                      : "No VPN Instances Yet"}
-                  </span>
-                </p>
-                {isConnected && vpnInstances.length > 0 && (
+                {isInstancesLoading ? (
+                  <div className="flex-1 h-6 rounded bg-white/10 animate-pulse" />
+                ) : (
+                  <p
+                    className={`flex-1 flex items-center font-exo-2 font-black text-sm leading-[100%] tracking-[0] ${
+                      vpnInstances.length > 0 && isConnected
+                        ? "justify-start text-left"
+                        : "justify-center text-center"
+                    } md:justify-start md:text-left`}
+                  >
+                    <span className="md:hidden">
+                      {(vpnInstances.length > 0 && isConnected)
+                        ? "VPN Instances"
+                        : "No VPN Instances or Connected Wallet Found"}
+                    </span>
+                    <span className="hidden md:inline">
+                      {(vpnInstances.length > 0 && isConnected)
+                        ? "VPN Instances"
+                        : "No VPN Instances Yet"}
+                    </span>
+                  </p>
+                )}
+                {!isInstancesLoading && isConnected && vpnInstances.length > 0 && (
                   <button
                     className="flex-shrink-0 rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01]"
                     onClick={() => setShowAdditionalPurchaseCards(true)}

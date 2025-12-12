@@ -43,7 +43,7 @@ const Navigation = () => {
   return (
     <nav className="absolute top-0 left-0 right-0 z-50 bg-[#00000033]">
       <div className="relative flex max-w-[80rem] justify-between items-center flex-1 self-stretch mx-auto p-4">
-        <Link to="/">
+        <Link to="/" onClick={closeMenu} aria-label="Go to home">
           <img
             src={nabuLogo}
             alt="Nabu Logo"
@@ -53,7 +53,7 @@ const Navigation = () => {
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6">
             <Link
-              to="/"
+              to="/account"
               className="font-ibm-plex text-white font-bold text-sm hover:text-gray-200 transition-colors"
             >
               VPN Access
@@ -93,7 +93,7 @@ const Navigation = () => {
           <div className="md:hidden absolute right-4 top-[4.5rem] w-64 rounded-2xl bg-[#0c0f14e6] backdrop-blur-xl shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] border border-white/10">
             <div className="flex flex-col gap-1 px-3 py-3">
               <Link
-                to="/"
+                to="/account"
                 onClick={closeMenu}
                 className="flex justify-between items-center rounded-xl px-3 py-2 font-ibm-plex text-white font-bold text-sm hover:bg-white/5 transition-colors"
               >

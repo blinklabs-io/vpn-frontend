@@ -36,6 +36,7 @@ interface WalletState {
 
   // Actions
   setWalletState: (state: Partial<WalletState>) => void;
+  openWalletModal: () => void;
   connect: (walletName: string) => Promise<boolean>;
   disconnect: () => void;
   signMessage: (message: string) => Promise<unknown>;
@@ -83,6 +84,10 @@ export const useWalletStore = create<WalletState>()(
       lastVpnConfigUrl: null,
 
       setWalletState: (newState) => set((state) => ({ ...state, ...newState })),
+
+      openWalletModal: () => {
+        set({ isWalletModalOpen: true });
+      },
 
       setVpnConfigUrl: (url: string) => set({ lastVpnConfigUrl: url }),
 

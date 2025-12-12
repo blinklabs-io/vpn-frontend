@@ -48,13 +48,14 @@ const ConfirmModal = ({
 
   if (!isOpen) return null;
 
-  const handleDragStart = (clientY: number) => {
+  const handleDragStart = (clientY?: number) => {
+    if (typeof clientY !== "number") return;
     setDragStartY(clientY);
     setDragOffset(0);
   };
 
-  const handleDragMove = (clientY: number) => {
-    if (dragStartY === null) return;
+  const handleDragMove = (clientY?: number) => {
+    if (dragStartY === null || typeof clientY !== "number") return;
     const delta = Math.max(0, clientY - dragStartY);
     setDragOffset(Math.min(delta, DRAG_MAX_PULL));
   };

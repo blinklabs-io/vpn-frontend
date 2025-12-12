@@ -1,111 +1,12 @@
 import { Link } from "react-router";
-import { useState, useEffect, useRef, useMemo } from "react";
 
 const HowItWorks = () => {
-  const [activeSection, setActiveSection] = useState("overview");
-  const [isMobile, setIsMobile] = useState(false);
-  const isScrollingRef = useRef(false);
-
-  const sections = useMemo(
-    () => [
-      { id: "overview", title: "Overview", number: null },
-      { id: "signup", title: "Website Signup Process", number: 1 },
-      { id: "validation", title: "Smart Contract Validation", number: 2 },
-      { id: "indexer", title: "Indexer Processing", number: 3 },
-      {
-        id: "authentication",
-        title: "Profile Download Authentication",
-        number: 4,
-      },
-      { id: "setup", title: "VPN Client Setup", number: 5 },
-    ],
-    [],
-  );
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const scrollToSection = (sectionId: string) => {
-    isScrollingRef.current = true;
-    setActiveSection(sectionId);
-
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      setTimeout(() => {
-        isScrollingRef.current = false;
-      }, 1000);
-    }
-  };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isScrollingRef.current) return;
-
-      const scrollPosition = window.scrollY + 200;
-
-      for (const section of sections) {
-        const element = document.getElementById(section.id);
-        if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (
-            scrollPosition >= offsetTop &&
-            scrollPosition < offsetTop + offsetHeight
-          ) {
-            setActiveSection(section.id);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [sections]);
-
   return (
-    <div className="flex relative pt-16 min-h-screen overflow-hidden bg-black/30">
+    <div className="relative pt-16 min-h-screen overflow-hidden bg-black/30">
       <div className="absolute -top-40 -left-32 w-[420px] h-[420px] bg-blue-500/20 blur-[160px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-purple-500/20 blur-[160px] rounded-full pointer-events-none" />
 
-      {!isMobile && (
-        <div className="w-80 fixed left-0 top-32 h-[calc(100vh-4rem)] overflow-y-auto z-20">
-          <div className="mx-4 p-6 bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
-            <nav className="space-y-2">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    activeSection === section.id
-                      ? "bg-white/10 text-white border border-white/20 shadow"
-                      : "text-gray-300 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <div className="flex items-center">
-                    {section.number && (
-                      <div className="w-8 h-8 bg-transparent border border-white/30 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                        {section.number}
-                      </div>
-                    )}
-                    <span className="text-sm font-medium">{section.title}</span>
-                  </div>
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-      )}
-
-      <div className={`flex-1 relative z-10 ${isMobile ? "ml-0" : "ml-80"}`}>
+      <div className="relative z-10">
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="bg-white/10 rounded-2xl p-10 backdrop-blur-xl border border-white/20 shadow-2xl">
             <div className="space-y-12">
