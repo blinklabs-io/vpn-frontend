@@ -3,7 +3,6 @@ import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-cor
 import { useWalletStore } from "../stores/walletStore";
 import { useNavigate } from "react-router";
 import { useState, useRef, useEffect } from "react";
-import { showError } from "../utils/toast";
 
 interface WalletConnectionProps {
   variant?: "default" | "white";
@@ -158,14 +157,15 @@ const WalletConnection = ({
       ? "flex py-3 px-8 min-w-[150px] justify-center items-center gap-2.5 rounded-md bg-white text-black font-semibold cursor-pointer text-sm hover:bg-gray-100 transition-all"
       : "flex py-1.5 px-5 min-w-[150px] justify-center items-center gap-2.5 rounded-full border-2 border-white bg-white/80 text-black font-semibold text-sm z-40 cursor-pointer hover:bg-white/90 transition-all";
 
-  // Helper function to show error with deduplication
+  // Helper function to surface connection errors with deduplication
   const showErrorOnce = (message: string) => {
     const now = Date.now();
     const lastError = lastErrorRef.current;
     
     // Only show if it's a different message or more than 1 second has passed
     if (!lastError || lastError.message !== message || now - lastError.timestamp > 1000) {
-      showError(message);
+      console.error(message);
+      setConnectionError(message);
       lastErrorRef.current = { message, timestamp: now };
     }
   };
