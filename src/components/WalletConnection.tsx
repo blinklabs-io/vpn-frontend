@@ -2,7 +2,7 @@ import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wall
 import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
 import { useWalletStore } from "../stores/walletStore";
 import { useNavigate } from "react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ConfirmModal from "./ConfirmModal";
 
 interface WalletConnectionProps {
@@ -122,12 +122,16 @@ const WalletConnection = ({
   onConnected,
   theme = "dark",
 }: WalletConnectionProps) => {
-  const { isConnected, connect, disconnect } = useWalletStore();
+  const {
+    isConnected,
+    connect,
+    disconnect,
+  } = useWalletStore();
   const navigate = useNavigate();
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(initiallyOpen);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [pendingWallet, setPendingWallet] = useState<string | null>(null);
+  const [localModalOpen, setLocalModalOpen] = useState(initiallyOpen);
   const lastErrorRef = useRef<{ message: string; timestamp: number } | null>(null);
   const isDropdownLayout = listLayout === "dropdown";
   const flexContainerBaseClasses =
@@ -156,10 +160,14 @@ const WalletConnection = ({
     }
   };
 
+  useEffect(() => {
+    setLocalModalOpen(initiallyOpen);
+  }, [initiallyOpen]);
+
   const openWalletList = () => {
     setConnectionError(null);
     setPendingWallet(null);
-    setIsWalletModalOpen(true);
+    setLocalModalOpen(true);
   };
 
   const closeWalletList = () => {
@@ -167,19 +175,19 @@ const WalletConnection = ({
       return;
     }
 
-    setIsWalletModalOpen(false);
+    setLocalModalOpen(false);
     setConnectionError(null);
     setPendingWallet(null);
   };
 
   const handleSuccessfulConnect = () => {
     setConnectionError(null);
-    setIsWalletModalOpen(false);
+    setLocalModalOpen(false);
 
     if (onConnected) {
       onConnected();
     } else {
-      navigate("/");
+      navigate("/account");
     }
   };
 
@@ -229,6 +237,14 @@ const WalletConnection = ({
       errorMessage.includes("no wallet")
     ) {
       showErrorOnce(`${walletName} wallet is not installed. Please install it from the official website.`);
+    } else if (
+      errorMessage.includes("too many requests") ||
+      errorMessage.includes("429") ||
+      errorMessage.includes("rate limit")
+    ) {
+      const message = `${walletName} is temporarily rate limiting requests. Please wait 30-60 seconds, close other dApp tabs, and retry. Restarting the wallet extension can also help.`;
+      showErrorOnce(message);
+      setConnectionError(message);
     } else if (
       errorMessage.includes("wrong network") ||
       errorMessage.includes("network type") ||
@@ -282,7 +298,7 @@ const WalletConnection = ({
 
   const renderWalletModal = () => (
     <ConfirmModal
-      isOpen={isWalletModalOpen}
+      isOpen={localModalOpen}
       title="Choose a wallet"
       message={
         <div className="space-y-4">
