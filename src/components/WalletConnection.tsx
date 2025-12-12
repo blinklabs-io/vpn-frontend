@@ -2,7 +2,8 @@ import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wall
 import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
 import { useWalletStore } from "../stores/walletStore";
 import { useNavigate } from "react-router";
-import { useState, useRef, useEffect } from "react";
+import { useRef, useState } from "react";
+import ConfirmModal from "./ConfirmModal";
 
 interface WalletConnectionProps {
   variant?: "default" | "white";
@@ -24,110 +25,88 @@ const SUPPORTED_WALLETS = [
   "vespr",
 ];
 
-const DROPDOWN_WALLET_LIST_CSS = `
-  font-family: Helvetica Light, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 700;
-  width: 100%;
-  & > span {
-    padding: 10px 12px;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: start;
-    gap: 8px;
-    background: transparent;
-    backdrop-filter: blur(10px);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    opacity: 0;
-    transform: translateY(-10px);
-    animation: cascadeIn 0.4s ease-out forwards;
-  }
-  & > span:nth-child(1) { animation-delay: 0.02s; }
-  & > span:nth-child(2) { animation-delay: 0.08s; }
-  & > span:nth-child(3) { animation-delay: 0.12s; }
-  & > span:nth-child(4) { animation-delay: 0.17s; }
-  & > span:nth-child(5) { animation-delay: 0.22s; }
-  & > span:nth-child(6) { animation-delay: 0.27s; }
-  & > span:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-  }
-  @keyframes cascadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
+const buildWalletListCss = (
+  isDropdownLayout: boolean,
+  isLightTheme: boolean,
+  fullWidth = false,
+) => {
+  const textColor = isLightTheme ? "#0f172a" : "#ffffff";
+  const borderColor = isLightTheme ? "rgba(15, 23, 42, 0.15)" : "rgba(255, 255, 255, 0.2)";
+  const hoverBg = isLightTheme ? "rgba(15, 23, 42, 0.06)" : "rgba(255, 255, 255, 0.1)";
+  const hoverBorder = isLightTheme ? "rgba(15, 23, 42, 0.25)" : "rgba(255, 255, 255, 0.3)";
 
-const FLEX_WALLET_LIST_CSS = `
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  width: 100%;
-  max-width: 540px;
-  font-family: Helvetica Light, sans-serif;
-  font-size: 0.8rem;
-  font-weight: 700;
-  justify-items: stretch;
-  align-content: start;
-  & > span {
-    width: 100%;
-    padding: 8px 12px;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: start;
+  if (isDropdownLayout) {
+    return `
+      font-family: Helvetica Light, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 700;
+      width: 100%;
+      & > span {
+        padding: 10px 12px;
+        color: ${textColor};
+        border: 1px solid ${borderColor};
+        border-radius: 6px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        gap: 8px;
+        background: transparent;
+        backdrop-filter: blur(10px);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        opacity: 1;
+        transform: translateY(0);
+      }
+      & > span:hover {
+        background: ${hoverBg};
+        border-color: ${hoverBorder};
+        transform: translateY(-2px);
+      }
+    `;
+  }
+
+  return `
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
-    background: transparent;
-    backdrop-filter: blur(10px);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    margin: 0;
-    opacity: 0;
-    transform: translateY(-10px);
-    animation: cascadeIn 0.4s ease-out forwards;
-  }
-  & > span:nth-child(1) { animation-delay: 0.05s; }
-  & > span:nth-child(2) { animation-delay: 0.1s; }
-  & > span:nth-child(3) { animation-delay: 0.15s; }
-  & > span:nth-child(4) { animation-delay: 0.2s; }
-  & > span:nth-child(5) { animation-delay: 0.25s; }
-  & > span:nth-child(6) { animation-delay: 0.3s; }
-  & > span:nth-child(7) { animation-delay: 0.35s; }
-  & > span:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-  @keyframes cascadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
+    width: 100%;
+    max-width: ${fullWidth ? "none" : "540px"};
+    font-family: Helvetica Light, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    justify-items: stretch;
+    align-content: start;
+    & > span {
+      width: 100%;
+      padding: 8px 12px;
+      color: ${textColor};
+      border: 1px solid ${borderColor};
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: start;
+      gap: 10px;
+      background: transparent;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      margin: 0;
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  @media (max-width: 1024px) {
-    max-width: 480px;
-  }
-  @media (max-width: 640px) {
-    max-width: none;
-  }
-`;
+    & > span:hover {
+      background: ${hoverBg};
+      border-color: ${hoverBorder};
+    }
+    @media (max-width: 1024px) {
+      max-width: 480px;
+    }
+    @media (max-width: 640px) {
+      max-width: none;
+    }
+  `;
+};
 
 const getNetworkType = (): NetworkType => {
   const network = import.meta.env.VITE_CARDANO_NETWORK || "preprod";
@@ -145,11 +124,10 @@ const WalletConnection = ({
 }: WalletConnectionProps) => {
   const { isConnected, connect, disconnect } = useWalletStore();
   const navigate = useNavigate();
-  const [showWalletList, setShowWalletList] = useState(initiallyOpen);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(initiallyOpen);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [pendingWallet, setPendingWallet] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const lastErrorRef = useRef<{ message: string; timestamp: number } | null>(null);
   const isDropdownLayout = listLayout === "dropdown";
   const flexContainerBaseClasses =
@@ -164,9 +142,6 @@ const WalletConnection = ({
   const statusTextClass = isLightTheme
     ? "mb-2 text-sm text-gray-700"
     : "mb-2 text-sm text-white/80";
-  const closeButtonClasses = isLightTheme
-    ? "absolute bottom-0 right-0 text-sm text-gray-500 transition-colors hover:text-gray-800 disabled:cursor-not-allowed disabled:text-gray-300 mt-auto cursor-pointer px-4 py-3 z-50 hover:bg-gray-100 rounded"
-    : "absolute bottom-0 right-0 text-sm text-white/70 transition-colors hover:text-white disabled:cursor-not-allowed disabled:text-white/40 mt-auto cursor-pointer px-4 py-3 z-50 hover:bg-white/5 rounded";
 
   // Helper function to surface connection errors with deduplication
   const showErrorOnce = (message: string) => {
@@ -184,12 +159,7 @@ const WalletConnection = ({
   const openWalletList = () => {
     setConnectionError(null);
     setPendingWallet(null);
-
-    if (isDropdownLayout) {
-      setShowWalletList((prev) => !prev);
-    } else {
-      setShowWalletList(true);
-    }
+    setIsWalletModalOpen(true);
   };
 
   const closeWalletList = () => {
@@ -197,14 +167,14 @@ const WalletConnection = ({
       return;
     }
 
-    setShowWalletList(false);
+    setIsWalletModalOpen(false);
     setConnectionError(null);
     setPendingWallet(null);
   };
 
   const handleSuccessfulConnect = () => {
     setConnectionError(null);
-    setShowWalletList(false);
+    setIsWalletModalOpen(false);
 
     if (onConnected) {
       onConnected();
@@ -279,27 +249,6 @@ const WalletConnection = ({
     setPendingWallet(null);
   };
 
-  useEffect(() => {
-    if (!isDropdownLayout) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowWalletList(false);
-        setConnectionError(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownLayout]);
-
   const renderConnectionFeedback = (
     errorClasses = isLightTheme
       ? "mb-3 rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700"
@@ -311,12 +260,12 @@ const WalletConnection = ({
         <div className={errorClasses}>{connectionError}</div>
       )}
       {isConnecting && pendingWallet && (
-        <p className={`${statusClasses} animate-pulse`}>Connecting to {pendingWallet}...</p>
+        <div className={statusClasses}></div>
       )}
     </>
   );
 
-  const renderWalletList = () => (
+  const renderWalletList = (isLight = isLightTheme, fullWidth = false) => (
     <ConnectWalletList
       borderRadius={15}
       gap={12}
@@ -327,8 +276,41 @@ const WalletConnection = ({
       showUnavailableWallets={0}
       peerConnectEnabled={false}
       limitNetwork={getNetworkType()}
-      customCSS={isDropdownLayout ? DROPDOWN_WALLET_LIST_CSS : FLEX_WALLET_LIST_CSS}
+      customCSS={buildWalletListCss(isDropdownLayout, isLight, fullWidth)}
     />
+  );
+
+  const renderWalletModal = () => (
+    <ConfirmModal
+      isOpen={isWalletModalOpen}
+      title="Choose a wallet"
+      message={
+        <div className="space-y-4">
+          <p className="text-slate-800 text-sm md:text-base">
+            Select a Cardano wallet to continue.
+          </p>
+          {renderConnectionFeedback(
+            "rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700",
+            "mb-2 text-sm text-gray-700",
+          )}
+          <div className="pt-1 w-full">{renderWalletList(true, true)}</div>
+        </div>
+      }
+      showConfirm={false}
+      cancelLabel="Close"
+      onConfirm={closeWalletList}
+      onCancel={closeWalletList}
+    />
+  );
+
+  const connectButton = (
+    <button
+      onClick={openWalletList}
+      className={`${buttonClasses} ${isConnecting ? "animate-pulse" : ""}`}
+      disabled={isConnecting}
+    >
+      {isConnecting ? "Connecting..." : "Connect Wallet"}
+    </button>
   );
 
   if (isConnected) {
@@ -340,6 +322,7 @@ const WalletConnection = ({
         >
           Disconnect
         </button>
+        {renderWalletModal()}
       </div>
     );
   }
@@ -373,144 +356,69 @@ const WalletConnection = ({
             </p>
           )}
 
-          <div className="relative" ref={dropdownRef}>
-            {isDropdownLayout ? (
-              <>
-                <button
-                  onClick={openWalletList}
-                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? 'animate-pulse' : ''}`}
-                  disabled={isConnecting}
-                >
-                  {isConnecting ? "Connecting..." : "Connect"}
-                </button>
-
-                {showWalletList && (
-                  <div className="absolute top-full left-0 mt-2 backdrop-blur-sm p-4 z-50 min-w-[200px]">
-                    {renderConnectionFeedback(
-                      isLightTheme
-                        ? "mb-3 rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700"
-                        : "mb-3 rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200",
-                      statusTextClass,
-                    )}
-                    {renderWalletList()}
-                  </div>
-                )}
-              </>
-            ) : !showWalletList ? (
-              <div
-                className={`${flexContainerBaseClasses} items-start `}
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src="/cardano-icon.svg"
-                    alt="Cardano"
-                    className="h-10 w-10 brightness-0 invert"
-                  />
-                  <div className="flex flex-col">
-                    <h3 className={`${headingTextClass} text-lg font-medium`}>
-                      Connect Wallet
-                    </h3>
-                    <p className={`${subTextClass} text-sm md:text-base`}>
-                      Connect your wallet to purchase VPN access
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={openWalletList}
-                  className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? 'animate-pulse' : ''}`}
-                  disabled={isConnecting}
-                >
-                  {isConnecting ? "Connecting..." : "Connect"}
-                </button>
+          <div className="relative flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <img
+                src="/cardano-icon.svg"
+                alt="Cardano"
+                className="h-10 w-10 brightness-0 invert"
+              />
+              <div className="flex flex-col">
+                <h3 className={`${headingTextClass} text-lg font-medium`}>
+                  Connect Wallet
+                </h3>
+                <p className={`${subTextClass} text-sm md:text-base`}>
+                  Connect your wallet to purchase VPN access
+                </p>
               </div>
-            ) : (
-              <div
-                className={`${flexContainerBaseClasses} items-center justify-start`}
-              >
-                {renderConnectionFeedback(
-                isLightTheme
-                  ? "rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700 max-w-[540px] w-full"
-                  : "rounded-md border border-red-400 bg-red-500/10 px-4 py-2 text-sm text-red-200 max-w-[540px] w-full",
-                statusTextClass,
-                )}
-                {renderWalletList()}
-                <button
-                  type="button"
-                  onClick={closeWalletList}
-                  disabled={isConnecting}
-                  className={closeButtonClasses}
-                >
-                  Close
-                </button>
-              </div>
-            )}
+            </div>
+            <button
+              onClick={openWalletList}
+              className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? "animate-pulse" : ""}`}
+              disabled={isConnecting}
+            >
+              {isConnecting ? "Connecting..." : "Connect"}
+            </button>
           </div>
         </div>
+        {renderWalletModal()}
       </div>
     );
   }
 
   if (isDropdownLayout) {
     return (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={openWalletList}
-          className={`${buttonClasses} ${isConnecting ? 'animate-pulse' : ''}`}
-          disabled={isConnecting}
-        >
-          {isConnecting ? "Connecting..." : "Connect Wallet"}
-        </button>
-
-        {showWalletList && (
-          <div className="absolute top-full left-0 right-0 pt-3 z-50 animate-in slide-in-from-top-2 duration-300">
-            {renderWalletList()}
-          </div>
-        )}
-      </div>
+      <>
+        <div className="relative">
+          {connectButton}
+        </div>
+        {renderWalletModal()}
+      </>
     );
   }
 
-  return showWalletList ? (
-    <div
-      className={`${flexContainerBaseClasses} items-center justify-start gap-3`}
-      ref={dropdownRef}
-    >
-      {renderWalletList()}
-      <button
-        type="button"
-        onClick={closeWalletList}
-        disabled={isConnecting}
-        className={closeButtonClasses}
+  return (
+    <>
+      <div
+        className={`${flexContainerBaseClasses} items-start justify-between`}
       >
-        Close
-      </button>
-    </div>
-  ) : (
-    <div
-      className={`${flexContainerBaseClasses} items-start justify-between`}
-      ref={dropdownRef}
-    >
-      <div className="flex items-center gap-3">
-        <img
-          src="/cardano-icon.svg"
-          alt="Cardano"
-          className="h-10 w-10 brightness-0 invert"
-        />
-        <div className="flex flex-col">
-        <h3 className={`${headingTextClass} text-lg font-medium`}>Connect Wallet</h3>
-        <p className={`${subTextClass} text-sm md:text-base`}>
-            Connect your wallet to purchase VPN access
-          </p>
+        <div className="flex items-center gap-3">
+          <img
+            src="/cardano-icon.svg"
+            alt="Cardano"
+            className="h-10 w-10 brightness-0 invert"
+          />
+          <div className="flex flex-col">
+            <h3 className={`${headingTextClass} text-lg font-medium`}>Connect Wallet</h3>
+            <p className={`${subTextClass} text-sm md:text-base`}>
+              Connect your wallet to purchase VPN access
+            </p>
+          </div>
         </div>
+        {connectButton}
       </div>
-      <button
-        onClick={openWalletList}
-        className={`${buttonClasses} ${isConnecting ? 'animate-pulse' : ''}`}
-        disabled={isConnecting}
-      >
-        {isConnecting ? "Connecting..." : "Connect Wallet"}
-      </button>
-    </div>
+      {renderWalletModal()}
+    </>
   );
 };
 
