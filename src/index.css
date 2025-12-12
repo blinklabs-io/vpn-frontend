@@ -2,11 +2,7 @@
 
 body {
   background-color: #040617;
-  background-image: url("/hero-backdrop.png");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center top;
-  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 @media (min-width: 1145px) {
