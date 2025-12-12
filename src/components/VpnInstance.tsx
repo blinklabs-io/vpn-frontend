@@ -46,12 +46,12 @@ const VpnInstance = ({
     >
       <div className="flex flex-col items-start gap-1 w-full">
         <div className="flex justify-between items-start w-full gap-2">
-          <p className="text-sm md:text-base">Region: {region}</p>
-          <p className="text-sm md:text-base">Duration: {duration}</p>
+          <p className="text-sm  md:text-base">Region: <span className="font-semibold">{region}</span></p>
+          <p className="text-sm md:text-base">Duration: <span className="font-semibold">{duration}</span></p>
         </div>
         <div className="flex justify-between items-start w-full">
           <div className="flex items-center gap-2">
-            <p className="text-sm md:text-base">Status: {status}</p>
+            <p className="text-sm md:text-base">Status: <span className="font-semibold">{status}</span></p>
             <span
               className={`w-2 h-2 rounded-full ${
                 status === "Active"
@@ -62,7 +62,7 @@ const VpnInstance = ({
               }`}
             ></span>
           </div>
-          <p className="text-sm md:text-base">Time Remaining: {expires}</p>
+          <p className="text-sm md:text-base">Time Remaining: <span className="font-semibold">{expires}</span></p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ const VpnInstance = ({
             className="flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm cursor-pointer bg-white text-black hover:bg-white/90 transition-all"
             onClick={onAction}
           >
-            <p className="font-light text-black text-sm">
+            <p className="text-black font-semibold text-sm">
               {status === "Active" ? "Get Config" : "Renew Access"}
             </p>
           </button>

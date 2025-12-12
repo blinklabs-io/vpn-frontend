@@ -9,6 +9,7 @@ import {
   useRenewVpn,
 } from "../api/hooks";
 import VpnInstance from "../components/VpnInstance";
+import PurchaseCard from "../components/PurchaseCard";
 import { showSuccess, showError, showCopyableUrl } from "../utils/toast";
 import type { ClientInfo } from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
@@ -20,7 +21,6 @@ import {
   cleanupCompletedTransactions,
 } from "../utils/pendingTransactions";
 import InstanceFilter from "../components/InstanceFilter";
-import RegionSelect from "../components/RegionSelect";
 import {
   sortVpnInstances,
   filterOptions,
@@ -35,8 +35,6 @@ const Account = () => {
     enabledWallet,
     setVpnConfigUrl,
   } = useWalletStore();
-  const [selectedRegionOverride, setSelectedRegionOverride] =
-    useState<string | null>(null);
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false);
 
@@ -113,7 +111,7 @@ const Account = () => {
         // Add pending client to localStorage
         const pendingClient = {
           id: data.clientId,
-          region: resolvedSelectedRegion,
+          region: payloadRegion,
           duration: selectedOption
             ? formatDuration(selectedOption.value)
             : "Unknown",
@@ -245,10 +243,7 @@ const Account = () => {
     : [];
 
   const regions = Array.isArray(refData?.regions) ? refData.regions : [];
-  const resolvedSelectedRegion =
-    selectedRegionOverride && regions.includes(selectedRegionOverride)
-      ? selectedRegionOverride
-      : regions[0] ?? "";
+  const payloadRegion = regions[0] ?? "";
 
   useEffect(() => {
     cleanupCompletedTransactions();
@@ -313,7 +308,7 @@ const Account = () => {
       return;
     }
 
-    if (!resolvedSelectedRegion) {
+    if (!payloadRegion) {
       showError("Please select a region");
       return;
     }
@@ -325,7 +320,7 @@ const Account = () => {
       paymentAddress: walletAddress,
       duration: targetDuration,
       price: option.price,
-      region: resolvedSelectedRegion,
+      region: payloadRegion,
     };
 
     signupMutation.mutate(payload);
@@ -407,10 +402,7 @@ const Account = () => {
       return;
     }
 
-    const instanceRegion =
-      dedupedClientList?.find((c) => c.id === renewingInstanceId)?.region ||
-      resolvedSelectedRegion;
-    if (!instanceRegion) {
+    if (!payloadRegion) {
       showError("Could not determine region for renewal");
       return;
     }
@@ -421,7 +413,7 @@ const Account = () => {
       clientId: renewingInstanceId,
       duration: selectedRenewDuration,
       price: renewOption.price,
-      region: instanceRegion,
+      region: payloadRegion,
     });
 
     // Reset renewal state
@@ -511,7 +503,7 @@ const Account = () => {
       stepDuration={4000}
     >
       {(showTooltips) => (
-        <div className="min-h-screen min-w-screen flex flex-col items-center bg-[linear-gradient(180deg,rgba(28,36,110,0.6)_0%,rgba(4,6,23,0.6)_25%,rgba(4,6,23,0.85)_100%),url('/hero-backdrop.png')] bg-cover bg-top bg-no-repeat pt-16 pb-16">
+        <div className="min-h-screen w-full overflow-x-hidden flex flex-col items-center bg-[linear-gradient(180deg,rgba(28,36,110,0.6)_0%,rgba(4,6,23,0.6)_25%,rgba(4,6,23,0.85)_100%),url('/hero-backdrop.png')] bg-cover bg-top bg-no-repeat pt-16 pb-16">
           <LoadingOverlay
             isVisible={isPurchaseLoading || isConfigLoading}
             messageTop={
@@ -574,84 +566,21 @@ const Account = () => {
 
             {/* Purchase cards */}
             <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-5">
                 {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
-                  durationOptions.map(
-                    (option: {
-                      value: number;
-                      label: string;
-                      timeDisplay: string;
-                      price: number;
-                    }) => (
-                      <div
-                        key={option.value}
-                        className="w-full sm:w-[320px] rounded-2xl p-[1px] bg-[linear-gradient(180deg,#9400FF_0%,rgba(0,0,0,0.5)_70%,rgba(0,0,0,1)_100%)] overflow-hidden"
-                        {...(showTooltips && {
-                          "data-tooltip-id": "duration-tooltip",
-                        })}
-                      >
-                        <div className="h-full w-full rounded-2xl bg-[linear-gradient(180deg,#9400FF_0%,rgba(0,0,0,0.5)_70%,rgba(0,0,0,1)_100%)] bg-clip-padding border border-[#FFFFFF40] shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-6 flex flex-col gap-3">
-                          <div className="text-center">
-                            <p className="text-sm font-semibold opacity-90">
-                              {option.label}
-                            </p>
-                            <p className="text-3xl font-extrabold mt-1">
-                              {formatPrice(option.price)}{" "}
-                              <span className="text-base font-semibold">ADA</span>
-                            </p>
-                            <p className="text-xs text-white/80 mt-1">
-                              + 1.7 ADA setup fee
-                            </p>
-                          </div>
-                          <button
-                            className={`mt-2 w-full rounded-full py-2 text-black font-semibold bg-white transition-all cursor-pointer ${
-                              signupMutation.isPending || !isConnected
-                                ? "opacity-60 cursor-not-allowed"
-                                : "hover:scale-[1.01]"
-                            }`}
-                            onClick={() => handlePurchase(option.value)}
-                            disabled={signupMutation.isPending || !isConnected}
-                            {...(showTooltips && {
-                              "data-tooltip-id": "purchase-tooltip",
-                            })}
-                          >
-                            {signupMutation.isPending
-                              ? "Processing..."
-                              : !isConnected
-                                ? "Connect Wallet"
-                                : "Buy Now"}
-                          </button>
-                        </div>
-                      </div>
-                    ),
-                  )
+                  durationOptions.map((option) => (
+                    <PurchaseCard
+                      key={option.value}
+                      option={option}
+                      isConnected={isConnected}
+                      isProcessing={signupMutation.isPending}
+                      onPurchase={(duration) => handlePurchase(duration)}
+                      showTooltips={showTooltips}
+                      formatPrice={formatPrice}
+                    />
+                  ))
                 ) : (
                   <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
-                )}
-              </div>
-
-              <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 justify-center">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-white text-base">Region:</p>
-                  {Array.isArray(refData?.regions) &&
-                  refData.regions.length > 0 ? (
-                    <RegionSelect
-                      value={resolvedSelectedRegion}
-                      onChange={setSelectedRegionOverride}
-                      regions={refData.regions}
-                      showTooltips={showTooltips}
-                    />
-                  ) : (
-                    <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
-                  )}
-                </div>
-                {selectedOption && (
-                  <div
-                    className="text-sm text-white/80 px-3 py-2 rounded-full bg-white/10"
-                    {...(showTooltips && { "data-tooltip-id": "price-tooltip" })}
-                  >
-                    {formatPrice(selectedOption.price)} ADA + 1.7 ADA setup fee
-                  </div>
                 )}
               </div>
             </div>
@@ -659,7 +588,7 @@ const Account = () => {
             {/* Instances */}
             <div className="bg-white/5 rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-5 md:p-6">
               <div className="flex justify-between items-center">
-                <p className="font-exo-2 font-black text-sm leading-[100%] tracking-[0] text-center">No VPN Instances Yet</p>
+               <p className="font-exo-2 font-black text-sm leading-[100%] tracking-[0] text-center">{(vpnInstances.length > 0 && isConnected) ? "VPN Instances" : "No VPN Instances Yet"}</p>
                 {isConnected && vpnInstances.length > 0 && (
                   <InstanceFilter
                     value={filterOption}
