@@ -20,7 +20,6 @@ import {
   removePendingTransaction,
   cleanupCompletedTransactions,
 } from "../utils/pendingTransactions";
-import InstanceFilter from "../components/InstanceFilter";
 import {
   sortVpnInstances,
   filterOptions,
@@ -49,10 +48,8 @@ const Account = () => {
   const [selectedRenewDuration, setSelectedRenewDuration] = useState<
     number | null
   >(null);
-  const [filterOption, setFilterOption] = useState<{
-    value: string;
-    label: string;
-  }>(filterOptions[0]);
+  const [showAdditionalPurchaseCards, setShowAdditionalPurchaseCards] =
+    useState(false);
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -490,11 +487,17 @@ const Account = () => {
 
     const allInstances = [...pendingInstances, ...activeInstances];
 
-    return sortVpnInstances(allInstances, filterOption.value as SortOption);
+    return sortVpnInstances(
+      allInstances,
+      filterOptions[0].value as SortOption,
+    );
   })();
 
+  const hasAnyInstances = vpnInstances.length > 0;
   const hasActiveInstance =
     vpnInstances.findIndex((instance) => instance.status === "Active") !== -1;
+  const shouldShowPurchaseCards =
+    !isConnected || !hasAnyInstances || showAdditionalPurchaseCards;
 
   return (
     <TooltipGuide
@@ -522,7 +525,19 @@ const Account = () => {
 
             {/* Hero */}
             <div className="flex flex-col items-center text-center gap-4 mt-16">
-              {isConnected && hasActiveInstance ? (
+              {!isConnected || !hasAnyInstances ? (
+                <>
+                  <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
+                    Private, account-free VPN access
+                  </h1>
+                  <p className="font-ibm-plex font-normal text-[16px] leading-[100%] tracking-[0] text-center text-[#E1B8FF]">
+                    Decentralized. No tracking. No subscriptions.
+                  </p>
+                  <p className="text-lg font-semibold mt-2">
+                    Get NABU VPN Access Now
+                  </p>
+                </>
+              ) : hasActiveInstance ? (
                 <>
                   <div className="flex items-center gap-3">
                     <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
@@ -549,53 +564,43 @@ const Account = () => {
                     hidden.
                   </p>
                 </>
-              ) : (
-                <>
-                  <h1 className="font-exo-2 font-black text-[32px] leading-[100%] tracking-[0] text-center">
-                    Private, account-free VPN access
-                  </h1>
-                  <p className="font-ibm-plex font-normal text-[16px] leading-[100%] tracking-[0] text-center text-[#E1B8FF]">
-                    Decentralized. No tracking. No subscriptions.
-                  </p>
-                  <p className="text-lg font-semibold mt-2">
-                    Get NABU VPN Access Now
-                  </p>
-                </>
-              )}
+              ) : null}
             </div>
 
             {/* Purchase cards */}
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap justify-center gap-5">
-                {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
-                  durationOptions.map((option) => (
-                    <PurchaseCard
-                      key={option.value}
-                      option={option}
-                      isConnected={isConnected}
-                      isProcessing={signupMutation.isPending}
-                      onPurchase={(duration) => handlePurchase(duration)}
-                      showTooltips={showTooltips}
-                      formatPrice={formatPrice}
-                    />
-                  ))
-                ) : (
-                  <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
-                )}
+            {shouldShowPurchaseCards && (
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-wrap justify-center gap-5">
+                  {Array.isArray(refData?.prices) && refData.prices.length > 0 ? (
+                    durationOptions.map((option) => (
+                      <PurchaseCard
+                        key={option.value}
+                        option={option}
+                        isConnected={isConnected}
+                        isProcessing={signupMutation.isPending}
+                        onPurchase={(duration) => handlePurchase(duration)}
+                        showTooltips={showTooltips}
+                        formatPrice={formatPrice}
+                      />
+                    ))
+                  ) : (
+                    <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Instances */}
             <div className="bg-white/5 rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-5 md:p-6">
               <div className="flex justify-between items-center">
                <p className="font-exo-2 font-black text-sm leading-[100%] tracking-[0] text-center">{(vpnInstances.length > 0 && isConnected) ? "VPN Instances" : "No VPN Instances Yet"}</p>
                 {isConnected && vpnInstances.length > 0 && (
-                  <InstanceFilter
-                    value={filterOption}
-                    onChange={(option) =>
-                      setFilterOption(option || filterOptions[0])
-                    }
-                  />
+                  <button
+                    className="rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01]"
+                    onClick={() => setShowAdditionalPurchaseCards(true)}
+                  >
+                    + Add New
+                  </button>
                 )}
               </div>
 
