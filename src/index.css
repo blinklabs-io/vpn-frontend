@@ -2,6 +2,7 @@
 
 body {
   background-color: #040617;
+  min-height: 100vh;
 }
 
 @media (min-width: 1145px) {

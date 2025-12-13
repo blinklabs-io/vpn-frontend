@@ -25,7 +25,7 @@ const LoadingOverlay = ({
           />
         </div>
         {messageTop && (
-          <div className="text-lg font-medium text-white">{messageTop}</div>
+          <div className="text-lg font-medium text-white my-1">{messageTop}</div>
         )}
         {messageBottom && (
           <div className="text-lg font-medium text-white">{messageBottom}</div>

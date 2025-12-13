@@ -9,19 +9,18 @@ import {
   useRenewVpn,
 } from "../api/hooks";
 import VpnInstance from "../components/VpnInstance";
-import WalletModal from "../components/WalletModal";
-import { showSuccess, showError, showCopyableUrl } from "../utils/toast";
+import PurchaseCard from "../components/PurchaseCard";
+import ConfirmModal from "../components/ConfirmModal";
 import type { ClientInfo } from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide";
+import WalletConnection from "../components/WalletConnection";
 import {
   getPendingTransactions,
   addPendingTransaction,
   removePendingTransaction,
   cleanupCompletedTransactions,
 } from "../utils/pendingTransactions";
-import InstanceFilter from "../components/InstanceFilter";
-import RegionSelect from "../components/RegionSelect";
 import {
   sortVpnInstances,
   filterOptions,
@@ -31,20 +30,21 @@ import {
 const Account = () => {
   const {
     isConnected,
-    disconnect,
-    closeWalletModal,
-    isWalletModalOpen,
-    balance,
     walletAddress,
     signAndSubmitTransaction,
-    enabledWallet,
     setVpnConfigUrl,
   } = useWalletStore();
-  const [selectedDuration, setSelectedDuration] = useState<number>(0);
-  const [selectedRegionOverride, setSelectedRegionOverride] =
-    useState<string | null>(null);
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false);
+  const [pendingTx, setPendingTx] = useState<{
+    type: "purchase" | "renew";
+    txCbor: string;
+    clientId: string;
+    durationLabel: string;
+    durationMs: number;
+    region: string;
+  } | null>(null);
+  const [errorModal, setErrorModal] = useState<string | null>(null);
 
   // Get pending clients from localStorage (will be reactive to changes)
   const [pendingClientsFromStorage, setPendingClientsFromStorage] = useState(
@@ -57,10 +57,9 @@ const Account = () => {
   const [selectedRenewDuration, setSelectedRenewDuration] = useState<
     number | null
   >(null);
-  const [filterOption, setFilterOption] = useState<{
-    value: string;
-    label: string;
-  }>(filterOptions[0]);
+  const [showAdditionalPurchaseCards, setShowAdditionalPurchaseCards] =
+    useState(false);
+  const [selectedDurationIndex, setSelectedDurationIndex] = useState(0);
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -110,72 +109,9 @@ const Account = () => {
   const clientProfileMutation = useClientProfile();
   const { startPolling } = useClientPolling();
 
-  const signupMutation = useSignup({
-    onSuccess: async (data) => {
-      try {
-        await signAndSubmitTransaction(data.txCbor);
-        showSuccess(`VPN purchase successful! Setting up your instance...`);
+  const signupMutation = useSignup();
 
-        // Add pending client to localStorage
-        const pendingClient = {
-          id: data.clientId,
-          region: resolvedSelectedRegion,
-          duration: selectedOption
-            ? formatDuration(selectedOption.value)
-            : "Unknown",
-          purchaseTime: new Date().toISOString(),
-        };
-        addPendingTransaction(pendingClient);
-
-        setPendingClientsFromStorage(
-          getPendingTransactions().filter((tx) => tx.status === "pending"),
-        );
-
-        startPolling(data.clientId);
-
-        setIsPurchaseLoading(false);
-      } catch (error) {
-        console.error("Transaction error details:", error);
-        showError("Failed to sign and submit transaction");
-        setIsPurchaseLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error("Signup failed:", error);
-      showError("Failed to sign and submit transaction");
-      setIsPurchaseLoading(false);
-    },
-  });
-
-  const renewMutation = useRenewVpn({
-    onSuccess: async (data, variables) => {
-      try {
-        await signAndSubmitTransaction(data.txCbor);
-        showSuccess("VPN renewal successful! Activating your instance...");
-        const pendingClient = {
-          id: variables.clientId,
-          region: variables.region,
-          duration: formatDuration(variables.duration),
-          purchaseTime: new Date().toISOString(),
-        };
-        addPendingTransaction(pendingClient);
-        setPendingClientsFromStorage(
-          getPendingTransactions().filter((tx) => tx.status === "pending"),
-        );
-        startPolling(variables.clientId);
-        setIsPurchaseLoading(false);
-      } catch (error) {
-        console.error("Transaction error details:", error);
-        showError("Failed to sign and submit transaction");
-        setIsPurchaseLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error("Renew failed:", error);
-      showError("Failed to build renewal transaction");
-      setIsPurchaseLoading(false);
-    },
-  });
+  const renewMutation = useRenewVpn();
 
   const { data: clientList, isLoading: isLoadingClients } = useClientList(
     { ownerAddress: walletAddress || "" },
@@ -190,6 +126,11 @@ const Account = () => {
       return true;
     });
   }, [clientList]);
+
+  const normalizeDurationMs = (duration?: number) => {
+    if (!duration) return 0;
+    return duration < 1000 * 60 * 60 ? duration * 1000 : duration;
+  };
 
   const formatDuration = (durationMs: number) => {
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
@@ -229,7 +170,7 @@ const Account = () => {
       return `${wholeDays} day${wholeDays > 1 ? "s" : ""}`;
     }
 
-    return `${hours.toString().padStart(2, "0")}:00:00`;
+    return hours === 1 ? "1 hour" : `${hours} hours`;
   };
 
   const formatPrice = (priceLovelace: number) => {
@@ -244,18 +185,22 @@ const Account = () => {
         price: priceData.price,
       }))
     : [];
+  const selectedDurationOption =
+    durationOptions[selectedDurationIndex] ?? durationOptions[0];
 
-  const resolvedSelectedDuration =
-    selectedDuration !== 0 &&
-    durationOptions.some((option) => option.value === selectedDuration)
-      ? selectedDuration
-      : durationOptions[0]?.value ?? 0;
+  useEffect(() => {
+    if (durationOptions.length === 0) {
+      setSelectedDurationIndex(0);
+      return;
+    }
+
+    setSelectedDurationIndex((prev) =>
+      Math.min(prev, durationOptions.length - 1),
+    );
+  }, [durationOptions.length]);
 
   const regions = Array.isArray(refData?.regions) ? refData.regions : [];
-  const resolvedSelectedRegion =
-    selectedRegionOverride && regions.includes(selectedRegionOverride)
-      ? selectedRegionOverride
-      : regions[0] ?? "";
+  const payloadRegion = regions[0] ?? "";
 
   useEffect(() => {
     cleanupCompletedTransactions();
@@ -301,37 +246,57 @@ const Account = () => {
     return () => window.clearTimeout(timeoutId);
   }, [dedupedClientList, pendingClientsFromStorage]);
 
-  const selectedOption = durationOptions.find(
-    (option: { value: number }) => option.value === resolvedSelectedDuration,
-  );
-
-  const handlePurchase = () => {
+  const handlePurchase = async (durationOverride?: number) => {
     if (!walletAddress) {
-      showError("No wallet address available");
+      setErrorModal("No wallet address available");
       return;
     }
 
-    if (!selectedOption) {
-      showError("Please select a duration");
+    const targetDuration =
+      durationOverride ??
+      selectedDurationOption?.value ??
+      durationOptions[0]?.value ??
+      0;
+    const option =
+      durationOptions.find(
+        (opt: { value: number }) => opt.value === targetDuration,
+      ) ?? selectedDurationOption ?? durationOptions[0];
+
+    if (!option) {
+      setErrorModal("Please select a duration");
       return;
     }
 
-    if (!resolvedSelectedRegion) {
-      showError("Please select a region");
+    if (!payloadRegion) {
+      setErrorModal("Please select a region");
       return;
     }
 
-    // Start loading state for entire purchase process
     setIsPurchaseLoading(true);
 
-    const payload = {
-      paymentAddress: walletAddress,
-      duration: resolvedSelectedDuration,
-      price: selectedOption.price,
-      region: resolvedSelectedRegion,
-    };
+    try {
+      const payload = {
+        paymentAddress: walletAddress,
+        duration: targetDuration,
+        price: option.price,
+        region: payloadRegion,
+      };
 
-    signupMutation.mutate(payload);
+      const data = await signupMutation.mutateAsync(payload);
+      setPendingTx({
+        type: "purchase",
+        txCbor: data.txCbor,
+        clientId: data.clientId,
+        durationMs: targetDuration,
+        durationLabel: formatDuration(targetDuration),
+        region: payloadRegion,
+      });
+    } catch (error) {
+      console.error("Signup failed:", error);
+      setErrorModal("Failed to build purchase transaction");
+    } finally {
+      setIsPurchaseLoading(false);
+    }
   };
 
   const handleAction = async (instanceId: string, action: string) => {
@@ -342,12 +307,6 @@ const Account = () => {
 
         setVpnConfigUrl(s3Url);
 
-        const isMobile =
-          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-            navigator.userAgent,
-          );
-        const isVespr = enabledWallet?.toLowerCase() === "vespr";
-
         const link = document.createElement("a");
         link.href = s3Url;
         link.download = `vpn-config-${instanceId}.conf`;
@@ -355,28 +314,10 @@ const Account = () => {
         link.click();
         document.body.removeChild(link);
 
-        // Show appropriate message based on device/wallet
-        if (isMobile || isVespr) {
-          showCopyableUrl(
-            s3Url,
-            isMobile && isVespr
-              ? "If download didn't start, copy this URL and paste it into your mobile browser:"
-              : isMobile
-                ? "If download didn't start on mobile, copy this URL and paste it into your browser:"
-                : "If download didn't start in Vespr, copy this URL and paste it into your browser:",
-          );
-        } else {
-          showSuccess("VPN config downloaded successfully!");
-          // Still show the copyable URL toast after a brief delay as a fallback
-          setTimeout(() => {
-            showCopyableUrl(s3Url, "Need the download link again? Copy it here:");
-          }, 2000);
-        }
-
         setIsConfigLoading(false);
       } catch (error) {
         console.error("Failed to get config:", error);
-        showError("Failed to get VPN config. Please try again.");
+        setErrorModal("Failed to get VPN config. Please try again.");
         setIsConfigLoading(false);
       }
     } else if (action === "Renew Access") {
@@ -391,14 +332,45 @@ const Account = () => {
     setSelectedRenewDuration(null);
   };
 
-  const handleConfirmRenewal = () => {
+  const handleConfirmSubmit = async () => {
+    if (!pendingTx) return;
+
+    setIsPurchaseLoading(true);
+    try {
+      await signAndSubmitTransaction(pendingTx.txCbor);
+      const pendingClient = {
+        id: pendingTx.clientId,
+        region: pendingTx.region,
+        duration: pendingTx.durationMs,
+        purchaseTime: new Date().toISOString(),
+      };
+      addPendingTransaction(pendingClient);
+      setPendingClientsFromStorage(
+        getPendingTransactions().filter((tx) => tx.status === "pending"),
+      );
+      startPolling(pendingTx.clientId);
+    } catch (error) {
+      console.error("Transaction error details:", error);
+      setErrorModal("Failed to sign and submit transaction");
+    } finally {
+      setIsPurchaseLoading(false);
+      setPendingTx(null);
+    }
+  };
+
+  const handleCancelPending = () => {
+    setPendingTx(null);
+    setIsPurchaseLoading(false);
+  };
+
+  const handleConfirmRenewal = async () => {
     if (!walletAddress) {
-      showError("No wallet address available");
+      setErrorModal("No wallet address available");
       return;
     }
 
     if (!renewingInstanceId || !selectedRenewDuration) {
-      showError("Please select a renewal duration");
+      setErrorModal("Please select a renewal duration");
       return;
     }
 
@@ -406,35 +378,42 @@ const Account = () => {
       (opt) => opt.value === selectedRenewDuration,
     );
     if (!renewOption) {
-      showError("Invalid duration selected");
+      setErrorModal("Invalid duration selected");
       return;
     }
 
-    const instanceRegion =
-      dedupedClientList?.find((c) => c.id === renewingInstanceId)?.region ||
-      resolvedSelectedRegion;
-    if (!instanceRegion) {
-      showError("Could not determine region for renewal");
+    if (!payloadRegion) {
+      setErrorModal("Could not determine region for renewal");
       return;
     }
 
     setIsPurchaseLoading(true);
-    renewMutation.mutate({
-      paymentAddress: walletAddress,
-      clientId: renewingInstanceId,
-      duration: selectedRenewDuration,
-      price: renewOption.price,
-      region: instanceRegion,
-    });
+    try {
+      const data = await renewMutation.mutateAsync({
+        paymentAddress: walletAddress,
+        clientId: renewingInstanceId,
+        duration: selectedRenewDuration,
+        price: renewOption.price,
+        region: payloadRegion,
+      });
 
-    // Reset renewal state
+      setPendingTx({
+        type: "renew",
+        txCbor: data.txCbor,
+        clientId: renewingInstanceId,
+        durationMs: selectedRenewDuration,
+        durationLabel: formatDuration(selectedRenewDuration),
+        region: payloadRegion,
+      });
+    } catch (error) {
+      console.error("Renew failed:", error);
+      setErrorModal("Failed to build renewal transaction");
+    } finally {
+      setIsPurchaseLoading(false);
+    }
+
     setRenewingInstanceId(null);
     setSelectedRenewDuration(null);
-  };
-
-  const handleDisconnect = () => {
-    disconnect();
-    closeWalletModal();
   };
 
   const formatTimeRemaining = (expirationDate: string) => {
@@ -443,7 +422,7 @@ const Account = () => {
     const diffMs = expiration.getTime() - now.getTime();
 
     if (diffMs <= 0) {
-      return "Expired";
+      return "n/a";
     }
 
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -454,26 +433,30 @@ const Account = () => {
 
     if (days > 0) {
       return `${days}d ${hours}h`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else {
-      return `${minutes}m`;
     }
+
+    return `${hours}h ${minutes}m`;
   };
 
-  const vpnInstances = useMemo(() => {
+  const vpnInstances = (() => {
+    const now = new Date();
+
     const activeInstances = dedupedClientList
       ? dedupedClientList.map((client: ClientInfo) => {
-          const isActive = new Date(client.expiration) > new Date();
+          const expirationTime = new Date(client.expiration).getTime();
+          const isActive = expirationTime > now.getTime();
+          const normalizedDurationMs =
+            normalizeDurationMs(client.duration) ||
+            Math.max(expirationTime - now.getTime(), 0) as number;
 
           return {
             id: client.id,
             region: client.region,
-            duration: formatTimeRemaining(client.expiration),
+            duration: formatDuration(normalizedDurationMs),
             status: isActive ? ("Active" as const) : ("Expired" as const),
-            expires: new Date(client.expiration).toLocaleDateString(),
+            expires: formatTimeRemaining(client.expiration),
             expirationDate: new Date(client.expiration),
-            originalDuration: client.duration || 0,
+            originalDuration: normalizedDurationMs,
           };
         })
       : [];
@@ -487,19 +470,30 @@ const Account = () => {
       .map((pending) => ({
         id: pending.id,
         region: pending.region,
-        duration: pending.duration,
+        duration: formatDuration(pending.duration),
         status: "Pending" as const,
         expires: "Setting up...",
         expirationDate: new Date(
           new Date(pending.purchaseTime).getTime() + 24 * 60 * 60 * 1000,
         ),
-        originalDuration: 0,
+        originalDuration: pending.duration,
       }));
 
     const allInstances = [...pendingInstances, ...activeInstances];
 
-    return sortVpnInstances(allInstances, filterOption.value as SortOption);
-  }, [dedupedClientList, pendingClientsFromStorage, filterOption]);
+    return sortVpnInstances(
+      allInstances,
+      filterOptions[0].value as SortOption,
+    );
+  })();
+
+  const hasAnyInstances = vpnInstances.length > 0;
+  const hasActiveInstance =
+    vpnInstances.findIndex((instance) => instance.status === "Active") !== -1;
+  const shouldShowPurchaseCards =
+    !isConnected || !hasAnyInstances || showAdditionalPurchaseCards;
+  const isHeroLoading = isLoadingClients;
+  const isInstancesLoading = isLoadingClients;
 
   return (
     <TooltipGuide
@@ -508,239 +502,300 @@ const Account = () => {
       stepDuration={4000}
     >
       {(showTooltips) => (
-        <div className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] pt-16">
-          <div className="flex flex-col items-center justify-center pt-14 gap-4 md:pt-12 md:gap-8 z-20 text-white w-full max-w-none md:max-w-[80rem] px-3 md:px-8">
-            <LoadingOverlay
-              isVisible={isPurchaseLoading || isConfigLoading}
-              messageTop={
-                isPurchaseLoading
-                  ? "Awaiting Transaction Confirmation"
-                  : "Preparing VPN Configuration"
+        <div
+          className="min-h-screen w-full overflow-x-hidden flex flex-col items-center  pt-16 pb-16"
+        >
+          <LoadingOverlay
+            isVisible={isPurchaseLoading || isConfigLoading}
+            messageTop={
+              isPurchaseLoading
+                ? "Awaiting Transaction Confirmation"
+                : "Preparing VPN Configuration"
+            }
+            messageBottom={
+              isPurchaseLoading
+                ? "Processing Purchase"
+                : "Downloading Config File"
+            }
+          />
+
+          {pendingTx && (
+            <ConfirmModal
+              isOpen
+              title={pendingTx.type === "purchase" ? "VPN Purchase" : "VPN Renewal"}
+              message={
+                <div className="space-y-1 text-left">
+                  <p className="text-sm text-gray-900">
+                    Duration:{" "}
+                    <span className="font-semibold">{pendingTx.durationLabel}</span>
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    Region: <span className="font-semibold">{pendingTx.region}</span>
+                  </p>
+                </div>
               }
-              messageBottom={
-                isPurchaseLoading
-                  ? "Processing Purchase"
-                  : "Downloading Config File"
-              }
+              confirmLabel="Confirm"
+              cancelLabel="Close"
+              onConfirm={handleConfirmSubmit}
+              onCancel={handleCancelPending}
             />
+          )}
 
-            {/* VPN PURCHASE SECTION */}
-            <div className="flex flex-col gap-4 w-full md:flex-row md:gap-8 md:items-start">
-              {/* VPN PURCHASE OPTIONS */}
-              <div className="flex flex-col justify-center items-start gap-3 w-full md:flex-1">
-                <div className="flex justify-between items-start gap-3 pb-4 w-full">
-                  <div className="flex flex-col justify-center items-start gap-3">
-                    <p className="font-exo-2 text-white text-lg font-bold">
-                      Buy VPN Access
-                    </p>
-                  </div>
-                  <div className="flex flex-col justify-center items-end gap-3">
-                    <p className="font-light text-white text-sm">
-                      Available Balance
-                    </p>
-                    <p className="font-light text-white text-sm">
-                      <span className="font-bold text-2xl">
-                        {balance ? balance : "0.00"}
-                      </span>{" "}
-                      ADA
-                    </p>
-                  </div>
-                </div>
+          {errorModal && (
+            <ConfirmModal
+              isOpen
+              title="Error"
+              message={errorModal}
+              showConfirm={false}
+              cancelLabel="Close"
+              onConfirm={() => setErrorModal(null)}
+              onCancel={() => setErrorModal(null)}
+            />
+          )}
 
-                {/* Duration Selection */}
-                <div
-                  className="flex flex-col justify-center items-start gap-2 p-3 w-full rounded-md bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]"
-                  {...(showTooltips && {
-                    "data-tooltip-id": "duration-tooltip",
-                  })}
-                >
-                  <div className="flex flex-col justify-center items-start gap-2 w-full">
-                    {Array.isArray(refData?.prices) &&
-                    refData.prices.length > 0 ? (
-                      <>
-                        <div className="flex flex-wrap items-center gap-2 w-full">
-                          {durationOptions.map(
-                            (option: {
-                              value: number;
-                              label: string;
-                              timeDisplay: string;
-                            }) => (
-                              <button
-                                key={option.value}
-                                className={`flex items-center justify-center gap-2.5 flex-1 min-w-0 rounded-sm bg-white text-black py-1.5 px-2 cursor-pointer whitespace-nowrap text-sm md:text-md md:px-3 ${
-                                  resolvedSelectedDuration === option.value
-                                    ? "opacity-100"
-                                    : "opacity-50"
-                                }`}
-                                onClick={() =>
-                                  setSelectedDuration(option.value)
-                                }
-                              >
-                                {option.label}
-                              </button>
-                            ),
-                          )}
-                        </div>
-                        <div
-                          className="text-lg flex justify-center items-center gap-2 w-full bg-[#000000A6] rounded-md py-3 px-2.5"
-                          {...(showTooltips && {
-                            "data-tooltip-id": "price-tooltip",
-                          })}
-                        >
-                          {selectedOption
-                            ? `${formatPrice(selectedOption.price)} ADA + 1.7 ADA setup fee`
-                            : ""}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="h-20 w-full bg-gray-300/20 rounded animate-pulse"></div>
-                    )}
-                  </div>
-                </div>
+          <div className="w-full max-w-[1200px] px-4 md:px-6 text-white flex flex-col gap-8">
 
-                {/* Region Selection and Purchase */}
-                <div className="flex flex-col gap-3 w-full md:flex-row md:gap-2 md:justify-between md:items-center">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-white text-lg">Region:</p>
-                    {Array.isArray(refData?.regions) &&
-                    refData.regions.length > 0 ? (
-                      <RegionSelect
-                        value={resolvedSelectedRegion}
-                        onChange={setSelectedRegionOverride}
-                        regions={refData.regions}
-                        showTooltips={showTooltips}
-                      />
-                    ) : (
-                      <div className="h-7 w-24 bg-gray-300/20 rounded animate-pulse"></div>
-                    )}
+            {/* Hero */}
+            <div className="flex flex-col items-center text-center gap-4 mt-16">
+              {isHeroLoading ? (
+                <>
+                  <div className="h-8 w-64 rounded-lg bg-white/20 animate-pulse md:w-80" />
+                  <div className="h-4 w-72 rounded-lg bg-white/10 animate-pulse md:w-96" />
+                  <div className="h-6 w-56 rounded-lg bg-white/20 animate-pulse md:w-72" />
+                </>
+              ) : !isConnected || !hasAnyInstances ? (
+                <>
+                  <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
+                    Private, account-free VPN access
+                  </h1>
+                  <p className="font-ibm-plex font-normal text-[14px] leading-[120%] tracking-[0] text-center text-[#E1B8FF] md:text-[16px] md:leading-[100%]">
+                    Decentralized. No tracking. No subscriptions.
+                  </p>
+                  <p className="text-lg font-semibold mt-2">
+                    Get NABU VPN Access Now
+                  </p>
+                </>
+              ) : hasActiveInstance ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
+                      Connected &amp; Secure
+                    </h1>
+                    <img
+                      src="/checks.svg"
+                      alt="Connected and secure"
+                      className="h-8 w-8"
+                    />
                   </div>
-                  {Array.isArray(refData?.prices) &&
-                  refData.prices.length > 0 ? (
-                    <button
-                      className={`flex items-center justify-center gap-2.5 rounded-md py-2 px-6 backdrop-blur-sm transition-all duration-200 w-full md:w-auto ${
-                        signupMutation.isPending || !isConnected
-                          ? "opacity-50 cursor-not-allowed bg-gray-500"
-                          : "cursor-pointer bg-[#9400FF] hover:bg-[#7A00CC] hover:scale-102"
-                      }`}
-                      onClick={handlePurchase}
-                      disabled={signupMutation.isPending || !isConnected}
-                      {...(showTooltips && {
-                        "data-tooltip-id": "purchase-tooltip",
-                      })}
-                    >
-                      <p className="font-medium text-white text-md">
-                        {signupMutation.isPending
-                          ? "Processing..."
-                          : !isConnected
-                            ? "Connect Wallet"
-                            : `Purchase VPN`}
-                      </p>
-                    </button>
-                  ) : (
-                    <div className="h-8 w-full md:w-32 bg-gray-300/20 rounded-md animate-pulse"></div>
-                  )}
-                </div>
-              </div>
-
-              {/* WALLET SECTION */}
-              <div
-                className={`flex flex-col items-center justify-center w-full md:flex-1 ${
-                  !isConnected
-                    ? "flex"
-                    : !isWalletModalOpen
-                      ? "hidden md:flex"
-                      : "flex"
-                }`}
-                {...(showTooltips && { "data-tooltip-id": "wallet-tooltip" })}
-              >
-                <WalletModal isOpen={true} onDisconnect={handleDisconnect} />
-              </div>
+                  <p className="font-ibm-plex font-normal text-[14px] leading-[130%] tracking-[0] text-center text-[#E1B8FF] md:text-[16px] md:leading-[120%]">
+                    You're currently protected. Add more connections or renew to
+                    extend service.
+                  </p>
+                </>
+              ) : isConnected ? (
+                <>
+                  <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
+                    You’re no longer protected.
+                  </h1>
+                  <p className="font-ibm-plex font-normal text-[14px] leading-[130%] tracking-[0] text-center text-[#E1B8FF] md:text-[16px] md:leading-[120%]">
+                    Restore your encrypted connection in seconds and keep your activity
+                    hidden.
+                  </p>
+                </>
+              ) : null}
             </div>
 
-            {/* VPN INSTANCES SECTION */}
-            <div className="flex flex-col justify-center items-start gap-3 w-full mt-4 md:mt-0">
-              <div className="flex justify-between items-center w-full">
-                <p className="text-white text-lg font-bold">VPN Instances</p>
-                {isConnected && vpnInstances.length > 0 && (
-                  <InstanceFilter
-                    value={filterOption}
-                    onChange={(option) =>
-                      setFilterOption(option || filterOptions[0])
-                    }
-                  />
-                )}
-              </div>
-              <div className="w-full">
-                {!isConnected ? (
-                  <p className="text-white/60 text-sm">
-                    Connect your wallet to view VPN instances
-                  </p>
-                ) : isLoadingClients ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    {[1, 2, 3, 4].map((index) => (
+            {/* Purchase cards */}
+            {shouldShowPurchaseCards && (
+              <div className="flex flex-col gap-4">
+                {durationOptions.length > 0 ? (
+                  <>
+                    {/* Mobile: single card with sliding selector */}
+                    <div className="flex flex-col gap-4 md:hidden">
                       <div
-                        key={index}
-                        className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]"
+                        className="relative flex items-center bg-black/50 rounded-2xl p-2 border border-white/20"
+                        {...(showTooltips && {
+                          "data-tooltip-id": "duration-tooltip",
+                        })}
                       >
-                        <div className="flex flex-col items-start gap-1 w-full">
-                          <div className="flex justify-between items-start w-full gap-2">
-                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
-                          </div>
-                          <div className="flex justify-between items-start w-full">
-                            <div className="flex items-center gap-2">
-                              <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
-                              <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
-                            </div>
-                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center w-full">
-                          <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
-                          <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                        <div
+                        className="absolute top-2 bottom-2 left-2 rounded-xl bg-white shadow-lg transition-transform duration-300 ease-out"
+                          style={{
+                            width: `${100 / durationOptions.length}%`,
+                            transform: `translateX(${selectedDurationIndex * 100}%)`,
+                          }}
+                        />
+                        {durationOptions.map((option, index) => (
+                          <button
+                            key={option.value}
+                            className={`relative z-10 flex-1 py-2 text-xs font-semibold transition-colors ${
+                              selectedDurationIndex === index
+                                ? "text-black"
+                                : "text-white font-semibold"
+                            }`}
+                            onClick={() => setSelectedDurationIndex(index)}
+                          >
+                            {option.timeDisplay}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="relative overflow-hidden">
+                        <div
+                          key={selectedDurationOption?.value ?? "vpn-card"}
+                          className="transition-transform duration-300 ease-out"
+                          style={{ transform: "translateX(0)" }}
+                        >
+                          <PurchaseCard
+                            option={selectedDurationOption}
+                            isConnected={isConnected}
+                            isProcessing={signupMutation.isPending}
+                            onPurchase={(duration) => handlePurchase(duration)}
+                            showTooltips={showTooltips}
+                            formatPrice={formatPrice}
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : vpnInstances.length > 0 ? (
-                  <div
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
-                    {...(showTooltips && {
-                      "data-tooltip-id": "instances-tooltip",
-                    })}
-                  >
-                    {vpnInstances.map((instance) => (
-                      <VpnInstance
-                        key={instance.id}
-                        region={instance.region}
-                        duration={instance.duration}
-                        status={instance.status}
-                        expires={instance.expires}
-                        onAction={() =>
-                          handleAction(
-                            instance.id,
-                            instance.status === "Active"
-                              ? "Get Config"
-                              : "Renew Access",
-                          )
-                        }
-                        isRenewExpanded={renewingInstanceId === instance.id}
-                        renewDurationOptions={durationOptions}
-                        selectedRenewDuration={selectedRenewDuration}
-                        onSelectRenewDuration={setSelectedRenewDuration}
-                        onConfirmRenewal={handleConfirmRenewal}
-                        onCancelRenewal={handleCancelRenewal}
-                      />
-                    ))}
-                  </div>
+                    </div>
+
+                    {/* Desktop: show all options */}
+                    <div className="hidden md:flex flex-col gap-5">
+                      <div className="flex flex-wrap justify-center gap-5">
+                        {durationOptions.map((option) => (
+                          <PurchaseCard
+                            key={option.value}
+                            option={option}
+                            isConnected={isConnected}
+                            isProcessing={signupMutation.isPending}
+                            onPurchase={(duration) => handlePurchase(duration)}
+                            showTooltips={showTooltips}
+                            formatPrice={formatPrice}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 ) : (
-                  <p className="text-white/60 text-sm">
-                    No VPN instances found
-                  </p>
+                  <>
+                    {/* Mobile loading skeleton */}
+                    <div className="flex md:hidden">
+                      <div className="w-full sm:w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                    </div>
+                    {/* Desktop loading skeletons */}
+                    <div className="hidden md:flex flex-wrap justify-center gap-5">
+                      <div className="w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                      <div className="w-[320px] h-[180px] bg-white/10 rounded-2xl animate-pulse" />
+                    </div>
+                  </>
                 )}
               </div>
+            )}
+
+            {/* Instances */}
+            <div className="bg-[#00000080] rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-4 md:p-6">
+              <div className="flex flex-row items-center justify-between gap-3 w-full">
+                {isInstancesLoading ? (
+                  <div className="flex-1 h-6 rounded bg-white/10 animate-pulse" />
+                ) : (
+                  <p
+                    className={`flex-1 flex items-center font-exo-2 font-black text-sm leading-[100%] tracking-[0] ${
+                      vpnInstances.length > 0 && isConnected
+                        ? "justify-start text-left"
+                        : "justify-center text-center"
+                    } md:justify-start md:text-left`}
+                  >
+                    <span className="md:hidden">
+                      {(vpnInstances.length > 0 && isConnected)
+                        ? "VPN Instances"
+                        : "No VPN Instances or Connected Wallet Found"}
+                    </span>
+                    <span className="hidden md:inline">
+                      {(vpnInstances.length > 0 && isConnected)
+                        ? "VPN Instances"
+                        : "No VPN Instances Yet"}
+                    </span>
+                  </p>
+                )}
+                {!isInstancesLoading && isConnected && vpnInstances.length > 0 && (
+                  <button
+                    className="flex-shrink-0 rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01]"
+                    onClick={() => setShowAdditionalPurchaseCards(true)}
+                  >
+                    + Add New
+                  </button>
+                )}
+              </div>
+
+              {isLoadingClients ? (
+                <div className="grid grid-cols-1 gap-4 w-full">
+                  {[1, 2, 3, 4].map((index) => (
+                    <div
+                      key={index}
+                      className="flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs bg-[rgba(255,255,255,0.20)]"
+                    >
+                      <div className="flex flex-col items-start gap-1 w-full">
+                        <div className="flex justify-between items-start w-full gap-2">
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-24"></div>
+                        </div>
+                        <div className="flex justify-between items-start w-full">
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 bg-gray-300/20 rounded animate-pulse w-16"></div>
+                            <div className="w-2 h-2 bg-gray-300/20 rounded-full animate-pulse"></div>
+                          </div>
+                          <div className="h-4 bg-gray-300/20 rounded animate-pulse w-20"></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center w-full">
+                        <div className="w-5 h-5 bg-gray-300/20 rounded animate-pulse"></div>
+                        <div className="h-8 bg-gray-300/20 rounded-md animate-pulse w-24"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : vpnInstances.length > 0 ? (
+                <div
+                  className="grid grid-cols-1 gap-4 w-full mt-4"
+                  {...(showTooltips && {
+                    "data-tooltip-id": "instances-tooltip",
+                  })}
+                >
+                  {vpnInstances.map((instance) => (
+                    <VpnInstance
+                      key={instance.id}
+                      region={instance.region}
+                      duration={instance.duration}
+                      status={instance.status}
+                      expires={instance.expires}
+                      onAction={() =>
+                        handleAction(
+                          instance.id,
+                          instance.status === "Active"
+                            ? "Get Config"
+                            : "Renew Access",
+                        )
+                      }
+                      isRenewExpanded={renewingInstanceId === instance.id}
+                      renewDurationOptions={durationOptions}
+                      selectedRenewDuration={selectedRenewDuration}
+                      onSelectRenewDuration={setSelectedRenewDuration}
+                      onConfirmRenewal={handleConfirmRenewal}
+                      onCancelRenewal={handleCancelRenewal}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 text-center text-white/80">
+                  {!isConnected && (
+                    <div className="md:hidden flex flex-col items-center gap-3 px-2 py-2">
+                      <WalletConnection listLayout="dropdown" initiallyOpen={false} />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
+
         </div>
       )}
     </TooltipGuide>
