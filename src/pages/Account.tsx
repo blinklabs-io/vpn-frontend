@@ -494,6 +494,11 @@ const Account = () => {
     !isConnected || !hasAnyInstances || showAdditionalPurchaseCards;
   const isHeroLoading = isLoadingClients;
   const isInstancesLoading = isLoadingClients;
+  const areAllInstancesExpired =
+    !isInstancesLoading &&
+    isConnected &&
+    vpnInstances.length > 0 &&
+    vpnInstances.every((instance) => instance.status === "Expired");
 
   return (
     <TooltipGuide
@@ -692,7 +697,13 @@ const Account = () => {
             )}
 
             {/* Instances */}
-            <div className="bg-[#00000080] rounded-2xl border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-4 md:p-6">
+            <div
+              className={`rounded-2xl bg-[#00000080] border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-4 md:p-6 ${
+                !isInstancesLoading && !isConnected && vpnInstances.length === 0
+                  ? "md:bg-transparent md:border-none md:shadow-none md:p-0"
+                  : ""
+              }`}
+            >
               <div className="flex flex-row items-center justify-between gap-3 w-full">
                 {isInstancesLoading ? (
                   <div className="flex-1 h-6 rounded bg-white/10 animate-pulse" />
@@ -712,13 +723,17 @@ const Account = () => {
                     <span className="hidden md:inline">
                       {(vpnInstances.length > 0 && isConnected)
                         ? "VPN Instances"
-                        : "No VPN Instances Yet"}
+                        : isConnected
+                          ? "No VPN Instances Yet"
+                          : ""}
                     </span>
                   </p>
                 )}
                 {!isInstancesLoading && isConnected && vpnInstances.length > 0 && (
                   <button
-                    className="flex-shrink-0 rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01]"
+                    className={`flex-shrink-0 rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01] ${
+                      areAllInstancesExpired ? "spinning-gradient-border" : ""
+                    }`}
                     onClick={() => setShowAdditionalPurchaseCards(true)}
                   >
                     + Add New
@@ -764,9 +779,9 @@ const Account = () => {
                     <VpnInstance
                       key={instance.id}
                       region={instance.region}
-                      duration={instance.duration}
                       status={instance.status}
                       expires={instance.expires}
+                      shouldSpinRenew={areAllInstancesExpired}
                       onAction={() =>
                         handleAction(
                           instance.id,

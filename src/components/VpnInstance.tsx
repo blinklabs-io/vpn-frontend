@@ -1,6 +1,7 @@
+import SpinningBorderButton from "./SpinningBorderButton";
+
 interface VpnInstanceProps {
   region: string;
-  duration: string;
   status: "Active" | "Expired" | "Pending";
   expires: string;
   onDelete?: () => void;
@@ -15,11 +16,11 @@ interface VpnInstanceProps {
   onSelectRenewDuration?: (duration: number) => void;
   onConfirmRenewal?: () => void;
   onCancelRenewal?: () => void;
+  shouldSpinRenew?: boolean;
 }
 
 const VpnInstance = ({
   region,
-  duration,
   status,
   expires,
   onAction,
@@ -29,6 +30,7 @@ const VpnInstance = ({
   onSelectRenewDuration,
   onConfirmRenewal,
   onCancelRenewal,
+  shouldSpinRenew = false,
 }: VpnInstanceProps) => {
   const formatPrice = (priceLovelace: number) => {
     return (priceLovelace / 1000000).toFixed(2);
@@ -52,7 +54,9 @@ const VpnInstance = ({
               {region ? region.slice(0, 2).toUpperCase() + region.slice(2) : ""}
             </span>
           </p>
-          <p className="text-xs md:text-sm">Duration: <span className="font-semibold">{duration}</span></p>
+          <p className="text-xs md:text-sm">
+            Time Remaining: <span className="font-semibold">{expires}</span>
+          </p>
         </div>
         <div className="flex justify-between items-start w-full">
           <div className="flex items-center gap-2">
@@ -67,7 +71,6 @@ const VpnInstance = ({
               }`}
             ></span>
           </div>
-          <p className="text-xs md:text-sm">Time Remaining: <span className="font-semibold">{expires}</span></p>
         </div>
       </div>
 
@@ -97,14 +100,17 @@ const VpnInstance = ({
 
       <div className="flex justify-end items-center gap-2 w-full">
         {status !== "Pending" && !isRenewExpanded && (
-          <button
-            className="flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm cursor-pointer bg-white text-black hover:bg-white/90 transition-all"
+          <SpinningBorderButton
+            spin={shouldSpinRenew && status === "Expired"}
+            useBorder={shouldSpinRenew && status === "Expired"}
             onClick={onAction}
+            className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm bg-white text-black hover:bg-white/90 transition-all"
+            radius="8px"
           >
             <p className="text-black font-semibold text-xs md:text-sm">
               {status === "Active" ? "Get Config" : "Renew Access"}
             </p>
-          </button>
+          </SpinningBorderButton>
         )}
 
         {isRenewExpanded && status === "Expired" && (
