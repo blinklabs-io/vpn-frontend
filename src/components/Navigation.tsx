@@ -97,21 +97,21 @@ const Navigation = () => {
               <Link
                 to="/how-it-works"
                 onClick={closeMenu}
-                className="flex justify-between items-center rounded-xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
+                className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
               >
                 How It Works
               </Link>
               <Link
                 to="/docs-faqs"
                 onClick={closeMenu}
-                className="flex justify-between items-center rounded-xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
+                className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
               >
                 FAQs
               </Link>
               <Link
                 to="/privacy-policy"
                 onClick={closeMenu}
-                className="flex justify-between items-center rounded-xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
+                className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
               >
                 Privacy Policy
               </Link>

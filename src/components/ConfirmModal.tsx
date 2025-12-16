@@ -107,7 +107,7 @@ const ConfirmModal = ({
               <button
                 type="button"
                 onClick={onCancel}
-                className="h-11 md:h-9 w-full md:w-auto rounded-md bg-[#9400FF] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 cursor-pointer"
+                className="h-11 md:h-9 md:rounded-md w-full md:w-auto rounded-full bg-[#9400FF] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 cursor-pointer"
               >
                 {cancelLabel}
               </button>
@@ -116,7 +116,7 @@ const ConfirmModal = ({
               <button
                 type="button"
                 onClick={onConfirm}
-                className="h-11 md:h-9 w-full md:w-auto rounded-md bg-[#9400FF] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 cursor-pointer"
+                className="h-11 md:h-9 md:rounded-md w-full md:w-auto rounded-full bg-[#9400FF] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 cursor-pointer"
               >
                 {confirmLabel}
               </button>
