@@ -1,3 +1,5 @@
+import { useWalletStore } from "../stores/walletStore";
+
 type PurchaseOption = {
   value: number;
   label: string;
@@ -22,7 +24,8 @@ const PurchaseCard = ({
   formatPrice,
   onPurchase,
 }: PurchaseCardProps) => {
-  const disabled = isProcessing || !isConnected;
+  const { openWalletModal } = useWalletStore();
+  const disabled = isProcessing;
 
   return (
     <div
@@ -45,11 +48,18 @@ const PurchaseCard = ({
           className={`mt-2 w-full rounded-full py-2 text-black font-semibold bg-white transition-all cursor-pointer ${
             disabled ? "opacity-60 cursor-not-allowed" : "hover:scale-[1.01]"
           }`}
-          onClick={() => onPurchase(option.value)}
+          onClick={() => {
+            if (isProcessing) return;
+            if (!isConnected) {
+              openWalletModal();
+              return;
+            }
+            onPurchase(option.value);
+          }}
           disabled={disabled}
           {...(showTooltips && { "data-tooltip-id": "purchase-tooltip" })}
         >
-          {isProcessing ? "Processing..." : !isConnected ? "Connect Wallet" : "Buy Now"}
+          {isProcessing ? "Processing..." : "Buy Now"}
         </button>
       </div>
     </div>

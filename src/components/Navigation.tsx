@@ -7,11 +7,7 @@ import { useWalletStore } from "../stores/walletStore";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const {
-    isWalletModalOpen,
-    closeWalletModal,
-    reconnectWallet,
-  } = useWalletStore();
+  const { reconnectWallet } = useWalletStore();
 
   useEffect(() => {
     reconnectWallet();
@@ -20,7 +16,6 @@ const Navigation = () => {
   useEffect(() => {
     const handleResize = () => {
       const isDesktop = window.innerWidth >= 768;
-      if (isDesktop && isWalletModalOpen) closeWalletModal();
       if (isDesktop && isMenuOpen) setIsMenuOpen(false);
     };
 
@@ -31,7 +26,7 @@ const Navigation = () => {
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [isWalletModalOpen, closeWalletModal, isMenuOpen]);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     return () => setIsMenuOpen(false);
