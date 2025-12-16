@@ -138,7 +138,7 @@ const WalletConnection = ({
     "relative mx-auto flex w-full max-w-[600px] flex-col min-h-[150px]";
   const buttonClasses =
     variant === "white"
-      ? "flex py-3 px-8 min-w-[150px] justify-center items-center gap-2.5 rounded-md bg-white text-black font-semibold cursor-pointer text-sm hover:bg-gray-100 transition-all"
+      ? "flex py-3 px-8 min-w-[150px] justify-center items-center gap-2.5 rounded-full bg-white text-black font-semibold cursor-pointer text-sm hover:bg-gray-100 transition-all"
       : "flex py-1.5 px-5 min-w-[150px] justify-center items-center gap-2.5 rounded-full border-2 border-white bg-white/80 text-black font-semibold text-sm z-40 cursor-pointer hover:bg-white/90 transition-all";
   const isLightTheme = theme === "light";
   const headingTextClass = isLightTheme ? "text-gray-900" : "text-white";
@@ -390,7 +390,7 @@ const WalletConnection = ({
             </div>
             <button
               onClick={openWalletList}
-              className={`bg-white text-black font-medium py-3 px-8 rounded-lg text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? "animate-pulse" : ""}`}
+              className={`bg-white text-black font-medium py-3 px-8 rounded-full text-lg cursor-pointer hover:bg-gray-100 transition-all ${isConnecting ? "animate-pulse" : ""}`}
               disabled={isConnecting}
             >
               {isConnecting ? "Connecting..." : "Connect"}
