@@ -495,16 +495,12 @@ const Account = () => {
     vpnInstances.length > 0 &&
     vpnInstances.every((instance) => instance.status === "Expired");
 
-  return (
-    <TooltipGuide
-      steps={tooltipSteps}
-      storageKey="vpn-account-visited"
-      stepDuration={4000}
+  const shouldEnableTooltipGuide = !hasAnyInstances;
+
+  const renderContent = (showTooltips: boolean) => (
+    <div
+      className="min-h-screen w-full overflow-x-hidden flex flex-col items-center  pt-16 pb-16"
     >
-      {(showTooltips) => (
-        <div
-          className="min-h-screen w-full overflow-x-hidden flex flex-col items-center  pt-16 pb-16"
-        >
           <LoadingOverlay
             isVisible={isPurchaseLoading || isConfigLoading}
             messageTop={
@@ -813,10 +809,20 @@ const Account = () => {
               )}
             </div>
           </div>
-
         </div>
-      )}
+  );
+
+  return shouldEnableTooltipGuide ? (
+    <TooltipGuide
+      steps={tooltipSteps}
+      storageKey="vpn-account-visited"
+      stepDuration={4000}
+      enabled={shouldEnableTooltipGuide}
+    >
+      {(showTooltips) => renderContent(showTooltips)}
     </TooltipGuide>
+  ) : (
+    renderContent(false)
   );
 };
 
