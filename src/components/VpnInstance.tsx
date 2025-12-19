@@ -104,7 +104,7 @@ const VpnInstance = ({
             spin={shouldSpinRenew && status === "Expired"}
             useBorder={shouldSpinRenew && status === "Expired"}
             onClick={onAction}
-            className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm bg-white text-black hover:bg-white/90 transition-all"
+            className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs shadow-sm bg-white text-black hover:bg-white/90 transition-all"
             radius="8px"
           >
             <p className="text-black font-semibold text-xs md:text-sm">
@@ -116,13 +116,13 @@ const VpnInstance = ({
         {isRenewExpanded && status === "Expired" && (
           <div className="flex gap-2 w-1/2 ml-auto">
             <button
-              className="flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm cursor-pointer bg-white/50 text-white hover:bg-white/70 transition-all flex-1"
+              className="flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs shadow-sm cursor-pointer bg-white/50 text-white hover:bg-white/70 transition-all flex-1"
               onClick={onCancelRenewal}
             >
               <p className="font-light text-xs md:text-sm">Cancel</p>
             </button>
             <button
-              className={`flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs box-shadow-sm transition-all flex-1 ${
+              className={`flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs shadow-sm transition-all flex-1 ${
                 selectedRenewDuration
                   ? "cursor-pointer bg-[#9400FF] text-white hover:bg-[#7A00CC]"
                   : "cursor-not-allowed bg-gray-400 text-gray-600 opacity-50"

@@ -41,6 +41,7 @@ const SpinningBorderButton = ({
     <button
       ref={ref}
       className={`${useBorder ? "border-gradient-button" : ""} ${className}`.trim()}
+      type="button"
       style={{
         ["--button-radius" as string]: radius,
         borderRadius: radius,

@@ -329,26 +329,27 @@ const Account = () => {
   const handleConfirmSubmit = async () => {
     if (!pendingTx) return;
 
+    const txToSubmit = pendingTx;
+    setPendingTx(null); // close modal immediately while continuing flow
     setIsPurchaseLoading(true);
     try {
-      await signAndSubmitTransaction(pendingTx.txCbor);
+      await signAndSubmitTransaction(txToSubmit.txCbor);
       const pendingClient = {
-        id: pendingTx.clientId,
-        region: pendingTx.region,
-        duration: pendingTx.durationMs,
+        id: txToSubmit.clientId,
+        region: txToSubmit.region,
+        duration: txToSubmit.durationMs,
         purchaseTime: new Date().toISOString(),
       };
       addPendingTransaction(pendingClient);
       setPendingClientsFromStorage(
         getPendingTransactions().filter((tx) => tx.status === "pending"),
       );
-      startPolling(pendingTx.clientId);
+      startPolling(txToSubmit.clientId);
     } catch (error) {
       console.error("Transaction error details:", error);
       setErrorModal("Failed to sign and submit transaction");
     } finally {
       setIsPurchaseLoading(false);
-      setPendingTx(null);
     }
   };
 
