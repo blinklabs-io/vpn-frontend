@@ -157,6 +157,13 @@ const WalletConnection = ({
     }
   };
 
+  const isUserCanceledError = (error: unknown) => {
+    if (!error) return false;
+    const maybeCode = (error as { code?: number }).code;
+    const message = (error as { message?: string }).message?.toLowerCase() ?? "";
+    return maybeCode === -3 || message.includes("user canceled");
+  };
+
   useEffect(() => {
     if (initiallyOpen) {
       openWalletModal();
@@ -216,10 +223,16 @@ const WalletConnection = ({
         }
       }
     } catch (error) {
-      console.error(`Error connecting to ${walletName}:`, error);
-      setConnectionError(
-        `Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      if (isUserCanceledError(error)) {
+        showErrorOnce(
+          "Connection request was canceled. Please accept the wallet access prompt and try again.",
+        );
+      } else {
+        console.error(`Error connecting to ${walletName}:`, error);
+        setConnectionError(
+          `Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
     } finally {
       setIsConnecting(false);
       setPendingWallet(null);
@@ -231,7 +244,11 @@ const WalletConnection = ({
     
     // Check if the error is about wallet not being installed
     const errorMessage = error.message.toLowerCase();
-    if (
+    if (isUserCanceledError(error)) {
+      showErrorOnce(
+        "Connection request was canceled. Please accept the wallet access prompt and try again.",
+      );
+    } else if (
       errorMessage.includes("not installed") ||
       errorMessage.includes("not found") ||
       errorMessage.includes("not available") ||
