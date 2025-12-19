@@ -31,11 +31,13 @@ const ConfirmModal = ({
   const DRAG_MAX_PULL = 260;
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const frame = requestAnimationFrame(() => setIsVisible(true));
+    const frame = requestAnimationFrame(() => {
+      if (isOpen) setIsVisible(true);
+    });
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
 
     return () => {
       cancelAnimationFrame(frame);
