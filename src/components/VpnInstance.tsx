@@ -78,7 +78,7 @@ const VpnInstance = ({
       {isRenewExpanded && renewDurationOptions && status === "Expired" && (
         <div className="flex flex-col gap-3 w-full pt-1">
           <p className="text-xs md:text-sm font-medium">Select renewal duration:</p>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
             {renewDurationOptions.map((option) => (
               <button
                 key={option.value}
