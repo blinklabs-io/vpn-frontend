@@ -12,6 +12,9 @@ type PurchaseCardProps = {
   isConnected: boolean;
   isProcessing: boolean;
   showTooltips?: boolean;
+  highlightDuration?: boolean;
+  highlightPrice?: boolean;
+  highlightPurchase?: boolean;
   formatPrice: (price: number) => string;
   onPurchase: (duration: number) => void;
 };
@@ -21,6 +24,9 @@ const PurchaseCard = ({
   isConnected,
   isProcessing,
   showTooltips,
+  highlightDuration = false,
+  highlightPrice = false,
+  highlightPurchase = false,
   formatPrice,
   onPurchase,
 }: PurchaseCardProps) => {
@@ -31,12 +37,17 @@ const PurchaseCard = ({
     <div
       key={option.value}
       className="w-full sm:w-[320px] rounded-2xl p-[1px] bg-[linear-gradient(180deg,#9400FF_0%,rgba(0,0,0,0.5)_100%)] overflow-hidden"
-      {...(showTooltips && { "data-tooltip-id": "duration-tooltip" })}
+      {...(showTooltips &&
+        highlightDuration && { "data-tooltip-id": "duration-tooltip" })}
     >
       <div className="h-full w-full rounded-2xl bg-[linear-gradient(180deg,#9400FF_0%,rgba(0,0,0,0.5)_100%)] bg-clip-padding border border-[#FFFFFF40] shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-6 flex flex-col gap-3">
         <div className="text-center flex flex-col items-center gap-1">
           <p className="font-exo-2 text-2xl font-semibold">{option.label}</p>
-          <p className="text-3xl font-ibm-plex font-semibold mt-1">
+          <p
+            className="text-3xl font-ibm-plex font-semibold mt-1"
+            {...(showTooltips &&
+              highlightPrice && { "data-tooltip-id": "price-tooltip" })}
+          >
             {formatPrice(option.price)}{" "}
             <span className="text-base font-semibold">ADA</span>
           </p>
@@ -57,7 +68,8 @@ const PurchaseCard = ({
             onPurchase(option.value);
           }}
           disabled={disabled}
-          {...(showTooltips && { "data-tooltip-id": "purchase-tooltip" })}
+          {...(showTooltips &&
+            highlightPurchase && { "data-tooltip-id": "purchase-tooltip" })}
         >
           {isProcessing ? "Processing..." : "Buy Now"}
         </button>

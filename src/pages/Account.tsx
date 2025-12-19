@@ -75,12 +75,6 @@ const Account = () => {
       placement: "bottom",
     },
     {
-      id: "region-tooltip",
-      content:
-        "Select the server region closest to you for the best performance, or choose a different region for location privacy.",
-      placement: "top",
-    },
-    {
       id: "wallet-tooltip",
       content:
         "Connect your Cardano wallet here to start purchasing VPN access. We support all major Cardano wallets!",
@@ -618,22 +612,19 @@ const Account = () => {
                     {/* Mobile: single card with sliding selector */}
                     <div className="flex flex-col gap-4 md:hidden">
                       <div
-                        className="relative flex items-center bg-black/50 rounded-2xl p-2 border border-white/20"
-                        {...(showTooltips && {
-                          "data-tooltip-id": "duration-tooltip",
-                        })}
+                        className="relative flex items-center bg-black/50 rounded-2xl p-2 border border-white/20 overflow-hidden"
                       >
                         <div
                         className="absolute top-2 bottom-2 left-2 rounded-xl bg-white shadow-lg transition-transform duration-300 ease-out"
                           style={{
-                            width: `${100 / durationOptions.length}%`,
+                            width: `calc((100% - 1rem) / ${durationOptions.length})`,
                             transform: `translateX(${selectedDurationIndex * 100}%)`,
                           }}
                         />
                         {durationOptions.map((option, index) => (
                           <button
                             key={option.value}
-                            className={`relative z-10 flex-1 py-2 text-xs font-semibold transition-colors ${
+                            className={`relative z-10 flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                               selectedDurationIndex === index
                                 ? "text-black"
                                 : "text-white font-semibold"
@@ -657,6 +648,9 @@ const Account = () => {
                             isProcessing={signupMutation.isPending}
                             onPurchase={(duration) => handlePurchase(duration)}
                             showTooltips={showTooltips}
+                            highlightDuration
+                            highlightPrice
+                            highlightPurchase
                             formatPrice={formatPrice}
                           />
                         </div>
@@ -666,7 +660,7 @@ const Account = () => {
                     {/* Desktop: show all options */}
                     <div className="hidden md:flex flex-col gap-5">
                       <div className="flex flex-wrap justify-center gap-5">
-                        {durationOptions.map((option) => (
+                        {durationOptions.map((option, index) => (
                           <PurchaseCard
                             key={option.value}
                             option={option}
@@ -674,6 +668,9 @@ const Account = () => {
                             isProcessing={signupMutation.isPending}
                             onPurchase={(duration) => handlePurchase(duration)}
                             showTooltips={showTooltips}
+                            highlightDuration={index === 0}
+                            highlightPrice={index === 0}
+                            highlightPurchase={index === 0}
                             formatPrice={formatPrice}
                           />
                         ))}
@@ -802,7 +799,12 @@ const Account = () => {
               ) : (
                 <div className="mt-4 text-center text-white/80">
                   {!isConnected && (
-                    <div className="md:hidden flex flex-col items-center gap-3 px-2 py-2">
+                    <div
+                      className="md:hidden flex flex-col items-center gap-3 px-2 py-2"
+                      {...(showTooltips && {
+                        "data-tooltip-id": "wallet-tooltip",
+                      })}
+                    >
                       <WalletConnection listLayout="dropdown" initiallyOpen={false} />
                     </div>
                   )}

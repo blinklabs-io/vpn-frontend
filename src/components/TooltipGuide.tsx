@@ -82,6 +82,7 @@ const TooltipGuide = ({
               key={step.id}
               id={step.id}
               place={step.placement || "top"}
+              anchorSelect={`[data-tooltip-id="${step.id}"]`}
               isOpen={isCurrentStep}
               clickable={true}
               className="force-opacity-1"
