@@ -167,10 +167,9 @@ const WalletConnection = ({
   useEffect(() => {
     if (initiallyOpen) {
       openWalletModal();
-    } else {
-      closeWalletModal();
     }
-  }, [initiallyOpen, openWalletModal, closeWalletModal]);
+    // Do not auto-close when initiallyOpen is false to avoid closing modals opened elsewhere.
+  }, [initiallyOpen, openWalletModal]);
 
   const openWalletList = () => {
     setConnectionError(null);
@@ -225,7 +224,7 @@ const WalletConnection = ({
     } catch (error) {
       if (isUserCanceledError(error)) {
         showErrorOnce(
-          "Connection request was canceled. Please accept the wallet access prompt and try again.",
+          "If you want to continue, please grant wallet access and try again.",
         );
       } else {
         console.error(`Error connecting to ${walletName}:`, error);
@@ -246,7 +245,7 @@ const WalletConnection = ({
     const errorMessage = error.message.toLowerCase();
     if (isUserCanceledError(error)) {
       showErrorOnce(
-        "Connection request was canceled. Please accept the wallet access prompt and try again.",
+        "If you want to continue, please grant wallet access and try again.",
       );
     } else if (
       errorMessage.includes("not installed") ||
