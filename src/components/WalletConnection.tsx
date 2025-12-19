@@ -66,10 +66,11 @@ const buildWalletListCss = (
     `;
   }
 
+  // Grid layout: force two columns (keep on mobile for consistency)
   return `
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     width: 100%;
     max-width: ${fullWidth ? "none" : "540px"};
     font-family: Helvetica Light, sans-serif;
@@ -79,7 +80,7 @@ const buildWalletListCss = (
     align-content: start;
     & > span {
       width: 100%;
-      padding: 8px 12px;
+      padding: 10px 12px;
       color: ${textColor};
       border: 1px solid ${borderColor};
       border-radius: 6px;
@@ -98,12 +99,6 @@ const buildWalletListCss = (
     & > span:hover {
       background: ${hoverBg};
       border-color: ${hoverBorder};
-    }
-    @media (max-width: 1024px) {
-      max-width: 480px;
-    }
-    @media (max-width: 640px) {
-      max-width: none;
     }
   `;
 };
@@ -281,20 +276,30 @@ const WalletConnection = ({
     </>
   );
 
-  const renderWalletList = (isLight = isLightTheme, fullWidth = false) => (
-    <ConnectWalletList
-      borderRadius={15}
-      gap={12}
-      primaryColor="#000000"
-      onConnect={onConnectWallet}
-      onConnectError={onConnectError}
-      supportedWallets={SUPPORTED_WALLETS}
-      showUnavailableWallets={0}
-      peerConnectEnabled={false}
-      limitNetwork={getNetworkType()}
-      customCSS={buildWalletListCss(isDropdownLayout, isLight, fullWidth)}
-    />
-  );
+  const renderWalletList = (
+    isLight = isLightTheme,
+    fullWidth = false,
+    layoutOverride?: "dropdown" | "grid",
+  ) => {
+    const useDropdownLayout = layoutOverride
+      ? layoutOverride === "dropdown"
+      : isDropdownLayout;
+
+    return (
+      <ConnectWalletList
+        borderRadius={15}
+        gap={12}
+        primaryColor="#000000"
+        onConnect={onConnectWallet}
+        onConnectError={onConnectError}
+        supportedWallets={SUPPORTED_WALLETS}
+        showUnavailableWallets={0}
+        peerConnectEnabled={false}
+        limitNetwork={getNetworkType()}
+        customCSS={buildWalletListCss(useDropdownLayout, isLight, fullWidth)}
+      />
+    );
+  };
 
   const renderWalletModal = () => (
     <ConfirmModal
@@ -309,7 +314,7 @@ const WalletConnection = ({
             "rounded-md border border-red-500/30 bg-red-50 px-4 py-2 text-sm text-red-700",
             "mb-2 text-sm text-gray-700",
           )}
-          <div className="pt-1 w-full">{renderWalletList(true, true)}</div>
+          <div className="pt-1 w-full">{renderWalletList(true, true, "grid")}</div>
         </div>
       }
       showConfirm={false}

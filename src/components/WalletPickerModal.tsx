@@ -52,11 +52,11 @@ const buildWalletListCss = (isDropdownLayout: boolean) => {
     `;
   }
 
-  // Match WalletConnection "flex" modal list styling (grid)
+  // Match WalletConnection modal list styling (grid, two columns even on mobile)
   return `
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     width: 100%;
     max-width: none;
     font-family: Helvetica Light, sans-serif;
@@ -85,12 +85,6 @@ const buildWalletListCss = (isDropdownLayout: boolean) => {
     & > span:hover {
       background: ${hoverBg};
       border-color: ${hoverBorder};
-    }
-    @media (max-width: 1024px) {
-      max-width: none;
-    }
-    @media (max-width: 640px) {
-      max-width: none;
     }
   `;
 };
@@ -259,7 +253,7 @@ const WalletPickerModal = () => {
               showUnavailableWallets={0}
               peerConnectEnabled={false}
               limitNetwork={getNetworkType()}
-              customCSS={buildWalletListCss(true)}
+              customCSS={buildWalletListCss(false)}
             />
           </div>
         </div>
