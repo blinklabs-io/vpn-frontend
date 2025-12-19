@@ -121,12 +121,14 @@ const WalletConnection = ({
     isConnected,
     connect,
     disconnect,
+    isWalletModalOpen,
+    openWalletModal,
+    closeWalletModal,
   } = useWalletStore();
   const navigate = useNavigate();
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [pendingWallet, setPendingWallet] = useState<string | null>(null);
-  const [localModalOpen, setLocalModalOpen] = useState(initiallyOpen);
   const lastErrorRef = useRef<{ message: string; timestamp: number } | null>(null);
   const isDropdownLayout = listLayout === "dropdown";
   const flexContainerBaseClasses =
@@ -156,13 +158,17 @@ const WalletConnection = ({
   };
 
   useEffect(() => {
-    setLocalModalOpen(initiallyOpen);
-  }, [initiallyOpen]);
+    if (initiallyOpen) {
+      openWalletModal();
+    } else {
+      closeWalletModal();
+    }
+  }, [initiallyOpen, openWalletModal, closeWalletModal]);
 
   const openWalletList = () => {
     setConnectionError(null);
     setPendingWallet(null);
-    setLocalModalOpen(true);
+    openWalletModal();
   };
 
   const closeWalletList = () => {
@@ -170,14 +176,14 @@ const WalletConnection = ({
       return;
     }
 
-    setLocalModalOpen(false);
+    closeWalletModal();
     setConnectionError(null);
     setPendingWallet(null);
   };
 
   const handleSuccessfulConnect = () => {
     setConnectionError(null);
-    setLocalModalOpen(false);
+    closeWalletModal();
 
     if (onConnected) {
       onConnected();
@@ -303,7 +309,7 @@ const WalletConnection = ({
 
   const renderWalletModal = () => (
     <ConfirmModal
-      isOpen={localModalOpen}
+      isOpen={isWalletModalOpen}
       title="Choose a wallet"
       message={
         <div className="space-y-4">

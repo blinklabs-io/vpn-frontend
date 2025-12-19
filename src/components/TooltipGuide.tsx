@@ -49,6 +49,19 @@ const TooltipGuide = ({
     onComplete?.();
   };
 
+  useEffect(() => {
+    if (!showTooltips || typeof document === "undefined") return;
+    const step = steps[currentStep];
+    if (!step) return;
+    const selector = `[data-tooltip-id="${step.id}"]`;
+    const anchor = document.querySelector(selector);
+    if (!anchor) {
+      console.warn(
+        `TooltipGuide: No element found for tooltip step id "${step.id}". Ensure the rendered element includes data-tooltip-id="${step.id}".`,
+      );
+    }
+  }, [showTooltips, steps, currentStep]);
+
   const renderTooltipContent = (content: string) => {
     return (
       <div className="flex flex-col gap-3">
