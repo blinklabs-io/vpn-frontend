@@ -207,8 +207,6 @@ export function submitTransaction(signedTxCbor: string): Promise<string> {
   const url = `${API_BASE_URL}/tx/submit`;
 
   const bodyHex = signedTxCbor.trim();
-  console.info("[API] submitTransaction hex length:", bodyHex.length);
-
   return fetch(url, {
     method: "POST",
     headers: {
