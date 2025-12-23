@@ -208,7 +208,7 @@ export function submitTransaction(signedTxCbor: string): Promise<string> {
 
   const arr = [];
   for (let i = 0, len = signedTxCbor.length; i < len; i += 2) {
-    arr.push(parseInt(signedTxCbor.substr(i, 2), 16));
+    arr.push(parseInt(signedTxCbor.slice(i, i + 2), 16));
   }
   const bodyBytes = new Uint8Array(arr);
   return fetch(url, {
