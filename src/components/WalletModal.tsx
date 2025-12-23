@@ -16,11 +16,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      // Ensure overflow is restored when modal closes
-      document.body.style.overflow = "";
-      return;
-    }
+    if (!isOpen) return;
 
     const frame = requestAnimationFrame(() => setIsVisible(true));
     const previousOverflow = document.body.style.overflow || "";
