@@ -140,6 +140,7 @@ const WalletPickerModal = () => {
 
   const handleSuccessfulConnect = () => {
     setConnectionError(null);
+    document.body.style.overflow = "";
     closeWalletModal();
     navigate("/account");
   };

@@ -2,7 +2,7 @@ import { Link } from "react-router";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden bg-black/30">
+    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
       <div className="absolute -top-40 -left-32 w-[420px] h-[420px] bg-blue-500/20 blur-[160px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-purple-500/20 blur-[160px] rounded-full pointer-events-none" />
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
@@ -12,7 +12,7 @@ const PrivacyPolicy = () => {
           </h1>
         </div>
 
-        <div className="bg-white/10 rounded-2xl p-10 backdrop-blur-xl border border-white/20 shadow-2xl">
+        <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-10 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
           <div className="space-y-10 text-gray-300">
             {/* Introduction */}
             <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
