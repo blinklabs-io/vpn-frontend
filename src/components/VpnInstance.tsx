@@ -5,8 +5,11 @@ interface VpnInstanceProps {
   status: "Active" | "Expired" | "Pending";
   expires: string;
   onDelete?: () => void;
-  onAction?: () => void;
+  onGetConfig?: () => void;
+  onStartRenew?: () => void;
+  onStartBuyTime?: () => void;
   isRenewExpanded?: boolean;
+  renewMode?: "renew" | "buy" | null;
   renewDurationOptions?: Array<{
     label: string;
     value: number;
@@ -23,8 +26,11 @@ const VpnInstance = ({
   region,
   status,
   expires,
-  onAction,
+  onGetConfig,
+  onStartRenew,
+  onStartBuyTime,
   isRenewExpanded,
+  renewMode = null,
   renewDurationOptions,
   selectedRenewDuration,
   onSelectRenewDuration,
@@ -74,10 +80,12 @@ const VpnInstance = ({
         </div>
       </div>
 
-      {/* Expanded renewal options */}
-      {isRenewExpanded && renewDurationOptions && status === "Expired" && (
+      {/* Expanded renewal / buy-time options */}
+      {isRenewExpanded &&
+        renewDurationOptions &&
+        (status === "Expired" || status === "Active") && (
         <div className="flex flex-col gap-3 w-full pt-1">
-          <p className="text-xs md:text-sm font-medium">Select renewal duration:</p>
+          <p className="text-xs md:text-sm font-medium">Select duration:</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
             {renewDurationOptions.map((option) => (
               <button
@@ -99,21 +107,38 @@ const VpnInstance = ({
       )}
 
       <div className="flex justify-end items-center gap-2 w-full">
-        {status !== "Pending" && !isRenewExpanded && (
+        {status === "Active" && !isRenewExpanded && (
+          <>
+            <SpinningBorderButton
+              onClick={onStartBuyTime}
+              className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs shadow-sm bg-white text-black hover:bg-white/90 transition-all"
+              radius="8px"
+            >
+              <p className="text-black font-semibold text-xs md:text-sm">Buy Time</p>
+            </SpinningBorderButton>
+            <SpinningBorderButton
+              onClick={onGetConfig}
+              className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs shadow-sm bg-white text-black hover:bg-white/90 transition-all"
+              radius="8px"
+            >
+              <p className="text-black font-semibold text-xs md:text-sm">Get Config</p>
+            </SpinningBorderButton>
+          </>
+        )}
+
+        {status === "Expired" && !isRenewExpanded && (
           <SpinningBorderButton
-            spin={shouldSpinRenew && status === "Expired"}
-            useBorder={shouldSpinRenew && status === "Expired"}
-            onClick={onAction}
+            spin={shouldSpinRenew}
+            useBorder={shouldSpinRenew}
+            onClick={onStartRenew}
             className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs shadow-sm bg-white text-black hover:bg-white/90 transition-all"
             radius="8px"
           >
-            <p className="text-black font-semibold text-xs md:text-sm">
-              {status === "Active" ? "Get Config" : "Renew Access"}
-            </p>
+            <p className="text-black font-semibold text-xs md:text-sm">Renew Access</p>
           </SpinningBorderButton>
         )}
 
-        {isRenewExpanded && status === "Expired" && (
+        {isRenewExpanded && (status === "Expired" || status === "Active") && (
           <div className="flex gap-2 w-1/2 ml-auto">
             <button
               className="flex items-center justify-center gap-3 rounded-md py-1.5 px-3.5 backdrop-blur-xs shadow-sm cursor-pointer bg-white/50 text-white hover:bg-white/70 transition-all flex-1"
@@ -130,7 +155,9 @@ const VpnInstance = ({
               onClick={onConfirmRenewal}
               disabled={!selectedRenewDuration}
             >
-              <p className="font-light text-xs md:text-sm">Renew</p>
+              <p className="font-light text-xs md:text-sm">
+                {renewMode === "buy" ? "Buy Time" : "Renew"}
+              </p>
             </button>
           </div>
         )}

@@ -37,12 +37,13 @@ const Account = () => {
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false);
   const [pendingTx, setPendingTx] = useState<{
-    type: "purchase" | "renew";
+    type: "purchase" | "renew" | "buy-time";
     txCbor: string;
     clientId: string;
     durationLabel: string;
     durationMs: number;
     region: string;
+    newExpiration?: string;
   } | null>(null);
   const [errorModal, setErrorModal] = useState<string | null>(null);
 
@@ -57,6 +58,9 @@ const Account = () => {
   const [selectedRenewDuration, setSelectedRenewDuration] = useState<
     number | null
   >(null);
+  const [renewMode, setRenewMode] = useState<"renew" | "buy" | null>(null);
+  const [renewingInstanceExpiration, setRenewingInstanceExpiration] =
+    useState<Date | null>(null);
   const [showAdditionalPurchaseCards, setShowAdditionalPurchaseCards] =
     useState(false);
   const [selectedDurationIndex, setSelectedDurationIndex] = useState(0);
@@ -293,37 +297,44 @@ const Account = () => {
     }
   };
 
-  const handleAction = async (instanceId: string, action: string) => {
-    if (action === "Get Config") {
-      try {
-        setIsConfigLoading(true);
-        const s3Url = await clientProfileMutation.mutateAsync(instanceId);
+  const handleGetConfig = async (instanceId: string) => {
+    try {
+      setIsConfigLoading(true);
+      const s3Url = await clientProfileMutation.mutateAsync(instanceId);
 
-        setVpnConfigUrl(s3Url);
+      setVpnConfigUrl(s3Url);
 
-        const link = document.createElement("a");
-        link.href = s3Url;
-        link.download = `vpn-config-${instanceId}.conf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const link = document.createElement("a");
+      link.href = s3Url;
+      link.download = `vpn-config-${instanceId}.conf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        setIsConfigLoading(false);
-      } catch (error) {
-        console.error("Failed to get config:", error);
-        setErrorModal("Failed to get VPN config. Please try again.");
-        setIsConfigLoading(false);
-      }
-    } else if (action === "Renew Access") {
-      // Toggle renewal expansion for this instance
-      setRenewingInstanceId(instanceId);
-      setSelectedRenewDuration(null);
+      setIsConfigLoading(false);
+    } catch (error) {
+      console.error("Failed to get config:", error);
+      setErrorModal("Failed to get VPN config. Please try again.");
+      setIsConfigLoading(false);
     }
+  };
+
+  const startDurationSelection = (
+    instanceId: string,
+    expirationDate: Date,
+    mode: "renew" | "buy",
+  ) => {
+    setRenewingInstanceId(instanceId);
+    setRenewMode(mode);
+    setRenewingInstanceExpiration(expirationDate);
+    setSelectedRenewDuration(null);
   };
 
   const handleCancelRenewal = () => {
     setRenewingInstanceId(null);
     setSelectedRenewDuration(null);
+    setRenewMode(null);
+    setRenewingInstanceExpiration(null);
   };
 
   const handleConfirmSubmit = async () => {
@@ -369,6 +380,11 @@ const Account = () => {
       return;
     }
 
+    if (!renewMode) {
+      setErrorModal("No renewal action selected");
+      return;
+    }
+
     const renewOption = durationOptions.find(
       (opt) => opt.value === selectedRenewDuration,
     );
@@ -392,13 +408,23 @@ const Account = () => {
         region: payloadRegion,
       });
 
+      const newExpirationDate =
+        renewMode === "buy" && renewingInstanceExpiration
+          ? new Date(
+              renewingInstanceExpiration.getTime() + selectedRenewDuration,
+            )
+          : null;
+
       setPendingTx({
-        type: "renew",
+        type: renewMode === "buy" ? "buy-time" : "renew",
         txCbor: data.txCbor,
         clientId: renewingInstanceId,
         durationMs: selectedRenewDuration,
         durationLabel: formatDuration(selectedRenewDuration),
         region: payloadRegion,
+        newExpiration: newExpirationDate
+          ? newExpirationDate.toLocaleString()
+          : undefined,
       });
     } catch (error) {
       console.error("Renew failed:", error);
@@ -409,6 +435,8 @@ const Account = () => {
 
     setRenewingInstanceId(null);
     setSelectedRenewDuration(null);
+    setRenewMode(null);
+    setRenewingInstanceExpiration(null);
   };
 
   const formatTimeRemaining = (expirationDate: string) => {
@@ -518,7 +546,13 @@ const Account = () => {
           {pendingTx && (
             <ConfirmModal
               isOpen
-              title={pendingTx.type === "purchase" ? "VPN Purchase" : "VPN Renewal"}
+              title={
+                pendingTx.type === "purchase"
+                  ? "VPN Purchase"
+                  : pendingTx.type === "buy-time"
+                    ? "Buy Time"
+                    : "VPN Renewal"
+              }
               message={
                 <div className="space-y-1 text-left">
                   <p className="text-sm text-gray-900">
@@ -528,6 +562,12 @@ const Account = () => {
                   <p className="text-sm text-gray-900">
                     Region: <span className="font-semibold">{pendingTx.region}</span>
                   </p>
+                  {pendingTx.newExpiration && (
+                    <p className="text-sm text-gray-900">
+                      New expiration:{" "}
+                      <span className="font-semibold">{pendingTx.newExpiration}</span>
+                    </p>
+                  )}
                 </div>
               }
               confirmLabel="Confirm"
@@ -776,15 +816,25 @@ const Account = () => {
                       status={instance.status}
                       expires={instance.expires}
                       shouldSpinRenew={areAllInstancesExpired}
-                      onAction={() =>
-                        handleAction(
+                      onGetConfig={() => handleGetConfig(instance.id)}
+                      onStartRenew={() =>
+                        startDurationSelection(
                           instance.id,
-                          instance.status === "Active"
-                            ? "Get Config"
-                            : "Renew Access",
+                          instance.expirationDate,
+                          "renew",
+                        )
+                      }
+                      onStartBuyTime={() =>
+                        startDurationSelection(
+                          instance.id,
+                          instance.expirationDate,
+                          "buy",
                         )
                       }
                       isRenewExpanded={renewingInstanceId === instance.id}
+                      renewMode={
+                        renewingInstanceId === instance.id ? renewMode : null
+                      }
                       renewDurationOptions={durationOptions}
                       selectedRenewDuration={selectedRenewDuration}
                       onSelectRenewDuration={setSelectedRenewDuration}
