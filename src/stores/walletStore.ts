@@ -168,11 +168,25 @@ export const useWalletStore = create<WalletState>()(
           try {
             const { getBalance, getWalletAddress } = get();
             await Promise.all([getBalance(), getWalletAddress()]);
+            
+            // Log wallet details after connection
+            const { walletAddress: addr, balance } = get();
+            console.log("Wallet connected successfully:", {
+              walletName,
+              stakeAddress,
+              walletAddress: addr,
+              balance,
+            });
           } catch (error) {
             console.warn(
               "Failed to get balance or address, but wallet is connected:",
               error,
             );
+            // Still log basic wallet info even if balance/address fetch fails
+            console.log("Wallet connected:", {
+              walletName,
+              stakeAddress,
+            });
           }
 
           return true;
