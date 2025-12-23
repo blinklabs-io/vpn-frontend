@@ -60,6 +60,12 @@ const Navigation = () => {
               How It Works
             </Link>
             <Link
+              to="/install"
+              className="font-ibm-plex text-white font-normal text-sm hover:text-gray-200 transition-colors"
+            >
+              How to Install
+            </Link>
+            <Link
               to="/docs-faqs"
               className="font-ibm-plex text-white font-normal text-sm hover:text-gray-200 transition-colors"
             >
@@ -100,6 +106,13 @@ const Navigation = () => {
                 className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
               >
                 How It Works
+              </Link>
+              <Link
+                to="/install"
+                onClick={closeMenu}
+                className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-normal text-sm hover:bg-white/5 transition-colors"
+              >
+                How to Install
               </Link>
               <Link
                 to="/docs-faqs"
