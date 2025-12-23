@@ -34,7 +34,7 @@ const ConfirmModal = ({
     const frame = requestAnimationFrame(() => {
       if (isOpen) setIsVisible(true);
     });
-    const previousOverflow = document.body.style.overflow;
+    const previousOverflow = document.body.style.overflow || "";
     if (isOpen) {
       document.body.style.overflow = "hidden";
     }
@@ -42,7 +42,7 @@ const ConfirmModal = ({
     return () => {
       cancelAnimationFrame(frame);
       setIsVisible(false);
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousOverflow || "";
       setDragOffset(0);
       setDragStartY(null);
     };

@@ -2,7 +2,7 @@ import { Link } from "react-router";
 
 const InstallGuide = () => {
   return (
-    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden bg-black/30">
+    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
       <div className="max-w-4xl mx-auto px-6 py-12 relative z-10">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-4">
@@ -37,7 +37,8 @@ const InstallGuide = () => {
           </div>
         </div>
 
-        <div className="space-y-8 mb-12">
+        <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
+          <div className="space-y-8 mb-12">
           <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-xl border border-white/20">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
@@ -517,6 +518,7 @@ const InstallGuide = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         <div className="text-center mt-8">

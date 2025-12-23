@@ -615,23 +615,22 @@ const Account = () => {
                 <>
                   <div className="flex items-center gap-3">
                     <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
-                      Connected &amp; Secure
+                      VPN Active
                     </h1>
                     <img
                       src="/checks.svg"
-                      alt="Connected and secure"
+                      alt="VPN Active"
                       className="h-8 w-8"
                     />
                   </div>
                   <p className="font-ibm-plex font-normal text-[14px] leading-[130%] tracking-[0] text-center text-[#E1B8FF] md:text-[16px] md:leading-[120%]">
-                    You're currently protected. Add more connections or renew to
-                    extend service.
+                    Your VPN subscription is active. Download your profile to connect, or add more connections or renew to extend service.
                   </p>
                 </>
-              ) : isConnected ? (
+              ) : areAllInstancesExpired ? (
                 <>
                   <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
-                    You’re no longer protected.
+                    You're no longer protected.
                   </h1>
                   <p className="font-ibm-plex font-normal text-[14px] leading-[130%] tracking-[0] text-center text-[#E1B8FF] md:text-[16px] md:leading-[120%]">
                     Restore your encrypted connection in seconds and keep your activity

@@ -115,7 +115,7 @@ const DocsFaqs = () => {
   };
 
   return (
-    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden bg-black/30">
+    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
       <div className="max-w-4xl mx-auto px-6 py-12 relative z-10">
         <div className="text-center mb-10">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-4">

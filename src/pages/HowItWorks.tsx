@@ -2,13 +2,13 @@ import { Link } from "react-router";
 
 const HowItWorks = () => {
   return (
-    <div className="relative pt-16 min-h-screen overflow-hidden bg-black/30">
+    <div className="relative pt-16 min-h-screen overflow-hidden">
       <div className="absolute -top-40 -left-32 w-[420px] h-[420px] bg-blue-500/20 blur-[160px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-purple-500/20 blur-[160px] rounded-full pointer-events-none" />
 
       <div className="relative z-10">
         <div className="max-w-5xl mx-auto px-6 py-16">
-          <div className="bg-white/10 rounded-2xl p-10 backdrop-blur-xl border border-white/20 shadow-2xl">
+          <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-10 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
             <div className="space-y-12">
               <section id="overview">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
