@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router";
 import Account from "../pages/Account";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import HowItWorks from "../pages/HowItWorks";
+import InstallGuide from "../pages/InstallGuide";
 import DocsFaqs from "../pages/DocsFaqs";
 import Home from "../pages/Home";
 
@@ -12,6 +13,7 @@ const AppRoutes = () => {
       <Route path="/account" element={<Account />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/install" element={<InstallGuide />} />
       <Route path="/docs-faqs" element={<DocsFaqs />} />
     </Routes>
   );

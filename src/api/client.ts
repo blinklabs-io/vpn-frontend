@@ -206,18 +206,17 @@ export function getClientProfile(
 export function submitTransaction(signedTxCbor: string): Promise<string> {
   const url = `${API_BASE_URL}/tx/submit`;
 
-  const arr = [];
-  for (let i = 0, len = signedTxCbor.length; i < len; i += 2) {
-    arr.push(parseInt(signedTxCbor.substr(i, 2), 16));
-  }
-  const bodyBytes = new Uint8Array(arr);
+  const bodyHex = signedTxCbor.trim();
+  console.info("[API] submitTransaction hex length:", bodyHex.length);
+
   return fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/cbor",
+      // Send raw hex as plain text for compatibility with submit endpoint expectations.
+      "Content-Type": "text/plain",
       accept: "application/json",
     },
-    body: bodyBytes,
+    body: bodyHex,
   }).then(async (response) => {
     if (!response.ok) {
       const errorText = await response.text();
