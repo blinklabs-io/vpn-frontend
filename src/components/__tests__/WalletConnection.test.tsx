@@ -7,7 +7,6 @@ import {
 } from "../../test/utils";
 import WalletConnection from "../WalletConnection";
 import { useWalletStore } from "../../stores/walletStore";
-import { showError } from "../../utils/toast";
 
 vi.mock("@cardano-foundation/cardano-connect-with-wallet", () => ({
   ConnectWalletList: ({
@@ -33,12 +32,6 @@ vi.mock("@cardano-foundation/cardano-connect-with-wallet", () => ({
 }));
 
 vi.mock("../../stores/walletStore");
-
-vi.mock("../../utils/toast", () => ({
-  showError: vi.fn(),
-  showSuccess: vi.fn(),
-  showInfo: vi.fn(),
-}));
 
 const mockUseWalletStore = vi.mocked(useWalletStore);
 
@@ -139,7 +132,7 @@ describe("WalletConnection", () => {
       });
     });
 
-    it("should show toast when wallet is not installed", async () => {
+    it("should surface error when wallet is not installed", async () => {
       mockConnect.mockResolvedValue(false);
       
       // Remove the wallet from window.cardano to simulate not installed
@@ -157,9 +150,9 @@ describe("WalletConnection", () => {
       await user.click(walletOption);
 
       await waitFor(() => {
-        expect(showError).toHaveBeenCalledWith(
-          expect.stringContaining("wallet is not installed"),
-        );
+        expect(
+          screen.getByText(/wallet is not installed/i),
+        ).toBeInTheDocument();
       });
 
       // Restore the original window.cardano

@@ -1,7 +1,7 @@
 export interface PendingTransaction {
   id: string;
   region: string;
-  duration: string;
+  duration: number; // duration in ms
   purchaseTime: string;
   status: "pending" | "complete";
   attempts: number;
