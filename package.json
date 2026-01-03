@@ -44,7 +44,7 @@
     "globals": "^16.4.0",
     "imagemin-avif": "^0.1.6",
     "imagemin-webp": "^8.0.0",
-    "jsdom": "^27.0.1",
+    "jsdom": "^27.4.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.2",
     "vite": "^7.2.6",
