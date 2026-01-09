@@ -37,7 +37,7 @@ interface WalletState {
   // Actions
   setWalletState: (state: Partial<WalletState>) => void;
   openWalletModal: () => void;
-  connect: (walletName: string) => Promise<boolean>;
+  connect: (walletName: string) => Promise<void>;
   disconnect: () => void;
   signMessage: (message: string) => Promise<unknown>;
   signTransaction: (txCbor: string) => Promise<string>; // Returns signed transaction CBOR
@@ -92,94 +92,85 @@ export const useWalletStore = create<WalletState>()(
       setVpnConfigUrl: (url: string) => set({ lastVpnConfigUrl: url }),
 
       connect: async (walletName: string) => {
-        try {
-          if (!window.cardano || !window.cardano[walletName]) {
-            return false; // Return false instead of throwing
-          }
+        if (!window.cardano || !window.cardano[walletName]) {
+          throw new Error(`${walletName} wallet is not installed`);
+        }
 
-          const walletApi = await window.cardano[walletName].enable();
-          const walletNetworkId = await walletApi.getNetworkId();
+        const walletApi = await window.cardano[walletName].enable();
+        const walletNetworkId = await walletApi.getNetworkId();
 
-          if (walletNetworkId !== EXPECTED_NETWORK_ID) {
-            const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
-            console.error(
-              `Wallet network mismatch. App expects ${APP_NETWORK_LABEL}, but wallet is on ${walletNetworkLabel}.`,
-            );
-            set({
-              isConnected: false,
-              isEnabled: false,
-              enabledWallet: null,
-              stakeAddress: null,
-              walletAddress: null,
-              walletApi: null,
-              balance: null,
-              pendingTx: null,
-            });
-            return false;
-          }
+        if (walletNetworkId !== EXPECTED_NETWORK_ID) {
+          const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
+          const errorMessage = `Network mismatch: This app requires ${APP_NETWORK_LABEL}, but your wallet is connected to ${walletNetworkLabel}. Please switch your wallet to ${APP_NETWORK_LABEL} and try again.`;
+          set({
+            isConnected: false,
+            isEnabled: false,
+            enabledWallet: null,
+            stakeAddress: null,
+            walletAddress: null,
+            walletApi: null,
+            balance: null,
+            pendingTx: null,
+          });
+          throw new Error(errorMessage);
+        }
 
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-          let stakeAddresses: string[] = [];
-          let retries = 3;
+        let stakeAddresses: string[] = [];
+        let retries = 3;
+        let activeWalletApi = walletApi;
 
-          while (retries > 0) {
-            try {
-              stakeAddresses = await walletApi.getRewardAddresses();
-              break;
-            } catch (error: unknown) {
-              retries--;
+        while (retries > 0) {
+          try {
+            stakeAddresses = await activeWalletApi.getRewardAddresses();
+            break;
+          } catch (error: unknown) {
+            retries--;
 
-              if (
-                error instanceof Error &&
-                (error.message.includes("account changed") ||
-                  error.message.includes("Account changed"))
-              ) {
-                console.warn(
-                  `Account changed error for ${walletName}, retrying... (${retries} attempts left)`,
-                );
+            if (
+              error instanceof Error &&
+              (error.message.includes("account changed") ||
+                error.message.includes("Account changed"))
+            ) {
+              console.warn(
+                `Account changed error for ${walletName}, retrying... (${retries} attempts left)`,
+              );
 
-                if (retries > 0) {
-                  await new Promise((resolve) => setTimeout(resolve, 500));
-                  continue;
-                } else {
-                  const newWalletApi =
-                    await window.cardano[walletName].enable();
-                  await new Promise((resolve) => setTimeout(resolve, 200));
-                  stakeAddresses = await newWalletApi.getRewardAddresses();
-                  break;
-                }
+              if (retries > 0) {
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                continue;
               } else {
-                throw error;
+                activeWalletApi =
+                  await window.cardano[walletName].enable();
+                await new Promise((resolve) => setTimeout(resolve, 200));
+                stakeAddresses = await activeWalletApi.getRewardAddresses();
+                break;
               }
+            } else {
+              throw error;
             }
           }
+        }
 
-          const stakeAddress = stakeAddresses?.[0] || null;
+        const stakeAddress = stakeAddresses?.[0] || null;
 
-          set({
-            isConnected: true,
-            isEnabled: true,
-            enabledWallet: walletName,
-            stakeAddress,
-            walletApi,
-          });
+        set({
+          isConnected: true,
+          isEnabled: true,
+          enabledWallet: walletName,
+          stakeAddress,
+          walletApi: activeWalletApi,
+        });
 
-          try {
-            const { getBalance, getWalletAddress } = get();
-            await Promise.all([getBalance(), getWalletAddress()]);
-          } catch (error) {
-            console.warn(
-              "Failed to get balance or address, but wallet is connected:",
-              error,
-            );
-    
-          }
-
-          return true;
+        try {
+          const { getBalance, getWalletAddress } = get();
+          await Promise.all([getBalance(), getWalletAddress()]);
         } catch (error) {
-          console.error(`Failed to connect to ${walletName}:`, error);
-          return false;
+          console.warn(
+            "Failed to get balance or address, but wallet is connected:",
+            error,
+          );
         }
       },
 

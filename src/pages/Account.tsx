@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import {
   useRefData,
@@ -125,6 +125,26 @@ const Account = () => {
     });
   }, [clientList]);
 
+  /**
+   * Normalize duration to milliseconds.
+   *
+   * API Contract: The backend API (RefDataResponse.prices[].duration, ClientInfo.duration)
+   * may return durations in either seconds or milliseconds depending on configuration.
+   * This function uses a heuristic threshold to detect the unit.
+   *
+   * Threshold: 1 hour (3,600,000ms) - values below this are assumed to be in seconds.
+   *
+   * IMPORTANT: This heuristic assumes VPN subscription durations are >= 1 hour when
+   * expressed in milliseconds. If the backend ever returns sub-1-hour durations in
+   * milliseconds (e.g., 30 minutes = 1,800,000ms for testing), they would be incorrectly
+   * multiplied by 1000. In that case, coordinate with the backend team to either:
+   * - Ensure consistent units in API responses
+   * - Add an explicit unit field to the API schema
+   * - Use a configuration flag for the expected format
+   *
+   * @param duration - Duration value from API (seconds or milliseconds)
+   * @returns Duration in milliseconds
+   */
   const normalizeDurationMs = (duration?: number) => {
     if (!duration) return 0;
     return duration < 1000 * 60 * 60 ? duration * 1000 : duration;
@@ -176,12 +196,15 @@ const Account = () => {
   };
 
   const durationOptions = Array.isArray(refData?.prices)
-    ? refData.prices.map((priceData: { duration: number; price: number }) => ({
-        label: formatDuration(priceData.duration),
-        value: priceData.duration,
-        timeDisplay: formatTimeDisplay(priceData.duration),
-        price: priceData.price,
-      }))
+    ? refData.prices.map((priceData: { duration: number; price: number }) => {
+        const normalizedDuration = normalizeDurationMs(priceData.duration);
+        return {
+          label: formatDuration(normalizedDuration),
+          value: normalizedDuration,
+          timeDisplay: formatTimeDisplay(normalizedDuration),
+          price: priceData.price,
+        };
+      })
     : [];
   const selectedDurationOption =
     durationOptions[selectedDurationIndex] ?? durationOptions[0];
@@ -364,10 +387,14 @@ const Account = () => {
     }
   };
 
-  const handleCancelPending = () => {
+  const handleCancelPending = useCallback(() => {
     setPendingTx(null);
     setIsPurchaseLoading(false);
-  };
+  }, []);
+
+  const closeErrorModal = useCallback(() => {
+    setErrorModal(null);
+  }, []);
 
   const handleConfirmRenewal = async () => {
     if (!walletAddress) {
@@ -584,8 +611,8 @@ const Account = () => {
               message={errorModal}
               showConfirm={false}
               cancelLabel="Close"
-              onConfirm={() => setErrorModal(null)}
-              onCancel={() => setErrorModal(null)}
+              onConfirm={closeErrorModal}
+              onCancel={closeErrorModal}
             />
           )}
 

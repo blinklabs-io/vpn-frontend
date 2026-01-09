@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import WalletConnection from "./WalletConnection";
 import ConfirmModal from "./ConfirmModal";
 import { useWalletStore } from "../stores/walletStore";
@@ -25,14 +25,19 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
     return () => {
       cancelAnimationFrame(frame);
       setIsVisible(false);
+      setShowDisconnectConfirm(false);
       document.body.style.overflow = previousOverflow || "";
     };
   }, [isOpen]);
 
-  const handleConfirmDisconnect = () => {
+  const closeDisconnectConfirm = useCallback(() => {
+    setShowDisconnectConfirm(false);
+  }, []);
+
+  const handleConfirmDisconnect = useCallback(() => {
     setShowDisconnectConfirm(false);
     onDisconnect();
-  };
+  }, [onDisconnect]);
 
   if (!isOpen) return null;
 
@@ -47,7 +52,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
         <div
           className="absolute inset-0"
           onClick={closeWalletModal}
-          aria-hidden
+          aria-hidden="true"
         />
         <div
           className={`${
@@ -109,7 +114,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
         message="This will disconnect your wallet from Nabu."
         confirmLabel="Confirm"
         cancelLabel="Close"
-        onCancel={() => setShowDisconnectConfirm(false)}
+        onCancel={closeDisconnectConfirm}
         onConfirm={handleConfirmDisconnect}
       />
     </>

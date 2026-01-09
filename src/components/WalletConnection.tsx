@@ -2,7 +2,7 @@ import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wall
 import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
 import { useWalletStore } from "../stores/walletStore";
 import { useNavigate } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmModal from "./ConfirmModal";
 
 interface WalletConnectionProps {
@@ -164,85 +164,11 @@ const WalletConnection = ({
     return maybeCode === -3 || message.includes("user canceled");
   };
 
-  useEffect(() => {
-    if (initiallyOpen) {
-      openWalletModal();
-    }
-    // Do not auto-close when initiallyOpen is false to avoid closing modals opened elsewhere.
-  }, [initiallyOpen, openWalletModal]);
+  // Consolidated error handler for both onConnectWallet and onConnectError
+  // Memoized since it's used by callbacks passed to ConnectWalletList
+  const handleConnectionError = useCallback((walletName: string, error: unknown) => {
+    const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
 
-  const openWalletList = () => {
-    setConnectionError(null);
-    setPendingWallet(null);
-    openWalletModal();
-  };
-
-  const closeWalletList = () => {
-    if (isConnecting) {
-      return;
-    }
-
-    closeWalletModal();
-    setConnectionError(null);
-    setPendingWallet(null);
-  };
-
-  const handleSuccessfulConnect = () => {
-    setConnectionError(null);
-    closeWalletModal();
-
-    if (onConnected) {
-      onConnected();
-    } else {
-      navigate("/account");
-    }
-  };
-
-  const onConnectWallet = async (walletName: string) => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    setPendingWallet(walletName);
-
-    try {
-      const success = await connect(walletName);
-
-      if (success) {
-        handleSuccessfulConnect();
-      } else {
-        console.error(
-          `Failed to connect to ${walletName} - connect function returned false`,
-        );
-        // Check if wallet is not installed
-        if (!window.cardano || !window.cardano[walletName]) {
-          showErrorOnce(`${walletName} wallet is not installed. Please install it from the official website.`);
-        } else {
-          setConnectionError(
-            `Failed to connect to ${walletName}. Please try again.`,
-          );
-        }
-      }
-    } catch (error) {
-      if (isUserCanceledError(error)) {
-        showErrorOnce(
-          "If you want to continue, please grant wallet access and try again.",
-        );
-      } else {
-        console.error(`Error connecting to ${walletName}:`, error);
-        setConnectionError(
-          `Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }
-    } finally {
-      setIsConnecting(false);
-      setPendingWallet(null);
-    }
-  };
-
-  const onConnectError = (walletName: string, error: Error) => {
-    console.error(`ConnectWalletList error for ${walletName}:`, error);
-    
-    // Check if the error is about wallet not being installed
-    const errorMessage = error.message.toLowerCase();
     if (isUserCanceledError(error)) {
       showErrorOnce(
         "If you want to continue, please grant wallet access and try again.",
@@ -259,10 +185,9 @@ const WalletConnection = ({
       errorMessage.includes("429") ||
       errorMessage.includes("rate limit")
     ) {
-      const message = `${walletName} is temporarily rate limiting requests. Please wait 30-60 seconds, close other dApp tabs, and retry. Restarting the wallet extension can also help.`;
-      showErrorOnce(message);
-      setConnectionError(message);
+      showErrorOnce(`${walletName} is temporarily rate limiting requests. Please wait 30-60 seconds, close other dApp tabs, and retry. Restarting the wallet extension can also help.`);
     } else if (
+      errorMessage.includes("network mismatch") ||
       errorMessage.includes("wrong network") ||
       errorMessage.includes("network type") ||
       errorMessage.includes("mainnet") ||
@@ -270,17 +195,69 @@ const WalletConnection = ({
     ) {
       const network = import.meta.env.VITE_CARDANO_NETWORK || "preprod";
       const expectedNetwork = network === "mainnet" ? "Mainnet" : "Testnet";
-      const message = `Network mismatch: This app requires ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`;
-      showErrorOnce(message);
-      setConnectionError(message);
+      showErrorOnce(`Network mismatch: This app requires ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
     } else {
-      showErrorOnce(`Error connecting to ${walletName}: ${error.message}`);
-      setConnectionError(`Error with ${walletName}: ${error.message}`);
+      showErrorOnce(`Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
-    
+  }, []);
+
+  useEffect(() => {
+    if (initiallyOpen) {
+      openWalletModal();
+    }
+    // Do not auto-close when initiallyOpen is false to avoid closing modals opened elsewhere.
+  }, [initiallyOpen, openWalletModal]);
+
+  const openWalletList = () => {
+    setConnectionError(null);
+    setPendingWallet(null);
+    openWalletModal();
+  };
+
+  const closeWalletList = useCallback(() => {
+    if (isConnecting) {
+      return;
+    }
+
+    closeWalletModal();
+    setConnectionError(null);
+    setPendingWallet(null);
+  }, [isConnecting, closeWalletModal]);
+
+  const handleSuccessfulConnect = useCallback(() => {
+    setConnectionError(null);
+    closeWalletModal();
+
+    if (onConnected) {
+      onConnected();
+    } else {
+      navigate("/account");
+    }
+  }, [closeWalletModal, onConnected, navigate]);
+
+  const onConnectWallet = useCallback(async (walletName: string) => {
+    setIsConnecting(true);
+    setConnectionError(null);
+    setPendingWallet(walletName);
+
+    try {
+      await connect(walletName);
+      handleSuccessfulConnect();
+    } catch (error) {
+      console.error(`Error connecting to ${walletName}:`, error);
+      handleConnectionError(walletName, error);
+    } finally {
+      setIsConnecting(false);
+      setPendingWallet(null);
+    }
+  }, [connect, handleSuccessfulConnect, handleConnectionError]);
+
+  const onConnectError = useCallback((walletName: string, error: Error) => {
+    console.error(`ConnectWalletList error for ${walletName}:`, error);
+    handleConnectionError(walletName, error);
     setIsConnecting(false);
     setPendingWallet(null);
-  };
+  }, [handleConnectionError]);
 
   const renderConnectionFeedback = (
     errorClasses = isLightTheme
@@ -293,7 +270,7 @@ const WalletConnection = ({
         <div className={errorClasses}>{connectionError}</div>
       )}
       {isConnecting && pendingWallet && (
-        <div className={statusClasses}></div>
+        <p className={`${statusClasses} animate-pulse`}>Connecting to {pendingWallet}...</p>
       )}
     </>
   );

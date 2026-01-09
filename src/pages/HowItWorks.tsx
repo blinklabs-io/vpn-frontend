@@ -10,9 +10,9 @@ const HowItWorks = () => {
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-10 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
             <div className="space-y-12">
-              <section id="overview">
+              <section id="overview" aria-labelledby="overview-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
-                  <h1 className="text-3xl font-semibold text-white mb-6">
+                  <h1 id="overview-title" className="text-3xl font-semibold text-white mb-6">
                     How It Works
                   </h1>
                   <p className="text-gray-300 text-lg leading-relaxed">
@@ -26,13 +26,13 @@ const HowItWorks = () => {
                 </div>
               </section>
 
-              <section id="signup">
+              <section id="signup" aria-labelledby="signup-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       1
                     </div>
-                    <h2 className="text-2xl font-semibold text-white">
+                    <h2 id="signup-title" className="text-2xl font-semibold text-white">
                       Web Frontend
                     </h2>
                   </div>
@@ -57,13 +57,13 @@ const HowItWorks = () => {
                 </div>
               </section>
 
-              <section id="validation">
+              <section id="validation" aria-labelledby="validation-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       2
                     </div>
-                    <h2 className="text-2xl font-semibold text-white">
+                    <h2 id="validation-title" className="text-2xl font-semibold text-white">
                       Smart Contract
                     </h2>
                   </div>
@@ -107,13 +107,13 @@ const HowItWorks = () => {
                 </div>
               </section>
 
-              <section id="indexer">
+              <section id="indexer" aria-labelledby="indexer-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       3
                     </div>
-                    <h2 className="text-2xl font-semibold text-white">
+                    <h2 id="indexer-title" className="text-2xl font-semibold text-white">
                       Indexer and API
                     </h2>
                   </div>
@@ -144,13 +144,13 @@ const HowItWorks = () => {
                 </div>
               </section>
 
-              <section id="authentication">
+              <section id="authentication" aria-labelledby="authentication-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       4
                     </div>
-                    <h2 className="text-2xl font-semibold text-white">
+                    <h2 id="authentication-title" className="text-2xl font-semibold text-white">
                       Profile Download Authentication
                     </h2>
                   </div>
@@ -170,13 +170,13 @@ const HowItWorks = () => {
                 </div>
               </section>
 
-              <section id="setup">
+              <section id="setup" aria-labelledby="setup-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       5
                     </div>
-                    <h2 className="text-2xl font-semibold text-white">
+                    <h2 id="setup-title" className="text-2xl font-semibold text-white">
                       OpenVPN Server
                     </h2>
                   </div>
@@ -209,13 +209,13 @@ const HowItWorks = () => {
                 </div>
               </section>
 
-              <section id="infrastructure">
+              <section id="infrastructure" aria-labelledby="infrastructure-title">
                 <div className="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-xl">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-transparent border-2 border-white rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       6
                     </div>
-                    <h2 className="text-2xl font-semibold text-white">
+                    <h2 id="infrastructure-title" className="text-2xl font-semibold text-white">
                       Infrastructure
                     </h2>
                   </div>
@@ -252,6 +252,8 @@ const HowItWorks = () => {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"

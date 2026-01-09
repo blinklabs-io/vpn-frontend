@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 interface ConfirmModalProps {
@@ -30,6 +30,12 @@ const ConfirmModal = ({
   const DRAG_DISMISS_THRESHOLD = 200;
   const DRAG_MAX_PULL = 260;
 
+  // Use ref to access latest onCancel without adding it to effect dependencies
+  const onCancelRef = useRef(onCancel);
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+  }, [onCancel]);
+
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (isOpen) setIsVisible(true);
@@ -39,12 +45,23 @@ const ConfirmModal = ({
       document.body.style.overflow = "hidden";
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancelRef.current();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
     return () => {
       cancelAnimationFrame(frame);
       setIsVisible(false);
       document.body.style.overflow = previousOverflow || "";
       setDragOffset(0);
       setDragStartY(null);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 
@@ -64,7 +81,7 @@ const ConfirmModal = ({
 
   const handleDragEnd = () => {
     if (dragOffset > DRAG_DISMISS_THRESHOLD) {
-      onCancel();
+      onCancelRef.current();
     } else {
       setDragOffset(0);
     }
@@ -82,7 +99,7 @@ const ConfirmModal = ({
       aria-modal="true"
       aria-label={typeof title === "string" ? title : undefined}
     >
-      <div className="absolute inset-0" onClick={onCancel} aria-hidden />
+      <div className="absolute inset-0" onClick={() => onCancelRef.current()} aria-hidden="true" />
       <div
         className={`${
           isVisible ? "translate-y-0" : "translate-y-full"
@@ -108,7 +125,7 @@ const ConfirmModal = ({
             {showCancel && (
               <button
                 type="button"
-                onClick={onCancel}
+                onClick={() => onCancelRef.current()}
                 className="h-11 md:h-9 md:rounded-md w-full md:w-auto rounded-full bg-[#9400FF] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 cursor-pointer"
               >
                 {cancelLabel}

@@ -44,7 +44,7 @@ const VpnInstance = ({
 
   return (
     <div
-      className={`flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-xs ${
+      className={`flex p-4 flex-col justify-center items-start gap-3 w-full rounded-md backdrop-blur-sm ${
         status === "Active"
           ? "bg-[linear-gradient(180deg,rgba(148,0,255,0.60)_0%,rgba(104,0,178,0.60)_100%)]"
           : status === "Pending"
