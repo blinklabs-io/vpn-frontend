@@ -2,7 +2,9 @@ import { Link } from "react-router";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="flex flex-col bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] relative pt-16 min-h-screen overflow-hidden">
+    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
+      <div className="absolute -top-40 -left-32 w-[420px] h-[420px] bg-blue-500/20 blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-purple-500/20 blur-[160px] rounded-full pointer-events-none" />
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-4">
@@ -13,7 +15,7 @@ const PrivacyPolicy = () => {
         <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-10 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
           <div className="space-y-10 text-gray-300">
             {/* Introduction */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-4">
                 1. Introduction
               </h2>
@@ -35,7 +37,7 @@ const PrivacyPolicy = () => {
             </section>
 
             {/* Our Commitment */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent mb-4">
                 2. Our Commitment to Privacy
               </h2>
@@ -64,7 +66,7 @@ const PrivacyPolicy = () => {
             </section>
 
             {/* Account Information */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent mb-4">
                 3. Account Information
               </h2>
@@ -92,7 +94,7 @@ const PrivacyPolicy = () => {
             </section>
 
             {/* Data Collection */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-4">
                 4. Data Collection Practices
               </h2>
@@ -138,7 +140,7 @@ const PrivacyPolicy = () => {
             </section>
 
             {/* Third-Party Services */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-4">
                 5. Third-Party Services and Intermediaries
               </h2>
@@ -188,7 +190,7 @@ const PrivacyPolicy = () => {
             </section>
 
             {/* Limitations and Disclaimers */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-orange-200 bg-clip-text text-transparent mb-4">
                 6. Limitations and Disclaimers
               </h2>
@@ -215,7 +217,7 @@ const PrivacyPolicy = () => {
             </section>
 
             {/* Contact Information */}
-            <section className="p-6 rounded-xl bg-[#00000033] border border-[#ffffff1a]">
+            <section className="p-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur-xl">
               <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-pink-200 bg-clip-text text-transparent mb-4">
                 7. Contact Information
               </h2>

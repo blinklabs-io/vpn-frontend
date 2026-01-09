@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CardanoWalletApi } from "../types/cardano";
 import { Address, Value, Tx } from "@harmoniclabs/cardano-ledger-ts";
-import { showError } from "../utils/toast";
 import { submitTransaction as submitTransactionApi } from "../api/client";
 
 const APP_NETWORK = (
@@ -37,6 +36,7 @@ interface WalletState {
 
   // Actions
   setWalletState: (state: Partial<WalletState>) => void;
+  openWalletModal: () => void;
   connect: (walletName: string) => Promise<boolean>;
   disconnect: () => void;
   signMessage: (message: string) => Promise<unknown>;
@@ -85,6 +85,10 @@ export const useWalletStore = create<WalletState>()(
 
       setWalletState: (newState) => set((state) => ({ ...state, ...newState })),
 
+      openWalletModal: () => {
+        set({ isWalletModalOpen: true });
+      },
+
       setVpnConfigUrl: (url: string) => set({ lastVpnConfigUrl: url }),
 
       connect: async (walletName: string) => {
@@ -98,8 +102,8 @@ export const useWalletStore = create<WalletState>()(
 
           if (walletNetworkId !== EXPECTED_NETWORK_ID) {
             const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
-            showError(
-              `Wallet network mismatch. This app is configured for ${APP_NETWORK_LABEL}, but your wallet is connected to ${walletNetworkLabel}. Please switch networks in your wallet and try again.`,
+            console.error(
+              `Wallet network mismatch. App expects ${APP_NETWORK_LABEL}, but wallet is on ${walletNetworkLabel}.`,
             );
             set({
               isConnected: false,
@@ -169,6 +173,7 @@ export const useWalletStore = create<WalletState>()(
               "Failed to get balance or address, but wallet is connected:",
               error,
             );
+    
           }
 
           return true;
@@ -213,7 +218,6 @@ export const useWalletStore = create<WalletState>()(
           }
         } catch (error) {
           console.error("Failed to get wallet address:", error);
-          showError("Failed to get wallet address");
         }
       },
 
@@ -247,7 +251,6 @@ export const useWalletStore = create<WalletState>()(
           return await walletApi.signData(address, payload);
         } catch (error) {
           console.error("Failed to sign message:", error);
-          showError("Failed to sign message");
           throw error;
         }
       },

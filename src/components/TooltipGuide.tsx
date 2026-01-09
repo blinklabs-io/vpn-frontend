@@ -13,19 +13,23 @@ interface TooltipGuideProps {
   storageKey: string;
   stepDuration?: number;
   onComplete?: () => void;
+  enabled?: boolean;
   children: (showTooltips: boolean) => ReactNode;
 }
 
 const TooltipGuide = ({
   steps,
   storageKey,
+  enabled = true,
   onComplete,
   children,
 }: TooltipGuideProps) => {
   const [showTooltips, setShowTooltips] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const effectiveShowTooltips = enabled && showTooltips;
 
   useEffect(() => {
+    if (!enabled) return;
     const hasVisited = localStorage.getItem(storageKey);
     if (!hasVisited) {
       setTimeout(() => {
@@ -33,7 +37,7 @@ const TooltipGuide = ({
       }, 500);
       localStorage.setItem(storageKey, "true");
     }
-  }, [storageKey]);
+  }, [enabled, storageKey]);
 
   const handleNextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -48,6 +52,29 @@ const TooltipGuide = ({
     setShowTooltips(false);
     onComplete?.();
   };
+
+  useEffect(() => {
+    if (!enabled || !showTooltips || typeof document === "undefined") return;
+    let frameId: number | null = null;
+
+    frameId = window.requestAnimationFrame(() => {
+      const step = steps[currentStep];
+      if (!step) return;
+      const selector = `[data-tooltip-id="${step.id}"]`;
+      const anchor = document.querySelector(selector);
+      if (!anchor) {
+        console.warn(
+          `TooltipGuide: No element found for tooltip step id "${step.id}". Ensure the rendered element includes data-tooltip-id="${step.id}".`,
+        );
+      }
+    });
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [enabled, showTooltips, steps, currentStep]);
 
   const renderTooltipContent = (content: string) => {
     return (
@@ -73,8 +100,9 @@ const TooltipGuide = ({
 
   return (
     <>
-      {children(showTooltips)}
-      {showTooltips &&
+      {children(effectiveShowTooltips)}
+      {enabled &&
+        effectiveShowTooltips &&
         steps.map((step, index) => {
           const isCurrentStep = currentStep === index;
           return (
@@ -82,6 +110,7 @@ const TooltipGuide = ({
               key={step.id}
               id={step.id}
               place={step.placement || "top"}
+              anchorSelect={`[data-tooltip-id="${step.id}"]`}
               isOpen={isCurrentStep}
               clickable={true}
               className="force-opacity-1"

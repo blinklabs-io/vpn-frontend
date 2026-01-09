@@ -10,7 +10,7 @@ const Home = () => {
   };
 
   return (
-    <div className="flex flex-col bg-[linear-gradient(180deg,#1C246E_0%,#040617_12.5%)] relative pt-16">
+    <div className="flex flex-col relative min-h-screen overflow-hidden bg-[#040617] pt-16">
       {/* Hero Section */}
       <HeroSection onGetStarted={handleGetStarted} />
 
