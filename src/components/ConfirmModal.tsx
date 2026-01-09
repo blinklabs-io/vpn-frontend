@@ -39,14 +39,23 @@ const ConfirmModal = ({
       document.body.style.overflow = "hidden";
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onCancel();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
       cancelAnimationFrame(frame);
       setIsVisible(false);
       document.body.style.overflow = previousOverflow || "";
       setDragOffset(0);
       setDragStartY(null);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onCancel]);
 
   if (!isOpen) return null;
 

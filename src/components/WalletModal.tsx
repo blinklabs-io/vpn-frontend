@@ -25,6 +25,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
     return () => {
       cancelAnimationFrame(frame);
       setIsVisible(false);
+      setShowDisconnectConfirm(false);
       document.body.style.overflow = previousOverflow || "";
     };
   }, [isOpen]);

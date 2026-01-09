@@ -29,7 +29,7 @@ const Navigation = () => {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    return () => setIsMenuOpen(false);
+    setIsMenuOpen(false);
   }, [location.pathname]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
@@ -96,7 +96,7 @@ const Navigation = () => {
               <Link
                 to="/account"
                 onClick={closeMenu}
-                className="flex justify-between items-center rounded-xl px-3 py-2 font-ibm-plex text-white font-bold text-sm hover:bg-white/5 transition-colors"
+                className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-bold text-sm hover:bg-white/5 transition-colors"
               >
                 VPN Access
               </Link>

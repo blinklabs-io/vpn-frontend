@@ -293,7 +293,7 @@ const WalletConnection = ({
         <div className={errorClasses}>{connectionError}</div>
       )}
       {isConnecting && pendingWallet && (
-        <div className={statusClasses}></div>
+        <p className={`${statusClasses} animate-pulse`}>Connecting to {pendingWallet}...</p>
       )}
     </>
   );

@@ -127,7 +127,7 @@ const Account = () => {
 
   const normalizeDurationMs = (duration?: number) => {
     if (!duration) return 0;
-    return duration < 1000 * 60 * 60 ? duration * 1000 : duration;
+    return duration < 1000 ? duration * 1000 : duration;
   };
 
   const formatDuration = (durationMs: number) => {

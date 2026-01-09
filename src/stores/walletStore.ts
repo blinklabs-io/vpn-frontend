@@ -102,9 +102,8 @@ export const useWalletStore = create<WalletState>()(
 
           if (walletNetworkId !== EXPECTED_NETWORK_ID) {
             const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
-            console.error(
-              `Wallet network mismatch. App expects ${APP_NETWORK_LABEL}, but wallet is on ${walletNetworkLabel}.`,
-            );
+            const errorMessage = `Network mismatch: This app requires ${APP_NETWORK_LABEL}, but your wallet is connected to ${walletNetworkLabel}. Please switch your wallet to ${APP_NETWORK_LABEL} and try again.`;
+            console.error(errorMessage);
             set({
               isConnected: false,
               isEnabled: false,
@@ -115,7 +114,7 @@ export const useWalletStore = create<WalletState>()(
               balance: null,
               pendingTx: null,
             });
-            return false;
+            throw new Error(errorMessage);
           }
 
           await new Promise((resolve) => setTimeout(resolve, 100));
