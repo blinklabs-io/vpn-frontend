@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import WalletConnection from "./WalletConnection";
 import ConfirmModal from "./ConfirmModal";
 import { useWalletStore } from "../stores/walletStore";
@@ -30,10 +30,14 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
     };
   }, [isOpen]);
 
-  const handleConfirmDisconnect = () => {
+  const closeDisconnectConfirm = useCallback(() => {
+    setShowDisconnectConfirm(false);
+  }, []);
+
+  const handleConfirmDisconnect = useCallback(() => {
     setShowDisconnectConfirm(false);
     onDisconnect();
-  };
+  }, [onDisconnect]);
 
   if (!isOpen) return null;
 
@@ -110,7 +114,7 @@ const WalletModal = ({ isOpen, onDisconnect }: WalletModalProps) => {
         message="This will disconnect your wallet from Nabu."
         confirmLabel="Confirm"
         cancelLabel="Close"
-        onCancel={() => setShowDisconnectConfirm(false)}
+        onCancel={closeDisconnectConfirm}
         onConfirm={handleConfirmDisconnect}
       />
     </>

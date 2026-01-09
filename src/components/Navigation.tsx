@@ -13,6 +13,12 @@ const Navigation = () => {
     reconnectWallet();
   }, [reconnectWallet]);
 
+  // Close menu when pathname changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- responding to router navigation
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleResize = () => {
       const isDesktop = window.innerWidth >= 768;
@@ -27,10 +33,6 @@ const Navigation = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
   const closeMenu = () => setIsMenuOpen(false);

@@ -2,7 +2,7 @@ import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wall
 import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
 import { useWalletStore } from "../stores/walletStore";
 import { useNavigate } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmModal from "./ConfirmModal";
 
 interface WalletConnectionProps {
@@ -164,85 +164,10 @@ const WalletConnection = ({
     return maybeCode === -3 || message.includes("user canceled");
   };
 
-  useEffect(() => {
-    if (initiallyOpen) {
-      openWalletModal();
-    }
-    // Do not auto-close when initiallyOpen is false to avoid closing modals opened elsewhere.
-  }, [initiallyOpen, openWalletModal]);
+  // Consolidated error handler for both onConnectWallet and onConnectError
+  const handleConnectionError = (walletName: string, error: unknown) => {
+    const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
 
-  const openWalletList = () => {
-    setConnectionError(null);
-    setPendingWallet(null);
-    openWalletModal();
-  };
-
-  const closeWalletList = () => {
-    if (isConnecting) {
-      return;
-    }
-
-    closeWalletModal();
-    setConnectionError(null);
-    setPendingWallet(null);
-  };
-
-  const handleSuccessfulConnect = () => {
-    setConnectionError(null);
-    closeWalletModal();
-
-    if (onConnected) {
-      onConnected();
-    } else {
-      navigate("/account");
-    }
-  };
-
-  const onConnectWallet = async (walletName: string) => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    setPendingWallet(walletName);
-
-    try {
-      const success = await connect(walletName);
-
-      if (success) {
-        handleSuccessfulConnect();
-      } else {
-        console.error(
-          `Failed to connect to ${walletName} - connect function returned false`,
-        );
-        // Check if wallet is not installed
-        if (!window.cardano || !window.cardano[walletName]) {
-          showErrorOnce(`${walletName} wallet is not installed. Please install it from the official website.`);
-        } else {
-          setConnectionError(
-            `Failed to connect to ${walletName}. Please try again.`,
-          );
-        }
-      }
-    } catch (error) {
-      if (isUserCanceledError(error)) {
-        showErrorOnce(
-          "If you want to continue, please grant wallet access and try again.",
-        );
-      } else {
-        console.error(`Error connecting to ${walletName}:`, error);
-        setConnectionError(
-          `Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }
-    } finally {
-      setIsConnecting(false);
-      setPendingWallet(null);
-    }
-  };
-
-  const onConnectError = (walletName: string, error: Error) => {
-    console.error(`ConnectWalletList error for ${walletName}:`, error);
-    
-    // Check if the error is about wallet not being installed
-    const errorMessage = error.message.toLowerCase();
     if (isUserCanceledError(error)) {
       showErrorOnce(
         "If you want to continue, please grant wallet access and try again.",
@@ -274,10 +199,66 @@ const WalletConnection = ({
       showErrorOnce(message);
       setConnectionError(message);
     } else {
-      showErrorOnce(`Error connecting to ${walletName}: ${error.message}`);
-      setConnectionError(`Error with ${walletName}: ${error.message}`);
+      const message = `Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`;
+      showErrorOnce(message);
+      setConnectionError(message);
     }
-    
+  };
+
+  useEffect(() => {
+    if (initiallyOpen) {
+      openWalletModal();
+    }
+    // Do not auto-close when initiallyOpen is false to avoid closing modals opened elsewhere.
+  }, [initiallyOpen, openWalletModal]);
+
+  const openWalletList = () => {
+    setConnectionError(null);
+    setPendingWallet(null);
+    openWalletModal();
+  };
+
+  const closeWalletList = useCallback(() => {
+    if (isConnecting) {
+      return;
+    }
+
+    closeWalletModal();
+    setConnectionError(null);
+    setPendingWallet(null);
+  }, [isConnecting, closeWalletModal]);
+
+  const handleSuccessfulConnect = () => {
+    setConnectionError(null);
+    closeWalletModal();
+
+    if (onConnected) {
+      onConnected();
+    } else {
+      navigate("/account");
+    }
+  };
+
+  const onConnectWallet = async (walletName: string) => {
+    setIsConnecting(true);
+    setConnectionError(null);
+    setPendingWallet(walletName);
+
+    try {
+      await connect(walletName);
+      handleSuccessfulConnect();
+    } catch (error) {
+      console.error(`Error connecting to ${walletName}:`, error);
+      handleConnectionError(walletName, error);
+    } finally {
+      setIsConnecting(false);
+      setPendingWallet(null);
+    }
+  };
+
+  const onConnectError = (walletName: string, error: Error) => {
+    console.error(`ConnectWalletList error for ${walletName}:`, error);
+    handleConnectionError(walletName, error);
     setIsConnecting(false);
     setPendingWallet(null);
   };
