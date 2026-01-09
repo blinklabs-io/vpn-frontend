@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@cardano-foundation/cardano-connect-with-wallet": "^0.2.15",
-    "@harmoniclabs/cardano-ledger-ts": "^0.4.0-dev16",
+    "@harmoniclabs/cardano-ledger-ts": "^0.4.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/react-query": "^5.90.14",
     "react": "^19.2.3",
