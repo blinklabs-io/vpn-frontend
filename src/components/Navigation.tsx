@@ -13,6 +13,12 @@ const Navigation = () => {
     reconnectWallet();
   }, [reconnectWallet]);
 
+  // Close menu when pathname changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- responding to router navigation
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleResize = () => {
       const isDesktop = window.innerWidth >= 768;
@@ -27,10 +33,6 @@ const Navigation = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    return () => setIsMenuOpen(false);
-  }, [location.pathname]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
   const closeMenu = () => setIsMenuOpen(false);
@@ -96,7 +98,7 @@ const Navigation = () => {
               <Link
                 to="/account"
                 onClick={closeMenu}
-                className="flex justify-between items-center rounded-xl px-3 py-2 font-ibm-plex text-white font-bold text-sm hover:bg-white/5 transition-colors"
+                className="flex justify-between items-center rounded-2xl px-3 py-2 font-ibm-plex text-white font-bold text-sm hover:bg-white/5 transition-colors"
               >
                 VPN Access
               </Link>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import {
   useRefData,
@@ -125,6 +125,8 @@ const Account = () => {
     });
   }, [clientList]);
 
+  // Normalize duration to milliseconds. API may return seconds or milliseconds.
+  // Threshold of 1 hour (3,600,000ms): values below are assumed to be seconds.
   const normalizeDurationMs = (duration?: number) => {
     if (!duration) return 0;
     return duration < 1000 * 60 * 60 ? duration * 1000 : duration;
@@ -176,12 +178,15 @@ const Account = () => {
   };
 
   const durationOptions = Array.isArray(refData?.prices)
-    ? refData.prices.map((priceData: { duration: number; price: number }) => ({
-        label: formatDuration(priceData.duration),
-        value: priceData.duration,
-        timeDisplay: formatTimeDisplay(priceData.duration),
-        price: priceData.price,
-      }))
+    ? refData.prices.map((priceData: { duration: number; price: number }) => {
+        const normalizedDuration = normalizeDurationMs(priceData.duration);
+        return {
+          label: formatDuration(normalizedDuration),
+          value: normalizedDuration,
+          timeDisplay: formatTimeDisplay(normalizedDuration),
+          price: priceData.price,
+        };
+      })
     : [];
   const selectedDurationOption =
     durationOptions[selectedDurationIndex] ?? durationOptions[0];
@@ -364,10 +369,14 @@ const Account = () => {
     }
   };
 
-  const handleCancelPending = () => {
+  const handleCancelPending = useCallback(() => {
     setPendingTx(null);
     setIsPurchaseLoading(false);
-  };
+  }, []);
+
+  const closeErrorModal = useCallback(() => {
+    setErrorModal(null);
+  }, []);
 
   const handleConfirmRenewal = async () => {
     if (!walletAddress) {
@@ -584,8 +593,8 @@ const Account = () => {
               message={errorModal}
               showConfirm={false}
               cancelLabel="Close"
-              onConfirm={() => setErrorModal(null)}
-              onCancel={() => setErrorModal(null)}
+              onConfirm={closeErrorModal}
+              onCancel={closeErrorModal}
             />
           )}
 

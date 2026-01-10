@@ -1,6 +1,6 @@
 import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wallet";
 import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useWalletStore } from "../stores/walletStore";
 import ConfirmModal from "./ConfirmModal";
@@ -133,10 +133,10 @@ const WalletPickerModal = () => {
     }
   };
 
-  const closeIfAllowed = () => {
+  const closeIfAllowed = useCallback(() => {
     if (isConnecting) return;
     closeWalletModal();
-  };
+  }, [isConnecting, closeWalletModal]);
 
   const handleSuccessfulConnect = () => {
     setConnectionError(null);
@@ -151,21 +151,8 @@ const WalletPickerModal = () => {
     setPendingWallet(walletName);
 
     try {
-      const success = await connect(walletName);
-
-      if (success) {
-        handleSuccessfulConnect();
-      } else {
-        if (!window.cardano || !window.cardano[walletName]) {
-          showErrorOnce(
-            `${walletName} wallet is not installed. Please install it from the official website.`,
-          );
-        } else {
-          setConnectionError(
-            `Failed to connect to ${walletName}. Please try again.`,
-          );
-        }
-      }
+      await connect(walletName);
+      handleSuccessfulConnect();
     } catch (error) {
       console.error(`Error connecting to ${walletName}:`, error);
       setConnectionError(

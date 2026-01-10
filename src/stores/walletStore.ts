@@ -94,7 +94,7 @@ export const useWalletStore = create<WalletState>()(
       connect: async (walletName: string) => {
         try {
           if (!window.cardano || !window.cardano[walletName]) {
-            return false; // Return false instead of throwing
+            throw new Error(`${walletName} wallet is not installed`);
           }
 
           const walletApi = await window.cardano[walletName].enable();
@@ -102,9 +102,7 @@ export const useWalletStore = create<WalletState>()(
 
           if (walletNetworkId !== EXPECTED_NETWORK_ID) {
             const walletNetworkLabel = formatWalletNetworkLabel(walletNetworkId);
-            console.error(
-              `Wallet network mismatch. App expects ${APP_NETWORK_LABEL}, but wallet is on ${walletNetworkLabel}.`,
-            );
+            const errorMessage = `Network mismatch: This app requires ${APP_NETWORK_LABEL}, but your wallet is connected to ${walletNetworkLabel}. Please switch your wallet to ${APP_NETWORK_LABEL} and try again.`;
             set({
               isConnected: false,
               isEnabled: false,
@@ -115,7 +113,7 @@ export const useWalletStore = create<WalletState>()(
               balance: null,
               pendingTx: null,
             });
-            return false;
+            throw new Error(errorMessage);
           }
 
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -179,7 +177,7 @@ export const useWalletStore = create<WalletState>()(
           return true;
         } catch (error) {
           console.error(`Failed to connect to ${walletName}:`, error);
-          return false;
+          throw error;
         }
       },
 

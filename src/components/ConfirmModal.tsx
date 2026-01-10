@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 interface ConfirmModalProps {
@@ -30,6 +30,12 @@ const ConfirmModal = ({
   const DRAG_DISMISS_THRESHOLD = 200;
   const DRAG_MAX_PULL = 260;
 
+  // Use ref to access latest onCancel without adding it to effect dependencies
+  const onCancelRef = useRef(onCancel);
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+  }, [onCancel]);
+
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (isOpen) setIsVisible(true);
@@ -39,12 +45,23 @@ const ConfirmModal = ({
       document.body.style.overflow = "hidden";
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancelRef.current();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
     return () => {
       cancelAnimationFrame(frame);
       setIsVisible(false);
       document.body.style.overflow = previousOverflow || "";
       setDragOffset(0);
       setDragStartY(null);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 
