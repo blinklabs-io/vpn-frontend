@@ -2,12 +2,8 @@ import { Link } from "react-router";
 
 const HowItWorks = () => {
   return (
-    <div className="relative pt-16 min-h-screen overflow-hidden">
-      <div className="absolute -top-40 -left-32 w-[420px] h-[420px] bg-blue-500/20 blur-[160px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-purple-500/20 blur-[160px] rounded-full pointer-events-none" />
-
-      <div className="relative z-10">
-        <div className="max-w-5xl mx-auto px-6 py-16">
+    <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
+      <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-10 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
             <div className="space-y-12">
               <section id="overview" aria-labelledby="overview-title">
@@ -267,7 +263,6 @@ const HowItWorks = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

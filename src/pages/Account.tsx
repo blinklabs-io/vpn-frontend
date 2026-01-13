@@ -554,7 +554,7 @@ const Account = () => {
 
   const renderContent = (showTooltips: boolean) => (
     <div
-      className="min-h-screen w-full overflow-x-hidden flex flex-col items-center  pt-16 pb-16"
+      className="min-h-screen w-full overflow-x-hidden flex flex-col items-center pt-16 pb-16"
     >
           <LoadingOverlay
             isVisible={isPurchaseLoading || isConfigLoading}
