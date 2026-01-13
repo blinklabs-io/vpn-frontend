@@ -3,8 +3,6 @@ import { Link } from "react-router";
 const PrivacyPolicy = () => {
   return (
     <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
-      <div className="absolute -top-40 -left-32 w-[420px] h-[420px] bg-blue-500/20 blur-[160px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-purple-500/20 blur-[160px] rounded-full pointer-events-none" />
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-4">
