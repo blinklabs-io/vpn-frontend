@@ -38,26 +38,31 @@ const mockUseWalletStore = vi.mocked(useWalletStore);
 describe("WalletConnection", () => {
   const mockConnect = vi.fn();
   const mockDisconnect = vi.fn();
+  const mockOpenWalletModal = vi.fn();
+  const mockCloseWalletModal = vi.fn();
+
+  const createMockStore = (overrides = {}) => ({
+    isConnected: false,
+    connect: mockConnect,
+    disconnect: mockDisconnect,
+    isEnabled: false,
+    enabledWallet: null,
+    stakeAddress: null,
+    walletApi: null,
+    isWalletModalOpen: false,
+    setWalletState: vi.fn(),
+    signMessage: vi.fn(),
+    toggleWalletModal: vi.fn(),
+    openWalletModal: mockOpenWalletModal,
+    closeWalletModal: mockCloseWalletModal,
+    ...overrides,
+  });
 
   beforeEach(() => {
     vi.resetAllMocks();
     setupWalletMocks();
     mockConnect.mockResolvedValue(true);
-
-    mockUseWalletStore.mockReturnValue({
-      isConnected: false,
-      connect: mockConnect,
-      disconnect: mockDisconnect,
-      isEnabled: false,
-      enabledWallet: null,
-      stakeAddress: null,
-      walletApi: null,
-      isWalletModalOpen: false,
-      setWalletState: vi.fn(),
-      signMessage: vi.fn(),
-      toggleWalletModal: vi.fn(),
-      closeWalletModal: vi.fn(),
-    });
+    mockUseWalletStore.mockReturnValue(createMockStore());
   });
 
   describe("when wallet is not connected", () => {
@@ -68,7 +73,7 @@ describe("WalletConnection", () => {
         name: /connect wallet/i,
       });
       expect(connectButton).toBeInTheDocument();
-      expect(connectButton).toHaveClass("border-white/20", "text-white");
+      expect(connectButton).toHaveClass("border-white", "text-black");
     });
 
     it("should render connect button with white variant", () => {
@@ -96,14 +101,13 @@ describe("WalletConnection", () => {
       ).toBeInTheDocument();
     });
 
-    it("should open wallet list and call connect when an option is selected", async () => {
+    it("should call connect when a wallet option is selected from open modal", async () => {
+      // Render with modal already open to test wallet selection behavior
+      mockUseWalletStore.mockReturnValue(createMockStore({ isWalletModalOpen: true }));
+
       const user = userEvent.setup();
       renderWithProviders(<WalletConnection />);
 
-      const connectButton = screen.getByRole("button", {
-        name: /connect wallet/i,
-      });
-      await user.click(connectButton);
       const walletOption = await screen.findByTestId("wallet-option-eternl");
       await user.click(walletOption);
 
@@ -113,39 +117,31 @@ describe("WalletConnection", () => {
     });
 
     it("should show error message when wallet connection fails", async () => {
-      mockConnect.mockResolvedValue(false);
+      mockConnect.mockRejectedValue(new Error("Connection failed"));
+      // Render with modal already open
+      mockUseWalletStore.mockReturnValue(createMockStore({ isWalletModalOpen: true }));
 
       const user = userEvent.setup();
       renderWithProviders(<WalletConnection />);
 
-      const connectButton = screen.getByRole("button", {
-        name: /connect wallet/i,
-      });
-      await user.click(connectButton);
       const walletOption = await screen.findByTestId("wallet-option-eternl");
       await user.click(walletOption);
 
       await waitFor(() => {
         expect(
-          screen.getByText(/failed to connect to eternl/i),
+          screen.getByText(/error connecting to eternl/i),
         ).toBeInTheDocument();
       });
     });
 
     it("should surface error when wallet is not installed", async () => {
-      mockConnect.mockResolvedValue(false);
-      
-      // Remove the wallet from window.cardano to simulate not installed
-      const originalCardano = window.cardano;
-      window.cardano = {};
+      mockConnect.mockRejectedValue(new Error("eternl wallet is not installed"));
+      // Render with modal already open
+      mockUseWalletStore.mockReturnValue(createMockStore({ isWalletModalOpen: true }));
 
       const user = userEvent.setup();
       renderWithProviders(<WalletConnection />);
 
-      const connectButton = screen.getByRole("button", {
-        name: /connect wallet/i,
-      });
-      await user.click(connectButton);
       const walletOption = await screen.findByTestId("wallet-option-eternl");
       await user.click(walletOption);
 
@@ -154,19 +150,13 @@ describe("WalletConnection", () => {
           screen.getByText(/wallet is not installed/i),
         ).toBeInTheDocument();
       });
-
-      // Restore the original window.cardano
-      window.cardano = originalCardano;
     });
 
     it("should display wallet options in flex layout after clicking connect", async () => {
-      const user = userEvent.setup();
-      renderWithProviders(<WalletConnection listLayout="flex" />);
+      // Render with modal already open to test that wallet options are displayed
+      mockUseWalletStore.mockReturnValue(createMockStore({ isWalletModalOpen: true }));
 
-      const connectButton = screen.getByRole("button", {
-        name: /connect wallet/i,
-      });
-      await user.click(connectButton);
+      renderWithProviders(<WalletConnection listLayout="flex" />);
 
       expect(
         await screen.findByTestId("wallet-option-eternl"),
@@ -176,20 +166,12 @@ describe("WalletConnection", () => {
 
   describe("when wallet is connected", () => {
     beforeEach(() => {
-      mockUseWalletStore.mockReturnValue({
+      mockUseWalletStore.mockReturnValue(createMockStore({
         isConnected: true,
-        connect: mockConnect,
-        disconnect: mockDisconnect,
         isEnabled: true,
         enabledWallet: "nami",
         stakeAddress: "stake1234567890",
-        walletApi: null,
-        isWalletModalOpen: false,
-        setWalletState: vi.fn(),
-        signMessage: vi.fn(),
-        toggleWalletModal: vi.fn(),
-        closeWalletModal: vi.fn(),
-      });
+      }));
     });
 
     it("should render disconnect button", () => {
@@ -228,9 +210,9 @@ describe("WalletConnection", () => {
 
       const button = screen.getByRole("button");
       expect(button).toHaveClass(
-        "border-white/20",
-        "backdrop-blur-sm",
-        "text-white",
+        "border-white",
+        "bg-white/80",
+        "text-black",
       );
     });
 

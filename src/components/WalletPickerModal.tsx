@@ -1,6 +1,6 @@
 import { ConnectWalletList } from "@cardano-foundation/cardano-connect-with-wallet";
 import { NetworkType } from "@cardano-foundation/cardano-connect-with-wallet-core";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useWalletStore } from "../stores/walletStore";
 import ConfirmModal from "./ConfirmModal";
@@ -133,10 +133,53 @@ const WalletPickerModal = () => {
     }
   };
 
-  const closeIfAllowed = () => {
+  const isUserCanceledError = (error: unknown) => {
+    if (!error) return false;
+    const maybeCode = (error as { code?: number }).code;
+    const message = (error as { message?: string }).message?.toLowerCase() ?? "";
+    return maybeCode === -3 || message.includes("user canceled");
+  };
+
+  // Consolidated error handler for both onConnectWallet and onConnectError
+  const handleConnectionError = (walletName: string, error: unknown) => {
+    const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
+
+    if (isUserCanceledError(error)) {
+      showErrorOnce(
+        "If you want to continue, please grant wallet access and try again.",
+      );
+    } else if (
+      errorMessage.includes("not installed") ||
+      errorMessage.includes("not found") ||
+      errorMessage.includes("not available") ||
+      errorMessage.includes("no wallet")
+    ) {
+      showErrorOnce(`${walletName} wallet is not installed. Please install it from the official website.`);
+    } else if (
+      errorMessage.includes("too many requests") ||
+      errorMessage.includes("429") ||
+      errorMessage.includes("rate limit")
+    ) {
+      showErrorOnce(`${walletName} is temporarily rate limiting requests. Please wait 30-60 seconds, close other dApp tabs, and retry. Restarting the wallet extension can also help.`);
+    } else if (
+      errorMessage.includes("network mismatch") ||
+      errorMessage.includes("wrong network") ||
+      errorMessage.includes("network type") ||
+      errorMessage.includes("mainnet") ||
+      errorMessage.includes("testnet")
+    ) {
+      const network = import.meta.env.VITE_CARDANO_NETWORK || "preprod";
+      const expectedNetwork = network === "mainnet" ? "Mainnet" : "Testnet";
+      showErrorOnce(`Network mismatch: This app requires ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
+    } else {
+      showErrorOnce(`Error connecting to ${walletName}: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  const closeIfAllowed = useCallback(() => {
     if (isConnecting) return;
     closeWalletModal();
-  };
+  }, [isConnecting, closeWalletModal]);
 
   const handleSuccessfulConnect = () => {
     setConnectionError(null);
@@ -151,28 +194,11 @@ const WalletPickerModal = () => {
     setPendingWallet(walletName);
 
     try {
-      const success = await connect(walletName);
-
-      if (success) {
-        handleSuccessfulConnect();
-      } else {
-        if (!window.cardano || !window.cardano[walletName]) {
-          showErrorOnce(
-            `${walletName} wallet is not installed. Please install it from the official website.`,
-          );
-        } else {
-          setConnectionError(
-            `Failed to connect to ${walletName}. Please try again.`,
-          );
-        }
-      }
+      await connect(walletName);
+      handleSuccessfulConnect();
     } catch (error) {
       console.error(`Error connecting to ${walletName}:`, error);
-      setConnectionError(
-        `Error connecting to ${walletName}: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      );
+      handleConnectionError(walletName, error);
     } finally {
       setIsConnecting(false);
       setPendingWallet(null);
@@ -181,41 +207,7 @@ const WalletPickerModal = () => {
 
   const onConnectError = (walletName: string, error: Error) => {
     console.error(`ConnectWalletList error for ${walletName}:`, error);
-
-    const errorMessage = error.message.toLowerCase();
-    if (
-      errorMessage.includes("not installed") ||
-      errorMessage.includes("not found") ||
-      errorMessage.includes("not available") ||
-      errorMessage.includes("no wallet")
-    ) {
-      showErrorOnce(
-        `${walletName} wallet is not installed. Please install it from the official website.`,
-      );
-    } else if (
-      errorMessage.includes("too many requests") ||
-      errorMessage.includes("429") ||
-      errorMessage.includes("rate limit")
-    ) {
-      const message = `${walletName} is temporarily rate limiting requests. Please wait 30-60 seconds, close other dApp tabs, and retry. Restarting the wallet extension can also help.`;
-      showErrorOnce(message);
-      setConnectionError(message);
-    } else if (
-      errorMessage.includes("wrong network") ||
-      errorMessage.includes("network type") ||
-      errorMessage.includes("mainnet") ||
-      errorMessage.includes("testnet")
-    ) {
-      const network = import.meta.env.VITE_CARDANO_NETWORK || "preprod";
-      const expectedNetwork = network === "mainnet" ? "Mainnet" : "Testnet";
-      const message = `Network mismatch: This app requires ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`;
-      showErrorOnce(message);
-      setConnectionError(message);
-    } else {
-      showErrorOnce(`Error connecting to ${walletName}: ${error.message}`);
-      setConnectionError(`Error with ${walletName}: ${error.message}`);
-    }
-
+    handleConnectionError(walletName, error);
     setIsConnecting(false);
     setPendingWallet(null);
   };
@@ -228,7 +220,7 @@ const WalletPickerModal = () => {
         </div>
       )}
       {isConnecting && pendingWallet && (
-        <div className="mb-2 text-sm text-gray-700"></div>
+        <p className="mb-2 text-sm text-gray-700 animate-pulse">Connecting to {pendingWallet}...</p>
       )}
     </>
   );
@@ -268,5 +260,3 @@ const WalletPickerModal = () => {
 };
 
 export default WalletPickerModal;
-
-
