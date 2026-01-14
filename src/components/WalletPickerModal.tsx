@@ -4,16 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useWalletStore } from "../stores/walletStore";
 import ConfirmModal from "./ConfirmModal";
-
-const SUPPORTED_WALLETS = [
-  "eternl",
-  "yoroi",
-  "gerowallet",
-  "begin",
-  "nufi",
-  "lace",
-  "vespr",
-];
+import { SUPPORTED_WALLETS } from "../constants/wallets";
 
 const buildWalletListCss = (isDropdownLayout: boolean) => {
   const textColor = "#0f172a";

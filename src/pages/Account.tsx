@@ -11,6 +11,7 @@ import {
 import VpnInstance from "../components/VpnInstance";
 import PurchaseCard from "../components/PurchaseCard";
 import ConfirmModal from "../components/ConfirmModal";
+import ProfileDeliveryModal from "../components/ProfileDeliveryModal";
 import type { ClientInfo } from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide";
@@ -26,6 +27,7 @@ import {
   filterOptions,
   type SortOption,
 } from "../utils/instanceSort";
+import { canDownloadFiles } from "../utils/environment";
 
 const Account = () => {
   const {
@@ -46,6 +48,10 @@ const Account = () => {
     newExpiration?: string;
   } | null>(null);
   const [errorModal, setErrorModal] = useState<string | null>(null);
+  const [profileDeliveryModal, setProfileDeliveryModal] = useState<{
+    downloadUrl: string;
+    clientId: string;
+  } | null>(null);
 
   // Get pending clients from localStorage (will be reactive to changes)
   const [pendingClientsFromStorage, setPendingClientsFromStorage] = useState(
@@ -327,12 +333,22 @@ const Account = () => {
 
       setVpnConfigUrl(s3Url);
 
-      const link = document.createElement("a");
-      link.href = s3Url;
-      link.download = `vpn-config-${instanceId}.conf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Check if direct downloads are supported in this environment
+      if (canDownloadFiles()) {
+        // Desktop browser: Direct download
+        const link = document.createElement("a");
+        link.href = s3Url;
+        link.download = `vpn-config-${instanceId}.conf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Mobile or wallet dApp browser: Show delivery options modal
+        setProfileDeliveryModal({
+          downloadUrl: s3Url,
+          clientId: instanceId,
+        });
+      }
 
       setIsConfigLoading(false);
     } catch (error) {
@@ -613,6 +629,14 @@ const Account = () => {
               cancelLabel="Close"
               onConfirm={closeErrorModal}
               onCancel={closeErrorModal}
+            />
+          )}
+
+          {profileDeliveryModal && (
+            <ProfileDeliveryModal
+              downloadUrl={profileDeliveryModal.downloadUrl}
+              clientId={profileDeliveryModal.clientId}
+              onClose={() => setProfileDeliveryModal(null)}
             />
           )}
 

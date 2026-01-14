@@ -4,6 +4,7 @@ import { useWalletStore } from "../stores/walletStore";
 import { useNavigate } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmModal from "./ConfirmModal";
+import { SUPPORTED_WALLETS } from "../constants/wallets";
 
 interface WalletConnectionProps {
   variant?: "default" | "white";
@@ -14,16 +15,6 @@ interface WalletConnectionProps {
   onConnected?: () => void;
   theme?: "dark" | "light";
 }
-
-const SUPPORTED_WALLETS = [
-  "eternl",
-  "yoroi",
-  "gerowallet",
-  "begin",
-  "nufi",
-  "lace",
-  "vespr",
-];
 
 const buildWalletListCss = (
   isDropdownLayout: boolean,
