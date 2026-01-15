@@ -815,9 +815,7 @@ const Account = () => {
                 )}
                 {!isInstancesLoading && isConnected && vpnInstances.length > 0 && (
                   <button
-                    className={`flex-shrink-0 rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01] ${
-                      areAllInstancesExpired ? "spinning-gradient-border" : ""
-                    }`}
+                    className="flex-shrink-0 rounded-full py-2 px-5 text-black font-semibold text-sm bg-white transition-all cursor-pointer hover:scale-[1.01]"
                     onClick={() => setShowAdditionalPurchaseCards(true)}
                   >
                     + Add New
