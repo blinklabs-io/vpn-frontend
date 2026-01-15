@@ -105,3 +105,21 @@ body {
 .border-gradient-button:hover {
   --c: #f5f5f5;
 }
+
+/* Mobile touch-friendly improvements */
+@media (max-width: 768px) {
+  /* Ensure minimum touch target size for accessibility */
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Form elements: min touch target and prevent iOS zoom on focus */
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
