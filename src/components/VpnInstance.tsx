@@ -1,13 +1,22 @@
+import { useState } from "react";
+import type { VpnProtocol, WireGuardDevice } from "../api/types";
 import SpinningBorderButton from "./SpinningBorderButton";
+import WireGuardDeviceList from "./WireGuardDeviceList";
 
 interface VpnInstanceProps {
   region: string;
   status: "Active" | "Expired" | "Pending";
   expires: string;
+  protocol?: VpnProtocol;
+  devices?: WireGuardDevice[];
+  deviceLimit?: number;
   onDelete?: () => void;
   onGetConfig?: () => void;
   onStartRenew?: () => void;
   onStartBuyTime?: () => void;
+  onAddDevice?: () => void;
+  onRedownloadConfig?: (device: WireGuardDevice) => void;
+  onRegenerateAll?: () => void;
   isRenewExpanded?: boolean;
   renewMode?: "renew" | "buy" | null;
   renewDurationOptions?: Array<{
@@ -22,13 +31,43 @@ interface VpnInstanceProps {
   shouldSpinRenew?: boolean;
 }
 
+/**
+ * Protocol icon component - displays WireGuard or OpenVPN indicator
+ */
+const ProtocolIcon = ({ protocol }: { protocol: VpnProtocol }) => {
+  if (protocol === "wireguard") {
+    return (
+      <span
+        className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/80 text-[10px] font-bold text-white"
+        title="WireGuard"
+      >
+        WG
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center justify-center w-5 h-5 rounded bg-green-600/80 text-[10px] font-bold text-white"
+      title="OpenVPN"
+    >
+      OV
+    </span>
+  );
+};
+
 const VpnInstance = ({
   region,
   status,
   expires,
+  protocol = "openvpn",
+  devices = [],
+  deviceLimit = 3,
   onGetConfig,
   onStartRenew,
   onStartBuyTime,
+  onAddDevice,
+  onRedownloadConfig,
+  onRegenerateAll,
   isRenewExpanded,
   renewMode = null,
   renewDurationOptions,
@@ -38,8 +77,17 @@ const VpnInstance = ({
   onCancelRenewal,
   shouldSpinRenew = false,
 }: VpnInstanceProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isWireGuard = protocol === "wireguard";
+
   const formatPrice = (priceLovelace: number) => {
     return (priceLovelace / 1000000).toFixed(2);
+  };
+
+  const toggleExpand = () => {
+    if (isWireGuard) {
+      setIsExpanded(!isExpanded);
+    }
   };
 
   return (
@@ -52,17 +100,35 @@ const VpnInstance = ({
             : "bg-[rgba(255,255,255,0.20)]"
       }`}
     >
+      {/* Header section */}
       <div className="flex flex-col items-start gap-1 w-full">
         <div className="flex justify-between items-start w-full gap-2">
-          <p className="text-xs md:text-sm">
-            Region:{" "}
-            <span className="font-semibold">
-              {region ? region.slice(0, 2).toUpperCase() + region.slice(2) : ""}
-            </span>
-          </p>
-          <p className="text-xs md:text-sm">
-            Time Remaining: <span className="font-semibold">{expires}</span>
-          </p>
+          <div className="flex items-center gap-2">
+            <ProtocolIcon protocol={protocol} />
+            <p className="text-xs md:text-sm">
+              Region:{" "}
+              <span className="font-semibold">
+                {region ? region.slice(0, 2).toUpperCase() + region.slice(2) : ""}
+              </span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-xs md:text-sm">
+              Time Remaining: <span className="font-semibold">{expires}</span>
+            </p>
+            {/* Expand/Collapse button for WireGuard instances */}
+            {isWireGuard && status === "Active" && (
+              <button
+                onClick={toggleExpand}
+                className="text-xs px-2 py-0.5 rounded bg-white/20 hover:bg-white/30 transition-colors cursor-pointer flex items-center gap-1"
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? "Collapse devices" : "Expand devices"}
+              >
+                {isExpanded ? "Collapse" : "Expand"}
+                <span className="text-[10px]">{isExpanded ? "\u25B2" : "\u25BC"}</span>
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex justify-between items-start w-full">
           <div className="flex items-center gap-2">
@@ -79,6 +145,21 @@ const VpnInstance = ({
           </div>
         </div>
       </div>
+
+      {/* Expanded WireGuard device list */}
+      {isWireGuard && isExpanded && status === "Active" && (
+        <>
+          <div className="w-full border-t border-white/20 my-1" />
+          <WireGuardDeviceList
+            devices={devices}
+            deviceLimit={deviceLimit}
+            onAddDevice={onAddDevice ?? (() => {})}
+            onRedownloadConfig={onRedownloadConfig ?? (() => {})}
+            onRegenerateAll={onRegenerateAll ?? (() => {})}
+          />
+          <div className="w-full border-t border-white/20 my-1" />
+        </>
+      )}
 
       {/* Expanded renewal / buy-time options */}
       {isRenewExpanded &&

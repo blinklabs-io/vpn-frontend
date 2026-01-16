@@ -6,3 +6,9 @@ export { useClientProfile } from "./useClientProfile";
 export { useMultipleClientAvailable } from "./useMultipleClientAvailable";
 export { useClientPolling } from "./useClientPolling";
 export { useRenewVpn } from "./useRenewVpn";
+export {
+  useWireGuardRegister,
+  useWireGuardProfile,
+  useWireGuardDeletePeer,
+  useWireGuardDevices,
+} from "./useWireGuard";
