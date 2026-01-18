@@ -86,6 +86,54 @@ export function post<T>(
   });
 }
 
+export async function postPlainText(
+  endpoint: string,
+  data?: unknown,
+  options?: RequestInit,
+): Promise<string> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  try {
+    const { headers, ...restOptions } = options || {};
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        accept: "text/plain",
+        ...headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      ...restOptions,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
+    }
+
+    return response.text();
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error("Network error: Unable to connect to the API");
+    }
+    throw error;
+  }
+}
+
+export function del<T>(
+  endpoint: string,
+  data?: unknown,
+  options?: RequestInit,
+): Promise<T> {
+  return apiClient<T>(endpoint, {
+    method: "DELETE",
+    body: data ? JSON.stringify(data) : undefined,
+    ...options,
+  });
+}
+
 // Types moved to types.ts to avoid conflicts
 
 export function getClientList(

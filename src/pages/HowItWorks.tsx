@@ -1,6 +1,20 @@
 import { Link } from "react-router";
+import { useState } from "react";
+import {
+  shouldShowWireGuardUI,
+  isOpenVpnAvailable,
+} from "../components/ProtocolToggle";
 
 const HowItWorks = () => {
+  const [showOpenVpnDetails, setShowOpenVpnDetails] = useState(false);
+  const [showWireGuardDetails, setShowWireGuardDetails] = useState(false);
+
+  const wireGuardEnabled = shouldShowWireGuardUI();
+  const openVpnEnabled = isOpenVpnAvailable();
+
+  // Determine the primary protocol name for the overview
+  const protocolName = wireGuardEnabled ? "WireGuard" : "OpenVPN";
+
   return (
     <div className="flex flex-col relative pt-16 min-h-screen overflow-hidden">
       <div className="max-w-5xl mx-auto px-6 py-16">
@@ -14,7 +28,7 @@ const HowItWorks = () => {
                   <p className="text-gray-300 text-lg leading-relaxed">
                     Our VPN system consists of multiple components, including
                     smart contracts, a custom chain indexer and API, a web
-                    frontend, and OpenVPN. These pieces work together to
+                    frontend, and {protocolName}. These pieces work together to
                     facilitate signup and management of your VPN subscription
                     and access to the VPN tunnel in a manner that focuses on
                     privacy.
@@ -113,30 +127,61 @@ const HowItWorks = () => {
                       Indexer and API
                     </h2>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    Once the signup TX makes it into a block and on-chain, it
-                    will get picked up by our{" "}
-                    <a
-                      href="https://github.com/blinklabs-io/vpn-indexer"
-                      className="text-blue-400 hover:text-blue-300 underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      custom indexer
-                    </a>
-                    . The client datum will be extracted and its information
-                    written to a SQLite database. A new client TLS certificate is
-                    generated and signed by our CA certificate, and a new VPN
-                    client config built and uploaded to a private S3 bucket.
-                  </p>
+                  {wireGuardEnabled ? (
+                    <>
+                      <p className="text-gray-300 leading-relaxed">
+                        Once the signup TX makes it into a block and on-chain, it
+                        will get picked up by our{" "}
+                        <a
+                          href="https://github.com/blinklabs-io/vpn-indexer"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          custom indexer
+                        </a>
+                        . The client datum will be extracted and its information
+                        written to a SQLite database. For WireGuard subscriptions,
+                        device registration and configuration generation happen
+                        on-demand when you add devices through the web interface.
+                      </p>
 
-                  <p className="text-gray-300 leading-relaxed">
-                    The on-chain data processed by our indexer is made available
-                    for querying via our API. We also provide endpoints for
-                    building transactions (for operations such as signup and
-                    renewal) and fetching generated client profiles. We
-                    explicitly do not log client IP addresses in our API.
-                  </p>
+                      <p className="text-gray-300 leading-relaxed">
+                        The on-chain data processed by our indexer is made available
+                        for querying via our API. We also provide endpoints for
+                        building transactions (for operations such as signup and
+                        renewal), registering WireGuard devices, and generating
+                        configurations. We explicitly do not log client IP addresses
+                        in our API.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-300 leading-relaxed">
+                        Once the signup TX makes it into a block and on-chain, it
+                        will get picked up by our{" "}
+                        <a
+                          href="https://github.com/blinklabs-io/vpn-indexer"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          custom indexer
+                        </a>
+                        . The client datum will be extracted and its information
+                        written to a SQLite database. Your OpenVPN profile is then
+                        generated and securely stored in S3.
+                      </p>
+
+                      <p className="text-gray-300 leading-relaxed">
+                        The on-chain data processed by our indexer is made available
+                        for querying via our API. We also provide endpoints for
+                        building transactions (for operations such as signup and
+                        renewal) and authenticated profile downloads. We explicitly
+                        do not log client IP addresses in our API.
+                      </p>
+                    </>
+                  )}
                 </div>
               </section>
 
@@ -147,22 +192,35 @@ const HowItWorks = () => {
                       4
                     </div>
                     <h2 id="authentication-title" className="text-2xl font-semibold text-white">
-                      Profile Download Authentication
+                      {wireGuardEnabled ? "Device Authentication" : "Profile Authentication"}
                     </h2>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    Once a client profile has been generated and uploaded to S3
-                    by our indexer, our API will allow fetching it by validating
-                    ownership of the wallet used to do the signup. This is done
-                    by generating a challenge string (the hex-encoded client ID
-                    and the current UNIX epoch time), signing this message with
-                    your wallet using the CIP-8 message signing format, and
-                    passing it to our API. We validate the signature of the
-                    challenge message against the wallet PKH provided at signup,
-                    and respond with a pre-signed S3 URL to fetch the client
-                    config. A particular signed challenge string is valid for a
-                    limited period of time to help prevent replay attacks.
-                  </p>
+                  {wireGuardEnabled ? (
+                    <p className="text-gray-300 leading-relaxed">
+                      For WireGuard, your device generates a cryptographic keypair
+                      locally in your browser using the X25519 algorithm. The
+                      private key never leaves your device—only the public key is
+                      sent to our API. This is done by generating a challenge
+                      string (the hex-encoded client ID and the current UNIX epoch
+                      time), signing this message with your wallet using the CIP-8
+                      message signing format, and passing it to our API along with
+                      your WireGuard public key. We validate the signature against
+                      the wallet PKH provided at signup, register your device, and
+                      return the server configuration. A signed challenge is valid
+                      for a limited period of time to help prevent replay attacks.
+                    </p>
+                  ) : (
+                    <p className="text-gray-300 leading-relaxed">
+                      Profile downloads are authenticated by signing a challenge
+                      with your wallet. The challenge consists of the hex-encoded
+                      client ID and the current UNIX epoch time, signed using the
+                      CIP-8 message signing format. We validate the signature
+                      against the wallet PKH provided at signup and respond with
+                      a pre-signed S3 URL to download your profile. A signed
+                      challenge is valid for a limited period of time to help
+                      prevent replay attacks.
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -173,35 +231,55 @@ const HowItWorks = () => {
                       5
                     </div>
                     <h2 id="setup-title" className="text-2xl font-semibold text-white">
-                      OpenVPN Server
+                      {wireGuardEnabled ? "WireGuard Server" : "OpenVPN Server"}
                     </h2>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    We run our OpenVPN server instances from a{" "}
-                    <a
-                      href="https://github.com/blinklabs-io/docker-openvpn"
-                      className="text-blue-400 hover:text-blue-300 underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      custom docker image
-                    </a>{" "}
-                    running in Kubernetes. Our image explicitly disables any
-                    logging from OpenVPN, which means that we cannot see the IP
-                    address that you connect with.
-                  </p>
+                  {wireGuardEnabled ? (
+                    <>
+                      <p className="text-gray-300 leading-relaxed">
+                        We run our WireGuard server instances in Kubernetes. WireGuard
+                        is a modern VPN protocol that uses state-of-the-art cryptography
+                        and has a minimal attack surface due to its small codebase.
+                        We explicitly disable any logging, which means that we cannot
+                        see the IP address that you connect with.
+                      </p>
 
-                  <p className="text-gray-300 leading-relaxed">
-                    When connecting to the VPN server, the user's client TLS
-                    certificate from their downloaded profile will be validated
-                    against our CA certificate when authenticating to the VPN
-                    server. The client certificate will also be checked against a
-                    CRL (certificate revocation list) maintained by our custom
-                    indexer to enforce expiration. By default, you will be
-                    provided with our hosted DNS servers a default route through
-                    the VPN, which prevents your ISP from being able to see what
-                    you are doing on the VPN.
-                  </p>
+                      <p className="text-gray-300 leading-relaxed">
+                        When connecting to the VPN server, your device's public key
+                        is validated against registered devices for your subscription.
+                        Each subscription supports up to 3 devices, allowing you to
+                        connect from your phone, laptop, and desktop simultaneously.
+                        By default, you will be provided with our hosted DNS servers
+                        and a default route through the VPN, which prevents your ISP
+                        from being able to see what you are doing on the VPN.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-300 leading-relaxed">
+                        We run OpenVPN server instances from a{" "}
+                        <a
+                          href="https://github.com/blinklabs-io/docker-openvpn"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          custom docker image
+                        </a>{" "}
+                        in Kubernetes with logging explicitly disabled, which means
+                        that we cannot see the IP address that you connect with.
+                      </p>
+
+                      <p className="text-gray-300 leading-relaxed">
+                        When connecting to the VPN server, your client certificate
+                        is validated against our CA and checked against a CRL
+                        (certificate revocation list) to enforce expiration. By
+                        default, you will be provided with our hosted DNS servers
+                        and a default route through the VPN, which prevents your ISP
+                        from being able to see what you are doing on the VPN.
+                      </p>
+                    </>
+                  )}
                 </div>
               </section>
 
@@ -237,7 +315,83 @@ const HowItWorks = () => {
               </section>
             </div>
 
-            <div className="text-center mt-12">
+            {/* Show "Looking for OpenVPN?" when WireGuard is primary and OpenVPN is available */}
+            {wireGuardEnabled && openVpnEnabled && (
+              <div className="mt-12 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowOpenVpnDetails(!showOpenVpnDetails)}
+                  className="text-sm text-[#E1B8FF] hover:text-white transition-colors cursor-pointer underline underline-offset-2"
+                >
+                  Looking for OpenVPN?
+                </button>
+
+                {showOpenVpnDetails && (
+                  <div className="mt-6 bg-white/5 rounded-xl p-6 border border-white/10 text-left">
+                    <h3 className="text-lg font-semibold text-white mb-3">OpenVPN (Compatibility)</h3>
+                    <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                      OpenVPN is available for devices that don't support WireGuard. The main
+                      differences in how OpenVPN works:
+                    </p>
+                    <ul className="text-gray-300 text-sm space-y-2 list-disc list-inside">
+                      <li>
+                        A client TLS certificate is generated server-side and signed by our CA
+                        certificate, then bundled into an .ovpn config file uploaded to S3.
+                      </li>
+                      <li>
+                        Profile downloads are authenticated by signing a challenge with your wallet,
+                        and we respond with a pre-signed S3 URL.
+                      </li>
+                      <li>
+                        We run OpenVPN server instances from a{" "}
+                        <a
+                          href="https://github.com/blinklabs-io/docker-openvpn"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          custom docker image
+                        </a>{" "}
+                        with logging explicitly disabled.
+                      </li>
+                      <li>
+                        Your client certificate is validated against our CA and checked against a
+                        CRL (certificate revocation list) to enforce expiration.
+                      </li>
+                      <li>
+                        OpenVPN subscriptions support one device per subscription (no multi-device).
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Show "Looking for WireGuard?" when OpenVPN is primary (WireGuard coming soon) */}
+            {!wireGuardEnabled && openVpnEnabled && (
+              <div className="mt-12 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowWireGuardDetails(!showWireGuardDetails)}
+                  className="text-sm text-[#E1B8FF] hover:text-white transition-colors cursor-pointer underline underline-offset-2"
+                >
+                  Looking for WireGuard?
+                </button>
+
+                {showWireGuardDetails && (
+                  <div className="mt-6 bg-white/5 rounded-xl p-6 border border-white/10 text-left">
+                    <h3 className="text-lg font-semibold text-white mb-3">WireGuard (Coming Soon)</h3>
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      WireGuard is a modern VPN protocol that offers faster speeds, better
+                      performance, and multi-device support (up to 3 devices per subscription).
+                      WireGuard support is coming soon to NABU VPN.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="text-center mt-8">
               <Link
                 to="/"
                 className="inline-flex items-center px-8 py-4 text-white border border-white/20 backdrop-blur-sm font-semibold rounded-xl shadow-lg hover:bg-gray-800 transition-colors"

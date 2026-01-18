@@ -16,6 +16,12 @@ import type { ClientInfo } from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide";
 import WalletConnection from "../components/WalletConnection";
+import ProtocolToggle, {
+  shouldShowWireGuardUI,
+  isOpenVpnAvailable,
+  type VpnProtocolType,
+} from "../components/ProtocolToggle";
+import RegionSelect, { filterRegionsByProtocol } from "../components/RegionSelect";
 import {
   getPendingTransactions,
   addPendingTransaction,
@@ -45,6 +51,7 @@ const Account = () => {
     durationLabel: string;
     durationMs: number;
     region: string;
+    priceAda: string;
     newExpiration?: string;
   } | null>(null);
   const [errorModal, setErrorModal] = useState<string | null>(null);
@@ -70,6 +77,13 @@ const Account = () => {
   const [showAdditionalPurchaseCards, setShowAdditionalPurchaseCards] =
     useState(false);
   const [selectedDurationIndex, setSelectedDurationIndex] = useState(0);
+
+  // Protocol selection state - default to WireGuard when enabled, otherwise OpenVPN
+  const [selectedProtocol, setSelectedProtocol] = useState<VpnProtocolType>(
+    () => (shouldShowWireGuardUI() ? "wireguard" : "openvpn")
+  );
+  // Region selection state - will be set once regions are loaded
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
 
   const tooltipSteps: TooltipStep[] = [
     {
@@ -201,17 +215,53 @@ const Account = () => {
     return (priceLovelace / 1000000).toFixed(2);
   };
 
-  const durationOptions = Array.isArray(refData?.prices)
-    ? refData.prices.map((priceData: { duration: number; price: number }) => {
-        const normalizedDuration = normalizeDurationMs(priceData.duration);
-        return {
-          label: formatDuration(normalizedDuration),
-          value: normalizedDuration,
-          timeDisplay: formatTimeDisplay(normalizedDuration),
-          price: priceData.price,
-        };
-      })
-    : [];
+  const regions = useMemo(
+    () => (Array.isArray(refData?.regions) ? refData.regions : []),
+    [refData?.regions]
+  );
+
+  // Filter regions based on selected protocol
+  const filteredRegions = useMemo(() => {
+    if (!shouldShowWireGuardUI()) {
+      // WireGuard disabled - use all regions (legacy OpenVPN behavior)
+      return regions;
+    }
+    return filterRegionsByProtocol(regions, selectedProtocol);
+  }, [regions, selectedProtocol]);
+
+  // Determine the region to use for purchases
+  const payloadRegion = useMemo(() => {
+    // If a region is explicitly selected, use it
+    if (selectedRegion && filteredRegions.includes(selectedRegion)) {
+      return selectedRegion;
+    }
+    // Otherwise use the first available region
+    return filteredRegions[0] ?? "";
+  }, [selectedRegion, filteredRegions]);
+
+  // Update selected region when protocol changes or regions load
+  useEffect(() => {
+    if (filteredRegions.length > 0 && !filteredRegions.includes(selectedRegion)) {
+      setSelectedRegion(filteredRegions[0]);
+    }
+  }, [filteredRegions, selectedRegion]);
+
+  // Use refdata prices for all protocols (same pricing across regions)
+  const activePrices = useMemo(() => {
+    return Array.isArray(refData?.prices) ? refData.prices : [];
+  }, [refData?.prices]);
+
+  const durationOptions = activePrices.map(
+    (priceData: { duration: number; price: number }) => {
+      const normalizedDuration = normalizeDurationMs(priceData.duration);
+      return {
+        label: formatDuration(normalizedDuration),
+        value: normalizedDuration,
+        timeDisplay: formatTimeDisplay(normalizedDuration),
+        price: priceData.price,
+      };
+    }
+  );
   const selectedDurationOption =
     durationOptions[selectedDurationIndex] ?? durationOptions[0];
 
@@ -225,9 +275,6 @@ const Account = () => {
       Math.min(prev, durationOptions.length - 1),
     );
   }, [durationOptions.length]);
-
-  const regions = Array.isArray(refData?.regions) ? refData.regions : [];
-  const payloadRegion = regions[0] ?? "";
 
   useEffect(() => {
     cleanupCompletedTransactions();
@@ -317,6 +364,7 @@ const Account = () => {
         durationMs: targetDuration,
         durationLabel: formatDuration(targetDuration),
         region: payloadRegion,
+        priceAda: formatPrice(option.price),
       });
     } catch (error) {
       console.error("Signup failed:", error);
@@ -465,6 +513,7 @@ const Account = () => {
         durationMs: selectedRenewDuration,
         durationLabel: formatDuration(selectedRenewDuration),
         region: payloadRegion,
+        priceAda: formatPrice(renewOption.price),
         newExpiration: newExpirationDate
           ? newExpirationDate.toLocaleString()
           : undefined,
@@ -591,30 +640,67 @@ const Account = () => {
               isOpen
               title={
                 pendingTx.type === "purchase"
-                  ? "VPN Purchase"
+                  ? "Confirm VPN Purchase"
                   : pendingTx.type === "buy-time"
-                    ? "Buy Time"
-                    : "VPN Renewal"
+                    ? "Confirm Time Extension"
+                    : "Confirm VPN Renewal"
               }
               message={
-                <div className="space-y-1 text-left">
-                  <p className="text-sm text-gray-900">
-                    Duration:{" "}
-                    <span className="font-semibold">{pendingTx.durationLabel}</span>
+                <div className="space-y-4 text-left">
+                  <p className="text-sm text-gray-600">
+                    {pendingTx.type === "purchase"
+                      ? "You are about to purchase a new VPN subscription."
+                      : pendingTx.type === "buy-time"
+                        ? "You are about to extend your existing subscription."
+                        : "You are about to renew your VPN subscription."}
                   </p>
-                  <p className="text-sm text-gray-900">
-                    Region: <span className="font-semibold">{pendingTx.region}</span>
+
+                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Duration</span>
+                      <span className="font-semibold text-gray-900">{pendingTx.durationLabel}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Region</span>
+                      <span className="font-semibold text-gray-900">{pendingTx.region}</span>
+                    </div>
+                    {pendingTx.newExpiration && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">New expiration</span>
+                        <span className="font-semibold text-gray-900">{pendingTx.newExpiration}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-gray-200 pt-2 mt-2 space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Subscription</span>
+                        <span className="text-gray-900">{pendingTx.priceAda} ADA</span>
+                      </div>
+                      {pendingTx.type === "purchase" && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Account setup</span>
+                          <span className="text-gray-900">1.70 ADA</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Network fee (est.)</span>
+                        <span className="text-gray-900">~0.31 ADA</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-semibold border-t border-gray-200 pt-1 mt-1">
+                        <span className="text-gray-900">Estimated total</span>
+                        <span className="text-gray-900">
+                          ~{(parseFloat(pendingTx.priceAda) + (pendingTx.type === "purchase" ? 1.7 : 0) + 0.31).toFixed(2)} ADA
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    After confirming, you'll be prompted to sign the transaction in your wallet.
                   </p>
-                  {pendingTx.newExpiration && (
-                    <p className="text-sm text-gray-900">
-                      New expiration:{" "}
-                      <span className="font-semibold">{pendingTx.newExpiration}</span>
-                    </p>
-                  )}
                 </div>
               }
-              confirmLabel="Confirm"
-              cancelLabel="Close"
+              confirmLabel="Continue to Wallet"
+              cancelLabel="Cancel"
               onConfirm={handleConfirmSubmit}
               onCancel={handleCancelPending}
             />
@@ -653,7 +739,9 @@ const Account = () => {
               ) : !isConnected || !hasAnyInstances ? (
                 <>
                   <h1 className="font-exo-2 font-black text-[24px] leading-[110%] tracking-[0] text-center md:text-[32px] md:leading-[100%]">
-                    Private, account-free VPN access
+                    {shouldShowWireGuardUI() && selectedProtocol === "openvpn"
+                      ? "Purchase VPN Access (OpenVPN)"
+                      : "Private, account-free VPN access"}
                   </h1>
                   <p className="font-ibm-plex font-normal text-[14px] leading-[120%] tracking-[0] text-center text-[#E1B8FF] md:text-[16px] md:leading-[100%]">
                     Decentralized. No tracking. No subscriptions.
@@ -694,6 +782,34 @@ const Account = () => {
             {/* Purchase cards */}
             {shouldShowPurchaseCards && (
               <div className="flex flex-col gap-4">
+                {/* Protocol Toggle - only shown when WireGuard is enabled and OpenVPN is selected */}
+                {shouldShowWireGuardUI() && selectedProtocol === "openvpn" && (
+                  <ProtocolToggle
+                    selectedProtocol={selectedProtocol}
+                    onProtocolChange={setSelectedProtocol}
+                  />
+                )}
+
+                {/* Region Selector - hidden if only 1 region available */}
+                {filteredRegions.length > 1 && (
+                  <div className="flex justify-center">
+                    <RegionSelect
+                      value={selectedRegion}
+                      onChange={setSelectedRegion}
+                      regions={filteredRegions}
+                    />
+                  </div>
+                )}
+
+                {/* Display single region info when selector is hidden */}
+                {filteredRegions.length === 1 && selectedProtocol === "openvpn" && (
+                  <div className="flex justify-center">
+                    <p className="text-sm text-[#E1B8FF]">
+                      Region: <span className="font-semibold text-white">{payloadRegion}</span>
+                    </p>
+                  </div>
+                )}
+
                 {durationOptions.length > 0 ? (
                   <>
                     {/* Mobile: single card with sliding selector */}
@@ -763,6 +879,16 @@ const Account = () => {
                         ))}
                       </div>
                     </div>
+
+                    {/* "Looking for OpenVPN?" link - shown below purchase cards when WireGuard is selected */}
+                    {shouldShowWireGuardUI() && selectedProtocol === "wireguard" && isOpenVpnAvailable() && (
+                      <div className="flex justify-center mt-2">
+                        <ProtocolToggle
+                          selectedProtocol={selectedProtocol}
+                          onProtocolChange={setSelectedProtocol}
+                        />
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
