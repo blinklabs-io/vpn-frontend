@@ -92,6 +92,86 @@ function getWireGuardInstallInfo(deviceType: DeviceType): {
 }
 
 /**
+ * Get platform-specific OpenVPN installation info
+ */
+function getOpenVpnInstallInfo(deviceType: DeviceType): {
+  appName: string;
+  downloadUrl: string;
+  storeText: string;
+  instructions: string[];
+} {
+  switch (deviceType) {
+    case "windows":
+      return {
+        appName: "OpenVPN Connect for Windows",
+        downloadUrl: "https://openvpn.net/client/",
+        storeText: "Download from openvpn.net",
+        instructions: [
+          "Download the OpenVPN Connect installer from the official website",
+          "Run the installer and follow the prompts",
+          "Once installed, OpenVPN will appear in your system tray",
+        ],
+      };
+    case "mac":
+      return {
+        appName: "OpenVPN Connect for macOS",
+        downloadUrl: "https://openvpn.net/client/",
+        storeText: "Download from openvpn.net",
+        instructions: [
+          "Download OpenVPN Connect from the official website",
+          "Open the installer and drag to Applications",
+          "OpenVPN will appear in your menu bar",
+        ],
+      };
+    case "iphone":
+    case "ipad":
+      return {
+        appName: "OpenVPN Connect for iOS",
+        downloadUrl: "https://apps.apple.com/app/openvpn-connect/id590379981",
+        storeText: "Download from App Store",
+        instructions: [
+          "Download OpenVPN Connect from the App Store",
+          "Open the app and allow VPN configuration access",
+          "Import your .ovpn profile file to connect",
+        ],
+      };
+    case "android":
+      return {
+        appName: "OpenVPN Connect for Android",
+        downloadUrl: "https://play.google.com/store/apps/details?id=net.openvpn.openvpn",
+        storeText: "Download from Play Store",
+        instructions: [
+          "Download OpenVPN Connect from the Play Store",
+          "Open the app and grant necessary permissions",
+          "Import your .ovpn profile file to connect",
+        ],
+      };
+    case "linux":
+      return {
+        appName: "OpenVPN for Linux",
+        downloadUrl: "https://openvpn.net/community-downloads/",
+        storeText: "Install via package manager",
+        instructions: [
+          "Install using your distribution's package manager (see commands below)",
+          "Place your .ovpn config file in a convenient location",
+          "Use 'openvpn --config' to connect",
+        ],
+      };
+    default:
+      return {
+        appName: "OpenVPN Connect",
+        downloadUrl: "https://openvpn.net/client/",
+        storeText: "Visit openvpn.net",
+        instructions: [
+          "Download OpenVPN Connect for your platform from openvpn.net",
+          "Install and open the application",
+          "Import your .ovpn profile file to connect",
+        ],
+      };
+  }
+}
+
+/**
  * Get the human-readable device name for display
  */
 function getDeviceDisplayName(deviceType: DeviceType): string {
@@ -761,8 +841,27 @@ const OpenVpnContent = () => {
  * Original OpenVPN Install Guide (shown when WireGuard is disabled)
  */
 const OpenVpnInstallGuide = () => {
+  const deviceType = detectDeviceTypeRaw();
+  const deviceName = getDeviceDisplayName(deviceType);
+  const installInfo = getOpenVpnInstallInfo(deviceType);
+  const isMobile = deviceType === "iphone" || deviceType === "ipad" || deviceType === "android";
+
   return (
     <>
+      {/* Platform detection banner */}
+      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-4 border border-blue-500/30 mb-8">
+        <div className="flex items-center gap-3">
+          <PlatformIcon deviceType={deviceType} className="w-10 h-10" />
+          <div>
+            <p className="text-white font-medium">
+              We detected you're on <span className="text-blue-400">{deviceName}</span>
+            </p>
+            <p className="text-gray-300 text-sm">Here's how to get started with NABU VPN</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick steps overview */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
@@ -780,12 +879,13 @@ const OpenVpnInstallGuide = () => {
           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
             <span className="text-black font-bold text-sm">3</span>
           </div>
-          <span className="text-white font-medium">Configure & Connect</span>
+          <span className="text-white font-medium">Import & Connect</span>
         </div>
       </div>
 
       <div className="bg-gradient-to-br from-[#00000066] to-[#1a1a2e66] rounded-2xl p-8 backdrop-blur-xl border border-[#ffffff2a] shadow-2xl">
-        <div className="space-y-8 mb-12">
+        <div className="space-y-8">
+          {/* Step 1: Install OpenVPN */}
           <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-xl border border-white/20">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
@@ -794,134 +894,158 @@ const OpenVpnInstallGuide = () => {
               <h2 className="text-2xl font-bold text-white">Install OpenVPN</h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-4">
-                  <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91v-6.75l10 .15z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-white">Windows</h3>
-                </div>
-                <div className="space-y-3">
-                  <a
-                    href="https://openvpn.net/client/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-400 hover:text-white transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    Download OpenVPN Client
-                  </a>
-                  <a
-                    href="https://openvpn.net/connect-docs/connect-for-windows.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Windows Documentation
-                  </a>
+            {/* Recommended for detected platform */}
+            <div className="bg-blue-500/10 rounded-xl p-6 border border-blue-500/30 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <PlatformIcon deviceType={deviceType} />
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Recommended for {deviceName}
+                  </h3>
+                  <p className="text-gray-300 text-sm">{installInfo.appName}</p>
                 </div>
               </div>
-
-              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-4">
-                  <svg className="w-8 h-8 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-white">macOS</h3>
-                </div>
-                <div className="space-y-3">
-                  <a
-                    href="https://openvpn.net/client/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-400 hover:text-white transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    Download OpenVPN Client
-                  </a>
-                  <a
-                    href="https://openvpn.net/connect-docs/macos-installation-guide.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    macOS Documentation
-                  </a>
-                </div>
-              </div>
-
-              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-4">
-                  <svg className="w-8 h-8 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.504 0C5.588 0 0 5.588 0 12.504s5.588 12.504 12.504 12.504S25.008 19.42 25.008 12.504 19.42 0 12.504 0zm0 22.008c-5.243 0-9.504-4.261-9.504-9.504S7.261 3 12.504 3s9.504 4.261 9.504 9.504-4.261 9.504-9.504 9.504z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-white">Linux</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-gray-300 text-sm font-mono">Terminal Command</span>
-                    </div>
-                    <code className="text-green-400 font-mono text-sm">sudo apt install openvpn</code>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-4">
-                  <svg className="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17 1.01L7 1c-1.1 0-1.99.9-1.99 2v18c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-white">Mobile</h3>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <a
-                    href="https://play.google.com/store/apps/details?id=net.openvpn.openvpn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-400 hover:text-white transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Android/iOS App
-                  </a>
-                  <a
-                    href="https://openvpn.net/connect-docs/connect-for-android.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Mobile Documentation
-                  </a>
-                </div>
-              </div>
+              <a
+                href={installInfo.downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors mb-4"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                {installInfo.storeText}
+              </a>
+              <ul className="space-y-2">
+                {installInfo.instructions.map((instruction, index) => (
+                  <li key={index} className="flex items-start gap-2 text-gray-300 text-sm">
+                    <span className="text-blue-400 mt-1">*</span>
+                    {instruction}
+                  </li>
+                ))}
+              </ul>
             </div>
+
+            {/* Linux terminal commands */}
+            {deviceType === "linux" && (
+              <div className="space-y-3 mb-6">
+                <h4 className="text-white font-medium">Terminal Commands:</h4>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-400 text-sm font-mono">Ubuntu/Debian:</span>
+                  </div>
+                  <code className="text-green-400 font-mono text-sm">
+                    sudo apt install openvpn
+                  </code>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-400 text-sm font-mono">Fedora:</span>
+                  </div>
+                  <code className="text-green-400 font-mono text-sm">
+                    sudo dnf install openvpn
+                  </code>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-400 text-sm font-mono">Arch Linux:</span>
+                  </div>
+                  <code className="text-green-400 font-mono text-sm">
+                    sudo pacman -S openvpn
+                  </code>
+                </div>
+              </div>
+            )}
+
+            {/* Other platforms */}
+            <CollapsibleSection title="Other Platforms">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                {deviceType !== "windows" && (
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <PlatformIcon deviceType="windows" className="w-6 h-6" />
+                      <h4 className="text-white font-medium">Windows</h4>
+                    </div>
+                    <a
+                      href="https://openvpn.net/client/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-white transition-colors text-sm"
+                    >
+                      Download from openvpn.net
+                    </a>
+                  </div>
+                )}
+                {deviceType !== "mac" && (
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <PlatformIcon deviceType="mac" className="w-6 h-6" />
+                      <h4 className="text-white font-medium">macOS</h4>
+                    </div>
+                    <a
+                      href="https://openvpn.net/client/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-white transition-colors text-sm"
+                    >
+                      Download from openvpn.net
+                    </a>
+                  </div>
+                )}
+                {deviceType !== "iphone" && deviceType !== "ipad" && (
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <PlatformIcon deviceType="iphone" className="w-6 h-6" />
+                      <h4 className="text-white font-medium">iOS (iPhone/iPad)</h4>
+                    </div>
+                    <a
+                      href="https://apps.apple.com/app/openvpn-connect/id590379981"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-white transition-colors text-sm"
+                    >
+                      Download from App Store
+                    </a>
+                  </div>
+                )}
+                {deviceType !== "android" && (
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <PlatformIcon deviceType="android" className="w-6 h-6" />
+                      <h4 className="text-white font-medium">Android</h4>
+                    </div>
+                    <a
+                      href="https://play.google.com/store/apps/details?id=net.openvpn.openvpn"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-white transition-colors text-sm"
+                    >
+                      Download from Play Store
+                    </a>
+                  </div>
+                )}
+                {deviceType !== "linux" && (
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <PlatformIcon deviceType="linux" className="w-6 h-6" />
+                      <h4 className="text-white font-medium">Linux</h4>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                      Install via package manager (apt, dnf, pacman)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CollapsibleSection>
           </div>
 
+          {/* Step 2: Download Profile */}
           <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-xl border border-white/20">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
                 <span className="text-black font-bold text-lg">2</span>
               </div>
-              <h2 className="text-2xl font-bold text-white">Download Your VPN Profile</h2>
+              <h2 className="text-2xl font-bold text-white">Download Your Profile</h2>
             </div>
 
             <div className="bg-white/5 rounded-xl p-6 border border-white/10">
@@ -932,7 +1056,8 @@ const OpenVpnInstallGuide = () => {
                 <h3 className="text-lg font-semibold text-white">Connect Wallet & Purchase</h3>
               </div>
               <p className="text-gray-300 mb-4">
-                Go to your account page and connect your Cardano wallet to purchase your VPN profile.
+                Go to your account page, connect your Cardano wallet, and purchase a VPN subscription.
+                Then download your OpenVPN profile (.ovpn file).
               </p>
               <Link
                 to="/account"
@@ -946,103 +1071,133 @@ const OpenVpnInstallGuide = () => {
             </div>
           </div>
 
+          {/* Step 3: Import & Connect */}
           <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-xl border border-white/20">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
                 <span className="text-black font-bold text-lg">3</span>
               </div>
-              <h2 className="text-2xl font-bold text-white">Configure & Connect</h2>
+              <h2 className="text-2xl font-bold text-white">Import & Connect</h2>
             </div>
 
+            {/* Mobile-specific instructions */}
+            {isMobile && (
+              <div className="bg-purple-500/10 rounded-xl p-6 border border-purple-500/30 mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-white">Import Profile on {deviceName}</h3>
+                </div>
+                <ol className="space-y-2 text-gray-300 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">1.</span>
+                    Open the OpenVPN Connect app on your {deviceName}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">2.</span>
+                    Tap the "+" or "Import" button
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">3.</span>
+                    Select your downloaded .ovpn profile file
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">4.</span>
+                    Tap "Add" to import the profile
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400 font-bold">5.</span>
+                    Toggle the switch to connect
+                  </li>
+                </ol>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Import Config */}
               <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
                   <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h3 className="text-lg font-semibold text-white">Configuration</h3>
+                  <h3 className="text-lg font-semibold text-white">Import Profile</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91v-6.75l10 .15z" />
-                      </svg>
+                      <PlatformIcon deviceType="windows" className="w-4 h-4" />
                       <span className="text-gray-300 text-sm">Windows</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <code className="text-gray-300 font-mono text-sm">
-                        C:\Program Files\OpenVPN\config\
-                      </code>
-                    </div>
+                    <span className="text-gray-300 text-sm">
+                      Right-click system tray icon, select "Import file..." and choose your .ovpn file
+                    </span>
                   </div>
-
                   <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12.504 0C5.588 0 0 5.588 0 12.504s5.588 12.504 12.504 12.504S25.008 19.42 25.008 12.504 19.42 0 12.504 0zm0 22.008c-5.243 0-9.504-4.261-9.504-9.504S7.261 3 12.504 3s9.504 4.261 9.504 9.504-4.261 9.504-9.504 9.504z" />
-                      </svg>
-                      <span className="text-gray-300 text-sm">Linux/Mac</span>
+                      <PlatformIcon deviceType="mac" className="w-4 h-4" />
+                      <span className="text-gray-300 text-sm">macOS</span>
+                    </div>
+                    <span className="text-gray-300 text-sm">
+                      Click menu bar icon, select "Import Profile" and choose your .ovpn file
+                    </span>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <PlatformIcon deviceType="linux" className="w-4 h-4" />
+                      <span className="text-gray-300 text-sm">Linux</span>
                     </div>
                     <code className="text-green-400 font-mono text-sm">
-                      sudo openvpn --config /path/to/your-profile.ovpn
+                      sudo openvpn --config ./nabu-vpn.ovpn
                     </code>
-                  </div>
-
-                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17 1.01L7 1c-1.1 0-1.99.9-1.99 2v18c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" />
-                      </svg>
-                      <span className="text-gray-300 text-sm">Mobile</span>
-                    </div>
-                    <span className="text-gray-300 text-sm">Import into OpenVPN Connect app</span>
                   </div>
                 </div>
               </div>
 
+              {/* Connect */}
               <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
                   <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <h3 className="text-lg font-semibold text-white">Connection</h3>
+                  <h3 className="text-lg font-semibold text-white">Connect</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91v-6.75l10 .15z" />
-                      </svg>
+                      <PlatformIcon deviceType="windows" className="w-4 h-4" />
                       <span className="text-gray-300 text-sm">Windows</span>
                     </div>
-                    <span className="text-gray-300 text-sm">Right-click GUI and select "Connect"</span>
+                    <span className="text-gray-300 text-sm">
+                      Right-click system tray icon and select "Connect"
+                    </span>
                   </div>
-
                   <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12.504 0C5.588 0 0 5.588 0 12.504s5.588 12.504 12.504 12.504S25.008 19.42 25.008 12.504 19.42 0 12.504 0zm0 22.008c-5.243 0-9.504-4.261-9.504-9.504S7.261 3 12.504 3s9.504 4.261 9.504 9.504-4.261 9.504-9.504 9.504z" />
-                      </svg>
-                      <span className="text-gray-300 text-sm">Linux/Mac</span>
+                      <PlatformIcon deviceType="mac" className="w-4 h-4" />
+                      <span className="text-gray-300 text-sm">macOS</span>
                     </div>
-                    <code className="text-green-400 font-mono text-sm">
-                      sudo openvpn --config /path/to/your-profile.ovpn
-                    </code>
+                    <span className="text-gray-300 text-sm">
+                      Click menu bar icon and toggle the switch to connect
+                    </span>
                   </div>
-
                   <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17 1.01L7 1c-1.1 0-1.99.9-1.99 2v18c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" />
-                      </svg>
+                      <PlatformIcon deviceType="iphone" className="w-4 h-4" />
                       <span className="text-gray-300 text-sm">Mobile</span>
                     </div>
-                    <span className="text-gray-300 text-sm">Tap "Connect" in the app</span>
+                    <span className="text-gray-300 text-sm">
+                      Toggle the switch next to your profile
+                    </span>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <PlatformIcon deviceType="linux" className="w-4 h-4" />
+                      <span className="text-gray-300 text-sm">Linux</span>
+                    </div>
+                    <code className="text-green-400 font-mono text-sm">
+                      sudo openvpn --config ./nabu-vpn.ovpn
+                    </code>
                   </div>
                 </div>
               </div>
@@ -1055,14 +1210,14 @@ const OpenVpnInstallGuide = () => {
                 </svg>
                 <div>
                   <p className="text-gray-300 text-sm">
-                    Still have questions on how to use OpenVPN?
+                    Need more help with OpenVPN?
                     <a
                       href="https://openvpn.net/connect-docs/user-guide.html"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-400 hover:text-white transition-colors ml-1"
                     >
-                      See the OpenVPN user guides here
+                      See the official OpenVPN user guide
                     </a>
                   </p>
                 </div>
