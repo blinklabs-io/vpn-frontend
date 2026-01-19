@@ -291,7 +291,7 @@ const DocsFaqs = () => {
         id: "multiple-instances-ovpn",
         question: "Can I buy multiple VPN subscriptions?",
         answer:
-          "Yes, you can purchase multiple subscriptions for different regions or to support more concurrent connections.",
+          "Yes, you can purchase multiple subscriptions. Each OpenVPN subscription supports one concurrent connection, but you can have multiple subscriptions if you need simultaneous connections on multiple devices.",
         openVpnOnly: true,
       },
       // IP logging - protocol aware
