@@ -99,21 +99,15 @@ const Account = () => {
       placement: "bottom",
     },
     {
-      id: "wallet-tooltip",
-      content:
-        "Connect your Cardano wallet here to start purchasing VPN access. We support all major Cardano wallets!",
-      placement: "left",
-    },
-    {
       id: "purchase-tooltip",
       content:
         "Click here to purchase your VPN access! Make sure your wallet is connected and you have enough ADA balance.",
       placement: "top",
     },
     {
-      id: "instances-tooltip",
+      id: "wallet-tooltip",
       content:
-        "Your active VPN instances will appear here. Click 'Get Config' to download your VPN configuration files!",
+        "Connect your Cardano wallet here to start purchasing VPN access. We support all major Cardano wallets!",
       placement: "top",
     },
   ];
@@ -909,7 +903,7 @@ const Account = () => {
             {/* Instances */}
             <div
               className={`rounded-2xl bg-[#00000080] border border-white/10 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.8)] p-4 md:p-6 ${
-                !isInstancesLoading && !isConnected && vpnInstances.length === 0
+                !isInstancesLoading && !isConnected && vpnInstances.length === 0 && !showTooltips
                   ? "md:bg-transparent md:border-none md:shadow-none md:p-0"
                   : ""
               }`}
@@ -979,9 +973,6 @@ const Account = () => {
               ) : vpnInstances.length > 0 ? (
                 <div
                   className="grid grid-cols-1 gap-4 w-full mt-4"
-                  {...(showTooltips && {
-                    "data-tooltip-id": "instances-tooltip",
-                  })}
                 >
                   {vpnInstances.map((instance) => (
                     <VpnInstance
@@ -1021,7 +1012,7 @@ const Account = () => {
                 <div className="mt-4 text-center text-white/80">
                   {!isConnected && (
                     <div
-                      className="md:hidden flex flex-col items-center gap-3 px-2 py-2"
+                      className={`${showTooltips ? "" : "md:hidden "}flex flex-col items-center gap-3 px-2 py-2`}
                       {...(showTooltips && {
                         "data-tooltip-id": "wallet-tooltip",
                       })}

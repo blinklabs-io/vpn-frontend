@@ -26,6 +26,7 @@ const TooltipGuide = ({
 }: TooltipGuideProps) => {
   const [showTooltips, setShowTooltips] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [visibleAnchorId, setVisibleAnchorId] = useState<string | null>(null);
   const effectiveShowTooltips = enabled && showTooltips;
 
   useEffect(() => {
@@ -53,18 +54,36 @@ const TooltipGuide = ({
     onComplete?.();
   };
 
+  // Find the first visible anchor element for the current step.
+  // Multiple elements may have the same data-tooltip-id (e.g. mobile + desktop cards),
+  // but only the visible one (non-zero dimensions) should be used as the anchor.
   useEffect(() => {
-    if (!enabled || !showTooltips || typeof document === "undefined") return;
+    if (!enabled || !showTooltips || typeof document === "undefined") {
+      setVisibleAnchorId(null);
+      return;
+    }
+
     let frameId: number | null = null;
 
     frameId = window.requestAnimationFrame(() => {
       const step = steps[currentStep];
       if (!step) return;
-      const selector = `[data-tooltip-id="${step.id}"]`;
-      const anchor = document.querySelector(selector);
-      if (!anchor) {
+      const elements = document.querySelectorAll(`[data-tooltip-id="${step.id}"]`);
+      let found = false;
+      for (const el of elements) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const anchorId = `__tooltip-anchor-${step.id}`;
+          el.id = anchorId;
+          setVisibleAnchorId(anchorId);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        setVisibleAnchorId(null);
         console.warn(
-          `TooltipGuide: No element found for tooltip step id "${step.id}". Ensure the rendered element includes data-tooltip-id="${step.id}".`,
+          `TooltipGuide: No visible element found for tooltip step id "${step.id}". Ensure the rendered element includes data-tooltip-id="${step.id}".`,
         );
       }
     });
@@ -108,10 +127,9 @@ const TooltipGuide = ({
           return (
             <Tooltip
               key={step.id}
-              id={step.id}
               place={step.placement || "top"}
-              anchorSelect={`[data-tooltip-id="${step.id}"]`}
-              isOpen={isCurrentStep}
+              anchorSelect={isCurrentStep && visibleAnchorId ? `#${visibleAnchorId}` : undefined}
+              isOpen={isCurrentStep && !!visibleAnchorId}
               clickable={true}
               className="force-opacity-1"
               style={{
