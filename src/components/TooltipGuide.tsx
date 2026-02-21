@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Tooltip } from "react-tooltip";
 import "./ToolTipGuide.css";
 
@@ -27,6 +27,7 @@ const TooltipGuide = ({
   const [showTooltips, setShowTooltips] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [visibleAnchorId, setVisibleAnchorId] = useState<string | null>(null);
+  const syntheticIdRef = useRef<{ element: Element; id: string } | null>(null);
   const effectiveShowTooltips = enabled && showTooltips;
 
   useEffect(() => {
@@ -78,6 +79,7 @@ const TooltipGuide = ({
           const anchorId = el.id || `__tooltip-anchor-${step.id}`;
           if (!el.id) {
             el.id = anchorId;
+            syntheticIdRef.current = { element: el, id: anchorId };
           }
           setVisibleAnchorId(anchorId);
           found = true;
@@ -95,6 +97,15 @@ const TooltipGuide = ({
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
+      }
+      // Remove synthetic IDs we assigned to avoid stale DOM mutations
+      // after React remounts or the effect re-runs.
+      if (syntheticIdRef.current) {
+        const { element, id } = syntheticIdRef.current;
+        if (element.id === id) {
+          element.removeAttribute("id");
+        }
+        syntheticIdRef.current = null;
       }
     };
   }, [enabled, showTooltips, steps, currentStep]);
@@ -132,7 +143,7 @@ const TooltipGuide = ({
             <Tooltip
               key={step.id}
               place={step.placement || "top"}
-              anchorSelect={isCurrentStep && visibleAnchorId ? `#${visibleAnchorId}` : undefined}
+              anchorSelect={isCurrentStep && visibleAnchorId ? `#${CSS.escape(visibleAnchorId)}` : undefined}
               isOpen={isCurrentStep && !!visibleAnchorId}
               clickable={true}
               className="force-opacity-1"
