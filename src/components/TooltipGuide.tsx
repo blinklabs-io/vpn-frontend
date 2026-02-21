@@ -41,6 +41,7 @@ const TooltipGuide = ({
   }, [enabled, storageKey]);
 
   const handleNextStep = () => {
+    setVisibleAnchorId(null); // prevent stale anchor flash
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
@@ -50,6 +51,7 @@ const TooltipGuide = ({
   };
 
   const handleSkip = () => {
+    setVisibleAnchorId(null);
     setShowTooltips(false);
     onComplete?.();
   };
@@ -73,8 +75,10 @@ const TooltipGuide = ({
       for (const el of elements) {
         const rect = el.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
-          const anchorId = `__tooltip-anchor-${step.id}`;
-          el.id = anchorId;
+          const anchorId = el.id || `__tooltip-anchor-${step.id}`;
+          if (!el.id) {
+            el.id = anchorId;
+          }
           setVisibleAnchorId(anchorId);
           found = true;
           break;
