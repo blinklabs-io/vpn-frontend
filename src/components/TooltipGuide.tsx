@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Tooltip } from "react-tooltip";
 import "./ToolTipGuide.css";
 
@@ -26,6 +26,8 @@ const TooltipGuide = ({
 }: TooltipGuideProps) => {
   const [showTooltips, setShowTooltips] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [visibleAnchorId, setVisibleAnchorId] = useState<string | null>(null);
+  const syntheticIdRef = useRef<{ element: Element; id: string } | null>(null);
   const effectiveShowTooltips = enabled && showTooltips;
 
   useEffect(() => {
@@ -40,6 +42,7 @@ const TooltipGuide = ({
   }, [enabled, storageKey]);
 
   const handleNextStep = () => {
+    setVisibleAnchorId(null); // prevent stale anchor flash
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
@@ -49,22 +52,44 @@ const TooltipGuide = ({
   };
 
   const handleSkip = () => {
+    setVisibleAnchorId(null);
     setShowTooltips(false);
     onComplete?.();
   };
 
+  // Find the first visible anchor element for the current step.
+  // Multiple elements may have the same data-tooltip-id (e.g. mobile + desktop cards),
+  // but only the visible one (non-zero dimensions) should be used as the anchor.
   useEffect(() => {
-    if (!enabled || !showTooltips || typeof document === "undefined") return;
+    if (!enabled || !showTooltips || typeof document === "undefined") {
+      setVisibleAnchorId(null);
+      return;
+    }
+
     let frameId: number | null = null;
 
     frameId = window.requestAnimationFrame(() => {
       const step = steps[currentStep];
       if (!step) return;
-      const selector = `[data-tooltip-id="${step.id}"]`;
-      const anchor = document.querySelector(selector);
-      if (!anchor) {
+      const elements = document.querySelectorAll(`[data-tooltip-id="${step.id}"]`);
+      let found = false;
+      for (const el of elements) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const anchorId = el.id || `__tooltip-anchor-${step.id}`;
+          if (!el.id) {
+            el.id = anchorId;
+            syntheticIdRef.current = { element: el, id: anchorId };
+          }
+          setVisibleAnchorId(anchorId);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        setVisibleAnchorId(null);
         console.warn(
-          `TooltipGuide: No element found for tooltip step id "${step.id}". Ensure the rendered element includes data-tooltip-id="${step.id}".`,
+          `TooltipGuide: No visible element found for tooltip step id "${step.id}". Ensure the rendered element includes data-tooltip-id="${step.id}".`,
         );
       }
     });
@@ -72,6 +97,15 @@ const TooltipGuide = ({
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
+      }
+      // Remove synthetic IDs we assigned to avoid stale DOM mutations
+      // after React remounts or the effect re-runs.
+      if (syntheticIdRef.current) {
+        const { element, id } = syntheticIdRef.current;
+        if (element.id === id) {
+          element.removeAttribute("id");
+        }
+        syntheticIdRef.current = null;
       }
     };
   }, [enabled, showTooltips, steps, currentStep]);
@@ -108,10 +142,9 @@ const TooltipGuide = ({
           return (
             <Tooltip
               key={step.id}
-              id={step.id}
               place={step.placement || "top"}
-              anchorSelect={`[data-tooltip-id="${step.id}"]`}
-              isOpen={isCurrentStep}
+              anchorSelect={isCurrentStep && visibleAnchorId ? `#${CSS.escape(visibleAnchorId)}` : undefined}
+              isOpen={isCurrentStep && !!visibleAnchorId}
               clickable={true}
               className="force-opacity-1"
               style={{
