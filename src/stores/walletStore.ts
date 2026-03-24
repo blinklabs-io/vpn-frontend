@@ -267,6 +267,7 @@ export const useWalletStore = create<WalletState>()(
 
       submitTransaction: async (signedTxCbor: string) => {
         try {
+          console.log("Submitting transaction hex:", signedTxCbor);
           const txHash = await submitTransactionApi(signedTxCbor);
           return txHash;
         } catch (error) {
