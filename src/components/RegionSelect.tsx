@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import Select from "react-select";
-import type { VpnProtocolType } from "./ProtocolToggle";
+import type { VpnProtocol } from "../api/types";
+import { shouldShowWireGuardUI, type VpnProtocolType } from "./ProtocolToggle";
 
 /**
  * Map of region IDs to friendly display names.
@@ -49,6 +50,16 @@ const openVpnRegions = openVpnRegionsEnv
  */
 function isOpenVpnRegion(region: string): boolean {
   return openVpnRegions.includes(region);
+}
+
+/**
+ * Determine the protocol for a given region.
+ * - When the WireGuard UI is disabled, all regions are treated as OpenVPN.
+ * - Otherwise, regions listed in VITE_OPENVPN_REGION are OpenVPN; everything else is WireGuard.
+ */
+export function getProtocolForRegion(region: string): VpnProtocol {
+  if (!shouldShowWireGuardUI()) return "openvpn";
+  return isOpenVpnRegion(region) ? "openvpn" : "wireguard";
 }
 
 /**
