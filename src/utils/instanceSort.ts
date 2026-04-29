@@ -1,3 +1,5 @@
+import type { VpnProtocol } from "../api/types";
+
 export type SortOption =
   | "default"
   | "recently_expired"
@@ -7,6 +9,7 @@ export type SortOption =
 export interface VpnInstanceData {
   id: string;
   region: string;
+  protocol: VpnProtocol;
   duration: string;
   status: "Active" | "Expired" | "Pending";
   expires: string;

@@ -31,6 +31,7 @@ export interface TxSignupRequest {
   duration: number;
   price: number;
   region: string;
+  protocol: VpnProtocol;
 }
 
 export interface TxSignupResponse {
@@ -73,6 +74,7 @@ export interface TxRenewRequest {
   duration: number;
   price: number;
   region: string;
+  protocol: VpnProtocol;
 }
 
 export interface TxRenewResponse {

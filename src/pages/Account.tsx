@@ -21,7 +21,10 @@ import ProtocolToggle, {
   isOpenVpnAvailable,
   type VpnProtocolType,
 } from "../components/ProtocolToggle";
-import RegionSelect, { filterRegionsByProtocol } from "../components/RegionSelect";
+import RegionSelect, {
+  filterRegionsByProtocol,
+  getProtocolForRegion,
+} from "../components/RegionSelect";
 import {
   getPendingTransactions,
   addPendingTransaction,
@@ -348,6 +351,7 @@ const Account = () => {
         duration: targetDuration,
         price: option.price,
         region: payloadRegion,
+        protocol: getProtocolForRegion(payloadRegion),
       };
 
       const data = await signupMutation.mutateAsync(payload);
@@ -491,6 +495,7 @@ const Account = () => {
         duration: selectedRenewDuration,
         price: renewOption.price,
         region: payloadRegion,
+        protocol: getProtocolForRegion(payloadRegion),
       });
 
       const newExpirationDate =
@@ -561,6 +566,7 @@ const Account = () => {
           return {
             id: client.id,
             region: client.region,
+            protocol: getProtocolForRegion(client.region),
             duration: formatDuration(normalizedDurationMs),
             status: isActive ? ("Active" as const) : ("Expired" as const),
             expires: formatTimeRemaining(client.expiration),
@@ -579,6 +585,7 @@ const Account = () => {
       .map((pending) => ({
         id: pending.id,
         region: pending.region,
+        protocol: getProtocolForRegion(pending.region),
         duration: formatDuration(pending.duration),
         status: "Pending" as const,
         expires: "Setting up...",
@@ -978,6 +985,7 @@ const Account = () => {
                     <VpnInstance
                       key={instance.id}
                       region={instance.region}
+                      protocol={instance.protocol}
                       status={instance.status}
                       expires={instance.expires}
                       shouldSpinRenew={areAllInstancesExpired}
