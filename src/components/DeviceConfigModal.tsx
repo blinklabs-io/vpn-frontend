@@ -2,8 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { detectDeviceType } from '../utils/deviceDetection';
 import { generateWireGuardKeypair } from '../utils/wireguardKeys';
-import { setDeviceName } from '../utils/deviceNames';
-import { useWireGuardProfile } from '../api/hooks/useWireGuard';
+import { setDeviceName, removeDeviceName } from '../utils/deviceNames';
+import {
+  useWireGuardDeletePeer,
+  useWireGuardProfile,
+  useWireGuardRegister,
+} from '../api/hooks/useWireGuard';
 import { useWalletStore } from '../stores/walletStore';
 import type { WireGuardDevice } from '../api/types';
 
@@ -66,10 +70,17 @@ export function DeviceConfigModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Last unix timestamp (in seconds) we minted for a WireGuard auth payload.
+  // Bumped monotonically so back-to-back signs in the same wall second don't
+  // produce identical (client_id, timestamp, signature) triples — Ed25519
+  // signatures are deterministic and the backend rejects replays.
+  const lastAuthTimestampRef = useRef(0);
 
   // Hooks
   const { signMessage } = useWalletStore();
+  const wireGuardRegister = useWireGuardRegister();
   const wireGuardProfile = useWireGuardProfile();
+  const wireGuardDeletePeer = useWireGuardDeletePeer();
 
   const headingId = 'device-config-heading';
 
@@ -204,34 +215,77 @@ export function DeviceConfigModal({
     setGenerationError(null);
 
     try {
-      // Step 1: Generate keypair
+      // Step 1: Generate a fresh X25519 keypair. Re-download regenerates
+      // because we never persist the private key.
       const newKeypair = await generateWireGuardKeypair();
 
-      // Step 2: Create auth payload and get config
-      const timestamp = Math.floor(Date.now() / 1000);
-      const challenge = `${clientId}${timestamp}`;
+      // Each WireGuard endpoint takes a fresh COSE auth payload — the
+      // backend treats every (client_id, timestamp, signature) triple as
+      // one-shot, so we sign per call. Timestamp is bumped monotonically
+      // to avoid collisions when several calls land in the same second.
+      const buildAuth = async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const timestamp = Math.max(now, lastAuthTimestampRef.current + 1);
+        lastAuthTimestampRef.current = timestamp;
+        const challenge = `${clientId}${timestamp}`;
+        const signResult = (await signMessage(challenge)) as SignDataResponse;
+        return {
+          client_id: clientId,
+          timestamp,
+          signature: signResult.signature,
+          key: signResult.key,
+        };
+      };
 
-      const signResult = (await signMessage(challenge)) as SignDataResponse;
-
-      const configText = await wireGuardProfile.mutateAsync({
-        client_id: clientId,
-        timestamp,
-        signature: signResult.signature,
-        key: signResult.key,
+      // Step 2: Register the new pubkey. /wg-profile returns 404 if the
+      // pubkey isn't registered, so this must come first.
+      // Note: for re-download we register BEFORE deleting the old peer so
+      // a downstream failure can't leave the user with no device. The
+      // trade-off is that an at-limit re-download will fail with "device
+      // limit reached" and the user will need to use Regenerate All.
+      const registerAuth = await buildAuth();
+      await wireGuardRegister.mutateAsync({
+        ...registerAuth,
         wg_pubkey: newKeypair.publicKey,
       });
 
-      // Step 3: Replace private key placeholder
+      // Step 3: Fetch the config text for the newly-registered pubkey.
+      const profileAuth = await buildAuth();
+      const configText = await wireGuardProfile.mutateAsync({
+        ...profileAuth,
+        wg_pubkey: newKeypair.publicKey,
+      });
+
+      // Step 4: Re-download only — retire the old peer now that the
+      // replacement is in place. If this fails, the user has a working
+      // new device plus an orphan they can clean up via Regenerate All.
+      if (existingDevice) {
+        try {
+          const deleteAuth = await buildAuth();
+          await wireGuardDeletePeer.mutateAsync({
+            ...deleteAuth,
+            wg_pubkey: existingDevice.pubkey,
+          });
+          removeDeviceName(existingDevice.pubkey);
+        } catch (deleteError) {
+          console.warn(
+            'Failed to remove old peer after re-download; new device is active but old entry remains:',
+            deleteError,
+          );
+        }
+      }
+
+      // Step 5: Replace private key placeholder
       const finalConfig = configText.replace(
         PRIVATE_KEY_PLACEHOLDER,
         newKeypair.privateKey
       );
       setConfig(finalConfig);
 
-      // Step 4: Store device name locally
+      // Step 6: Store device name locally
       setDeviceName(newKeypair.publicKey, finalName);
 
-      // Step 5: Notify parent of new device
+      // Step 7: Notify parent of new device
       if (onDeviceCreated && !existingDevice) {
         const newDevice: WireGuardDevice = {
           pubkey: newKeypair.publicKey,
@@ -254,7 +308,7 @@ export function DeviceConfigModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [deviceName, existingDevice, clientId, signMessage, wireGuardProfile, onDeviceCreated]);
+  }, [deviceName, existingDevice, clientId, signMessage, wireGuardRegister, wireGuardProfile, wireGuardDeletePeer, onDeviceCreated]);
 
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();

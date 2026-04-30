@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import {
   useRefData,
@@ -7,12 +7,18 @@ import {
   useClientProfile,
   useClientPolling,
   useRenewVpn,
+  useWireGuardDeletePeer,
 } from "../api/hooks";
 import VpnInstance from "../components/VpnInstance";
 import PurchaseCard from "../components/PurchaseCard";
 import ConfirmModal from "../components/ConfirmModal";
 import ProfileDeliveryModal from "../components/ProfileDeliveryModal";
-import type { ClientInfo } from "../api/types";
+import { DeviceConfigModal } from "../components/DeviceConfigModal";
+import type {
+  ClientInfo,
+  WireGuardDevice,
+  WireGuardDevicesResponse,
+} from "../api/types";
 import LoadingOverlay from "../components/LoadingOverlay";
 import TooltipGuide, { type TooltipStep } from "../components/TooltipGuide";
 import WalletConnection from "../components/WalletConnection";
@@ -24,7 +30,10 @@ import ProtocolToggle, {
 import RegionSelect, {
   filterRegionsByProtocol,
   getProtocolForRegion,
+  getRegionDisplayName,
 } from "../components/RegionSelect";
+import { post } from "../api/client";
+import { getDeviceName, removeDeviceName } from "../utils/deviceNames";
 import {
   getPendingTransactions,
   addPendingTransaction,
@@ -44,6 +53,7 @@ const Account = () => {
     walletAddress,
     signAndSubmitTransaction,
     setVpnConfigUrl,
+    signMessage,
   } = useWalletStore();
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false);
@@ -88,6 +98,27 @@ const Account = () => {
   // Region selection state - will be set once regions are loaded
   const [selectedRegion, setSelectedRegion] = useState<string>("");
 
+  // WireGuard expand/device state. Only one instance can be expanded at a
+  // time so we keep a single set of fetched devices keyed by client id.
+  const [expandedInstanceId, setExpandedInstanceId] = useState<string | null>(
+    null,
+  );
+  const [wgDevicesByClientId, setWgDevicesByClientId] = useState<
+    Record<string, { devices: WireGuardDevice[]; limit: number }>
+  >({});
+  const [wgDevicesLoadingId, setWgDevicesLoadingId] = useState<string | null>(
+    null,
+  );
+  const [wgDevicesErrorById, setWgDevicesErrorById] = useState<
+    Record<string, string | null>
+  >({});
+  const [deviceModal, setDeviceModal] = useState<{
+    clientId: string;
+    regionId: string;
+    regionName: string;
+    existingDevice?: WireGuardDevice;
+  } | null>(null);
+
   const tooltipSteps: TooltipStep[] = [
     {
       id: "duration-tooltip",
@@ -127,6 +158,160 @@ const Account = () => {
   const signupMutation = useSignup();
 
   const renewMutation = useRenewVpn();
+
+  const deletePeerMutation = useWireGuardDeletePeer();
+
+  // Build the COSE auth payload required by every WireGuard endpoint.
+  // The backend treats each (client_id, timestamp, signature) as one-shot,
+  // so we sign fresh for every call rather than caching. Timestamp is
+  // bumped monotonically per component instance so back-to-back signs in
+  // the same wall second don't produce identical triples (Ed25519 is
+  // deterministic, identical input → identical signature → server replay
+  // rejection).
+  const lastAuthTimestampRef = useRef(0);
+  const buildWireGuardAuth = useCallback(
+    async (clientId: string) => {
+      const now = Math.floor(Date.now() / 1000);
+      const timestamp = Math.max(now, lastAuthTimestampRef.current + 1);
+      lastAuthTimestampRef.current = timestamp;
+      const challenge = `${clientId}${timestamp}`;
+      const signResult = (await signMessage(challenge)) as {
+        key: string;
+        signature: string;
+      };
+      return {
+        client_id: clientId,
+        timestamp,
+        signature: signResult.signature,
+        key: signResult.key,
+      };
+    },
+    [signMessage],
+  );
+
+  const enrichDevices = useCallback(
+    (raw: WireGuardDevicesResponse["devices"]): WireGuardDevice[] =>
+      raw.map((d) => ({
+        pubkey: d.pubkey,
+        name: getDeviceName(d.pubkey) ?? "Device",
+        assignedIp: d.assigned_ip,
+        createdAt: new Date(d.created_at * 1000).toISOString(),
+      })),
+    [],
+  );
+
+  const fetchWireGuardDevices = useCallback(
+    async (clientId: string) => {
+      setWgDevicesLoadingId(clientId);
+      setWgDevicesErrorById((prev) => ({ ...prev, [clientId]: null }));
+      try {
+        const auth = await buildWireGuardAuth(clientId);
+        const response = await post<WireGuardDevicesResponse>(
+          "/client/wg-devices",
+          auth,
+        );
+        setWgDevicesByClientId((prev) => ({
+          ...prev,
+          [clientId]: {
+            devices: enrichDevices(response.devices),
+            limit: response.limit,
+          },
+        }));
+      } catch (error) {
+        console.error("Failed to fetch WireGuard devices:", error);
+        setWgDevicesErrorById((prev) => ({
+          ...prev,
+          [clientId]:
+            error instanceof Error
+              ? error.message
+              : "Failed to load devices.",
+        }));
+      } finally {
+        setWgDevicesLoadingId((prev) => (prev === clientId ? null : prev));
+      }
+    },
+    [buildWireGuardAuth, enrichDevices],
+  );
+
+  const handleToggleExpand = useCallback(
+    (clientId: string) => {
+      const willExpand = expandedInstanceId !== clientId;
+      setExpandedInstanceId(willExpand ? clientId : null);
+      if (willExpand && !wgDevicesByClientId[clientId]) {
+        // Fire-and-forget: state updates inside the helper drive the UI.
+        void fetchWireGuardDevices(clientId);
+      }
+    },
+    [expandedInstanceId, fetchWireGuardDevices, wgDevicesByClientId],
+  );
+
+  const handleDeviceCreated = useCallback(
+    (clientId: string, device: WireGuardDevice) => {
+      // Optimistic insert so the user sees their new device without a
+      // second wallet signature prompt. Real assigned_ip lands on next fetch.
+      setWgDevicesByClientId((prev) => {
+        const current = prev[clientId];
+        if (!current) return prev;
+        if (current.devices.some((d) => d.pubkey === device.pubkey)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [clientId]: {
+            ...current,
+            devices: [...current.devices, device],
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const handleRegenerateAll = useCallback(
+    async (clientId: string) => {
+      const current = wgDevicesByClientId[clientId];
+      if (!current || current.devices.length === 0) {
+        return;
+      }
+      setWgDevicesLoadingId(clientId);
+      try {
+        // Each delete needs its own fresh COSE signature. Update local
+        // state per success so a midway failure leaves the UI consistent
+        // with what's actually still on the server.
+        for (const device of current.devices) {
+          const auth = await buildWireGuardAuth(clientId);
+          await deletePeerMutation.mutateAsync({
+            ...auth,
+            wg_pubkey: device.pubkey,
+          });
+          removeDeviceName(device.pubkey);
+          setWgDevicesByClientId((prev) => {
+            const existing = prev[clientId];
+            if (!existing) return prev;
+            return {
+              ...prev,
+              [clientId]: {
+                ...existing,
+                devices: existing.devices.filter(
+                  (d) => d.pubkey !== device.pubkey,
+                ),
+              },
+            };
+          });
+        }
+      } catch (error) {
+        console.error("Failed to regenerate devices:", error);
+        setErrorModal(
+          error instanceof Error
+            ? error.message
+            : "Failed to remove existing devices.",
+        );
+      } finally {
+        setWgDevicesLoadingId((prev) => (prev === clientId ? null : prev));
+      }
+    },
+    [buildWireGuardAuth, deletePeerMutation, wgDevicesByClientId],
+  );
 
   const { data: clientList, isLoading: isLoadingClients } = useClientList(
     { ownerAddress: walletAddress || "" },
@@ -430,17 +615,19 @@ const Account = () => {
     setIsPurchaseLoading(true);
     try {
       await signAndSubmitTransaction(txToSubmit.txCbor);
+      const protocol = getProtocolForRegion(txToSubmit.region);
       const pendingClient = {
         id: txToSubmit.clientId,
         region: txToSubmit.region,
         duration: txToSubmit.durationMs,
         purchaseTime: new Date().toISOString(),
+        protocol,
       };
       addPendingTransaction(pendingClient);
       setPendingClientsFromStorage(
         getPendingTransactions().filter((tx) => tx.status === "pending"),
       );
-      startPolling(txToSubmit.clientId);
+      startPolling(txToSubmit.clientId, protocol);
     } catch (error) {
       console.error("Transaction error details:", error);
       setErrorModal("Failed to sign and submit transaction");
@@ -727,6 +914,20 @@ const Account = () => {
             />
           )}
 
+          {deviceModal && (
+            <DeviceConfigModal
+              isOpen
+              onClose={() => setDeviceModal(null)}
+              clientId={deviceModal.clientId}
+              regionId={deviceModal.regionId}
+              regionName={deviceModal.regionName}
+              existingDevice={deviceModal.existingDevice}
+              onDeviceCreated={(device) =>
+                handleDeviceCreated(deviceModal.clientId, device)
+              }
+            />
+          )}
+
           <div className="w-full max-w-[1200px] px-4 md:px-6 text-white flex flex-col gap-8">
 
             {/* Hero */}
@@ -981,40 +1182,89 @@ const Account = () => {
                 <div
                   className="grid grid-cols-1 gap-4 w-full mt-4"
                 >
-                  {vpnInstances.map((instance) => (
-                    <VpnInstance
-                      key={instance.id}
-                      region={instance.region}
-                      protocol={instance.protocol}
-                      status={instance.status}
-                      expires={instance.expires}
-                      shouldSpinRenew={areAllInstancesExpired}
-                      onGetConfig={() => handleGetConfig(instance.id)}
-                      onStartRenew={() =>
-                        startDurationSelection(
-                          instance.id,
-                          instance.expirationDate,
-                          "renew",
-                        )
-                      }
-                      onStartBuyTime={() =>
-                        startDurationSelection(
-                          instance.id,
-                          instance.expirationDate,
-                          "buy",
-                        )
-                      }
-                      isRenewExpanded={renewingInstanceId === instance.id}
-                      renewMode={
-                        renewingInstanceId === instance.id ? renewMode : null
-                      }
-                      renewDurationOptions={durationOptions}
-                      selectedRenewDuration={selectedRenewDuration}
-                      onSelectRenewDuration={setSelectedRenewDuration}
-                      onConfirmRenewal={handleConfirmRenewal}
-                      onCancelRenewal={handleCancelRenewal}
-                    />
-                  ))}
+                  {vpnInstances.map((instance) => {
+                    const wgState = wgDevicesByClientId[instance.id];
+                    const isWg = instance.protocol === "wireguard";
+                    return (
+                      <VpnInstance
+                        key={instance.id}
+                        region={instance.region}
+                        protocol={instance.protocol}
+                        status={instance.status}
+                        expires={instance.expires}
+                        devices={wgState?.devices ?? []}
+                        deviceLimit={wgState?.limit ?? 3}
+                        isExpanded={expandedInstanceId === instance.id}
+                        onToggleExpand={
+                          isWg ? () => handleToggleExpand(instance.id) : undefined
+                        }
+                        onRetryDevices={
+                          isWg
+                            ? () => void fetchWireGuardDevices(instance.id)
+                            : undefined
+                        }
+                        isDevicesLoading={wgDevicesLoadingId === instance.id}
+                        devicesError={wgDevicesErrorById[instance.id] ?? null}
+                        shouldSpinRenew={areAllInstancesExpired}
+                        onGetConfig={
+                          isWg ? undefined : () => handleGetConfig(instance.id)
+                        }
+                        onAddDevice={
+                          isWg
+                            ? () =>
+                                setDeviceModal({
+                                  clientId: instance.id,
+                                  regionId: instance.region,
+                                  regionName: getRegionDisplayName(
+                                    instance.region,
+                                  ),
+                                })
+                            : undefined
+                        }
+                        onRedownloadConfig={
+                          isWg
+                            ? (device) =>
+                                setDeviceModal({
+                                  clientId: instance.id,
+                                  regionId: instance.region,
+                                  regionName: getRegionDisplayName(
+                                    instance.region,
+                                  ),
+                                  existingDevice: device,
+                                })
+                            : undefined
+                        }
+                        onRegenerateAll={
+                          isWg
+                            ? () => void handleRegenerateAll(instance.id)
+                            : undefined
+                        }
+                        onStartRenew={() =>
+                          startDurationSelection(
+                            instance.id,
+                            instance.expirationDate,
+                            "renew",
+                          )
+                        }
+                        onStartBuyTime={() =>
+                          startDurationSelection(
+                            instance.id,
+                            instance.expirationDate,
+                            "buy",
+                          )
+                        }
+                        isRenewExpanded={renewingInstanceId === instance.id}
+                        renewMode={
+                          renewingInstanceId === instance.id ? renewMode : null
+                        }
+                        renewDurationOptions={durationOptions}
+                        selectedRenewDuration={selectedRenewDuration}
+                        onSelectRenewDuration={setSelectedRenewDuration}
+                        onConfirmRenewal={handleConfirmRenewal}
+                        onCancelRenewal={handleCancelRenewal}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="mt-4 text-center text-white/80">

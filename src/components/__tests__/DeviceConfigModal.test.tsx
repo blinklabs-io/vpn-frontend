@@ -11,11 +11,24 @@ vi.mock("../../stores/walletStore", () => ({
   }),
 }));
 
-// Mock the WireGuard profile hook
+// Mock the WireGuard hooks. The component now performs explicit register
+// (and delete-peer for re-downloads) calls before fetching the profile, so
+// each hook gets its own mock — but we route all of them through the same
+// mockMutateAsync to keep existing assertions working.
 const mockMutateAsync = vi.fn();
+const mockRegisterMutateAsync = vi.fn();
+const mockDeletePeerMutateAsync = vi.fn();
 vi.mock("../../api/hooks/useWireGuard", () => ({
   useWireGuardProfile: () => ({
     mutateAsync: mockMutateAsync,
+    isPending: false,
+  }),
+  useWireGuardRegister: () => ({
+    mutateAsync: mockRegisterMutateAsync,
+    isPending: false,
+  }),
+  useWireGuardDeletePeer: () => ({
+    mutateAsync: mockDeletePeerMutateAsync,
     isPending: false,
   }),
 }));
@@ -38,6 +51,7 @@ vi.mock("../../utils/wireguardKeys", () => ({
 vi.mock("../../utils/deviceNames", () => ({
   setDeviceName: vi.fn(),
   getDeviceName: vi.fn(),
+  removeDeviceName: vi.fn(),
 }));
 
 describe("DeviceConfigModal", () => {
@@ -58,6 +72,16 @@ describe("DeviceConfigModal", () => {
     mockMutateAsync.mockResolvedValue(
       "[Interface]\nPrivateKey = <REPLACE_WITH_YOUR_PRIVATE_KEY>\nAddress = 10.8.0.2/32\n\n[Peer]\nPublicKey = server-key\nEndpoint = vpn.example.com:51820\nAllowedIPs = 0.0.0.0/0",
     );
+    mockRegisterMutateAsync.mockResolvedValue({
+      success: true,
+      assigned_ip: "10.8.0.2",
+      device_count: 1,
+      device_limit: 3,
+    });
+    mockDeletePeerMutateAsync.mockResolvedValue({
+      success: true,
+      remaining_devices: 0,
+    });
   });
 
   afterEach(() => {

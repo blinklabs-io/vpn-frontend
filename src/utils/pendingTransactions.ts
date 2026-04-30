@@ -1,3 +1,6 @@
+import type { VpnProtocol } from "../api/types";
+import { getProtocolForRegion } from "../components/RegionSelect";
+
 export interface PendingTransaction {
   id: string;
   region: string;
@@ -6,6 +9,7 @@ export interface PendingTransaction {
   status: "pending" | "complete";
   attempts: number;
   maxAttempts: number;
+  protocol: VpnProtocol;
 }
 
 const STORAGE_KEY = "vpn_pending_transactions";
@@ -17,7 +21,14 @@ export function getPendingTransactions(): PendingTransaction[] {
     if (!stored) return [];
 
     const transactions: PendingTransaction[] = JSON.parse(stored);
-    return transactions;
+    // Backfill protocol for records written before the field existed.
+    // Re-derive from the stored region so legacy WireGuard purchases keep
+    // routing through /client/list polling instead of being misclassified
+    // as OpenVPN.
+    return transactions.map((tx) => ({
+      ...tx,
+      protocol: tx.protocol ?? getProtocolForRegion(tx.region),
+    }));
   } catch (error) {
     console.error("Failed to get pending transactions:", error);
     return [];

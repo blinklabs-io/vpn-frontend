@@ -1,17 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { checkClientAvailableWithGraceful404 } from "../client";
+import {
+  checkClientAvailableWithGraceful404,
+  getClientListWithGraceful404,
+} from "../client";
 import {
   updateTransactionStatus,
   updateTransactionAttempts,
   getActivePendingTransactions,
 } from "../../utils/pendingTransactions";
+import { useWalletStore } from "../../stores/walletStore";
+import type { VpnProtocol } from "../types";
 
 interface PollingState {
   isPolling: boolean;
   clientId: string | null;
   attempts: number;
   maxAttempts: number;
+  protocol: VpnProtocol;
 }
 
 const DEFAULT_MAX_ATTEMPTS = 20;
@@ -27,6 +33,7 @@ export function useClientPolling() {
         clientId: firstPending.id,
         attempts: firstPending.attempts,
         maxAttempts: DEFAULT_MAX_ATTEMPTS,
+        protocol: firstPending.protocol,
       };
     }
 
@@ -35,6 +42,7 @@ export function useClientPolling() {
       clientId: null,
       attempts: 0,
       maxAttempts: DEFAULT_MAX_ATTEMPTS,
+      protocol: "openvpn",
     };
   });
 
@@ -42,12 +50,17 @@ export function useClientPolling() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const startPolling = useCallback(
-    (clientId: string, initialAttempts: number = 0) => {
+    (
+      clientId: string,
+      protocol: VpnProtocol,
+      initialAttempts: number = 0,
+    ) => {
       setPollingState({
         isPolling: true,
         clientId,
         attempts: initialAttempts,
         maxAttempts: DEFAULT_MAX_ATTEMPTS,
+        protocol,
       });
     },
     [],
@@ -82,11 +95,29 @@ export function useClientPolling() {
 
     const pollClient = async () => {
       try {
-        const response = await checkClientAvailableWithGraceful404({
-          id: pollingState.clientId!,
-        });
+        let isReady = false;
 
-        if (response !== null) {
+        if (pollingState.protocol === "wireguard") {
+          // WireGuard subscriptions don't expose /client/available — they're
+          // ready as soon as the on-chain transaction confirms and the new
+          // clientId surfaces in /client/list. If the wallet isn't connected
+          // we treat this attempt as "not ready" and keep counting toward
+          // maxAttempts so the poll eventually gives up instead of stalling.
+          const ownerAddress = useWalletStore.getState().walletAddress;
+          const list = ownerAddress
+            ? await getClientListWithGraceful404({ ownerAddress })
+            : [];
+          isReady = list.some(
+            (client) => client.id === pollingState.clientId,
+          );
+        } else {
+          const response = await checkClientAvailableWithGraceful404({
+            id: pollingState.clientId!,
+          });
+          isReady = response !== null;
+        }
+
+        if (isReady) {
           stopPolling(true);
 
           await queryClient.invalidateQueries({ queryKey: ["clientList"] });
@@ -157,6 +188,7 @@ export function useClientPolling() {
     pollingState.clientId,
     pollingState.attempts,
     pollingState.maxAttempts,
+    pollingState.protocol,
     queryClient,
     stopPolling,
   ]);
