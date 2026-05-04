@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { VpnProtocol, WireGuardDevice } from "../api/types";
 import SpinningBorderButton from "./SpinningBorderButton";
 import WireGuardDeviceList from "./WireGuardDeviceList";
@@ -10,6 +9,11 @@ interface VpnInstanceProps {
   protocol?: VpnProtocol;
   devices?: WireGuardDevice[];
   deviceLimit?: number;
+  isDevicesLoading?: boolean;
+  devicesError?: string | null;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  onRetryDevices?: () => void;
   onDelete?: () => void;
   onGetConfig?: () => void;
   onStartRenew?: () => void;
@@ -62,6 +66,11 @@ const VpnInstance = ({
   protocol = "openvpn",
   devices = [],
   deviceLimit = 3,
+  isDevicesLoading = false,
+  devicesError = null,
+  isExpanded = false,
+  onToggleExpand,
+  onRetryDevices,
   onGetConfig,
   onStartRenew,
   onStartBuyTime,
@@ -77,7 +86,6 @@ const VpnInstance = ({
   onCancelRenewal,
   shouldSpinRenew = false,
 }: VpnInstanceProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const isWireGuard = protocol === "wireguard";
 
   const formatPrice = (priceLovelace: number) => {
@@ -86,7 +94,7 @@ const VpnInstance = ({
 
   const toggleExpand = () => {
     if (isWireGuard) {
-      setIsExpanded(!isExpanded);
+      onToggleExpand?.();
     }
   };
 
@@ -150,13 +158,30 @@ const VpnInstance = ({
       {isWireGuard && isExpanded && status === "Active" && (
         <>
           <div className="w-full border-t border-white/20 my-1" />
-          <WireGuardDeviceList
-            devices={devices}
-            deviceLimit={deviceLimit}
-            onAddDevice={onAddDevice ?? (() => {})}
-            onRedownloadConfig={onRedownloadConfig ?? (() => {})}
-            onRegenerateAll={onRegenerateAll ?? (() => {})}
-          />
+          {isDevicesLoading ? (
+            <div className="flex items-center gap-2 text-xs text-white/80 py-2">
+              <div className="w-3 h-3 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+              Loading devices…
+            </div>
+          ) : devicesError ? (
+            <div className="flex flex-col gap-2 w-full">
+              <p className="text-xs text-red-200">{devicesError}</p>
+              <button
+                onClick={onRetryDevices}
+                className="self-start text-xs px-2.5 py-1 rounded bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <WireGuardDeviceList
+              devices={devices}
+              deviceLimit={deviceLimit}
+              onAddDevice={onAddDevice ?? (() => {})}
+              onRedownloadConfig={onRedownloadConfig ?? (() => {})}
+              onRegenerateAll={onRegenerateAll ?? (() => {})}
+            />
+          )}
           <div className="w-full border-t border-white/20 my-1" />
         </>
       )}
@@ -197,13 +222,15 @@ const VpnInstance = ({
             >
               <p className="text-black font-semibold text-xs md:text-sm">Buy Time</p>
             </SpinningBorderButton>
-            <SpinningBorderButton
-              onClick={onGetConfig}
-              className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs shadow-sm bg-white text-black hover:bg-white/90 transition-all"
-              radius="8px"
-            >
-              <p className="text-black font-semibold text-xs md:text-sm">Get Config</p>
-            </SpinningBorderButton>
+            {!isWireGuard && (
+              <SpinningBorderButton
+                onClick={onGetConfig}
+                className="flex items-center justify-center gap-3 py-1.5 px-3.5 backdrop-blur-xs shadow-sm bg-white text-black hover:bg-white/90 transition-all"
+                radius="8px"
+              >
+                <p className="text-black font-semibold text-xs md:text-sm">Get Config</p>
+              </SpinningBorderButton>
+            )}
           </>
         )}
 

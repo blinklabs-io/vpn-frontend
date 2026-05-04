@@ -28,7 +28,7 @@ const REGION_FRIENDLY_NAMES: Record<string, string> = {
  * Get the friendly display name for a region.
  * Returns "Friendly Name (technical-id)" format.
  */
-function getRegionDisplayName(regionId: string): string {
+export function getRegionDisplayName(regionId: string): string {
   const friendlyName = REGION_FRIENDLY_NAMES[regionId];
   if (friendlyName) {
     return `${friendlyName} (${regionId})`;
