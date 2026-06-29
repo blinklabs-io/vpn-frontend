@@ -1,30 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
-import { getClientProfile } from "../client";
-import { useWalletStore } from "../../stores/walletStore";
-
-interface SignDataResponse {
-  key: string;
-  signature: string;
-}
+import { authedGetClientProfile } from "../session";
 
 export function useClientProfile() {
-  const { signMessage } = useWalletStore();
-
   return useMutation({
-    mutationFn: async (clientId: string) => {
-      const timestamp = Math.floor(Date.now() / 1000).toString();
-      const challenge = `${clientId}${timestamp}`;
-
-      const signResult = (await signMessage(challenge)) as SignDataResponse;
-
-      const profileRequest = {
-        id: clientId,
-        key: signResult.key,
-        signature: signResult.signature,
-      };
-
-      return await getClientProfile(profileRequest);
-    },
+    // Authenticates with a session token (signs once, then reuses it).
+    mutationFn: (clientId: string) => authedGetClientProfile(clientId),
     mutationKey: ["clientProfile"],
   });
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import {
   useRefData,
@@ -32,7 +32,7 @@ import RegionSelect, {
   getProtocolForRegion,
   getRegionDisplayName,
 } from "../components/RegionSelect";
-import { post } from "../api/client";
+import { authedPost } from "../api/session";
 import { getDeviceName, removeDeviceName } from "../utils/deviceNames";
 import {
   getPendingTransactions,
@@ -53,7 +53,6 @@ const Account = () => {
     walletAddress,
     signAndSubmitTransaction,
     setVpnConfigUrl,
-    signMessage,
   } = useWalletStore();
   const [isPurchaseLoading, setIsPurchaseLoading] = useState<boolean>(false);
   const [isConfigLoading, setIsConfigLoading] = useState<boolean>(false);
@@ -161,34 +160,6 @@ const Account = () => {
 
   const deletePeerMutation = useWireGuardDeletePeer();
 
-  // Build the COSE auth payload required by every WireGuard endpoint.
-  // The backend treats each (client_id, timestamp, signature) as one-shot,
-  // so we sign fresh for every call rather than caching. Timestamp is
-  // bumped monotonically per component instance so back-to-back signs in
-  // the same wall second don't produce identical triples (Ed25519 is
-  // deterministic, identical input → identical signature → server replay
-  // rejection).
-  const lastAuthTimestampRef = useRef(0);
-  const buildWireGuardAuth = useCallback(
-    async (clientId: string) => {
-      const now = Math.floor(Date.now() / 1000);
-      const timestamp = Math.max(now, lastAuthTimestampRef.current + 1);
-      lastAuthTimestampRef.current = timestamp;
-      const challenge = `${clientId}${timestamp}`;
-      const signResult = (await signMessage(challenge)) as {
-        key: string;
-        signature: string;
-      };
-      return {
-        client_id: clientId,
-        timestamp,
-        signature: signResult.signature,
-        key: signResult.key,
-      };
-    },
-    [signMessage],
-  );
-
   const enrichDevices = useCallback(
     (raw: WireGuardDevicesResponse["devices"]): WireGuardDevice[] =>
       raw.map((d) => ({
@@ -205,10 +176,11 @@ const Account = () => {
       setWgDevicesLoadingId(clientId);
       setWgDevicesErrorById((prev) => ({ ...prev, [clientId]: null }));
       try {
-        const auth = await buildWireGuardAuth(clientId);
-        const response = await post<WireGuardDevicesResponse>(
+        // Authenticates with a wallet-wide session token (signs once, then
+        // reuses it across all subscriptions).
+        const response = await authedPost<WireGuardDevicesResponse>(
           "/client/wg-devices",
-          auth,
+          { client_id: clientId },
         );
         setWgDevicesByClientId((prev) => ({
           ...prev,
@@ -230,7 +202,7 @@ const Account = () => {
         setWgDevicesLoadingId((prev) => (prev === clientId ? null : prev));
       }
     },
-    [buildWireGuardAuth, enrichDevices],
+    [enrichDevices],
   );
 
   const handleToggleExpand = useCallback(
@@ -275,13 +247,12 @@ const Account = () => {
       }
       setWgDevicesLoadingId(clientId);
       try {
-        // Each delete needs its own fresh COSE signature. Update local
-        // state per success so a midway failure leaves the UI consistent
-        // with what's actually still on the server.
+        // Deletes reuse the cached session token (one signature for the
+        // whole batch). Update local state per success so a midway failure
+        // leaves the UI consistent with what's actually still on the server.
         for (const device of current.devices) {
-          const auth = await buildWireGuardAuth(clientId);
           await deletePeerMutation.mutateAsync({
-            ...auth,
+            client_id: clientId,
             wg_pubkey: device.pubkey,
           });
           removeDeviceName(device.pubkey);
@@ -310,7 +281,7 @@ const Account = () => {
         setWgDevicesLoadingId((prev) => (prev === clientId ? null : prev));
       }
     },
-    [buildWireGuardAuth, deletePeerMutation, wgDevicesByClientId],
+    [deletePeerMutation, wgDevicesByClientId],
   );
 
   const { data: clientList, isLoading: isLoadingClients } = useClientList(

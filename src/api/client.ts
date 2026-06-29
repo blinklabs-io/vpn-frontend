@@ -11,6 +11,18 @@ import type {
 
 export const API_BASE_URL = import.meta.env.DEV ? "/api" : "/api";
 
+/** Error thrown by the API client, carrying the HTTP status code. */
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, statusText: string, body: string) {
+    super(
+      `API Error: ${status} ${statusText}${body ? ` - ${body}` : ""}`,
+    );
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -40,9 +52,7 @@ export async function apiClient<T>(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
-      );
+      throw new HttpError(response.status, response.statusText, errorText);
     }
 
     // Handle empty responses explicitly
@@ -108,9 +118,7 @@ export async function postPlainText(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
-      );
+      throw new HttpError(response.status, response.statusText, errorText);
     }
 
     return response.text();
@@ -248,15 +256,18 @@ export async function checkClientAvailableWithGraceful404(
 
 export function getClientProfile(
   request: ClientProfileRequest,
+  headers?: Record<string, string>,
 ): Promise<string> {
   const url = `${API_BASE_URL}/client/profile`;
+  const requestHeaders = {
+    "Content-Type": "application/json",
+    accept: "application/json",
+    ...headers,
+  };
 
   return fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      accept: "application/json",
-    },
+    headers: requestHeaders,
     body: JSON.stringify(request),
     redirect: "manual",
   }).then(async (response) => {
@@ -275,10 +286,7 @@ export function getClientProfile(
       console.log("Got opaque redirect, using follow approach...");
       return fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          accept: "application/json",
-        },
+        headers: requestHeaders,
         body: JSON.stringify(request),
         redirect: "follow",
       }).then((finalResponse) => {
@@ -292,9 +300,7 @@ export function getClientProfile(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `API Error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
-      );
+      throw new HttpError(response.status, response.statusText, errorText);
     }
 
     return response.text();

@@ -8,7 +8,7 @@ import {
   useWireGuardDevices,
 } from "../useWireGuard";
 import { createTestQueryClient } from "../../../test/utils";
-import * as client from "../../client";
+import * as session from "../../session";
 import type {
   WireGuardRegisterRequest,
   WireGuardRegisterResponse,
@@ -19,15 +19,18 @@ import type {
   WireGuardDevicesResponse,
 } from "../../types";
 
-vi.mock("../../client", () => ({
-  post: vi.fn(),
-  postPlainText: vi.fn(),
-  del: vi.fn(),
+// The hooks authenticate via the session layer, which attaches a Bearer
+// token (minting one with a single wallet signature on first use). Tests mock
+// that layer so they exercise the hooks without a real wallet.
+vi.mock("../../session", () => ({
+  authedPost: vi.fn(),
+  authedPostPlainText: vi.fn(),
+  authedDel: vi.fn(),
 }));
 
-const mockedPost = vi.mocked(client.post);
-const mockedPostPlainText = vi.mocked(client.postPlainText);
-const mockedDel = vi.mocked(client.del);
+const mockedPost = vi.mocked(session.authedPost);
+const mockedPostPlainText = vi.mocked(session.authedPostPlainText);
+const mockedDel = vi.mocked(session.authedDel);
 
 describe("useWireGuard hooks", () => {
   let queryClient: QueryClient;
@@ -44,9 +47,6 @@ describe("useWireGuard hooks", () => {
   describe("useWireGuardRegister", () => {
     const mockRequest: WireGuardRegisterRequest = {
       client_id: "test-client-123",
-      timestamp: Date.now(),
-      signature: "hex-signature",
-      key: "hex-key",
       wg_pubkey: "base64-public-key",
     };
 
@@ -130,9 +130,6 @@ describe("useWireGuard hooks", () => {
   describe("useWireGuardProfile", () => {
     const mockRequest: WireGuardProfileRequest = {
       client_id: "test-client-123",
-      timestamp: Date.now(),
-      signature: "hex-signature",
-      key: "hex-key",
       wg_pubkey: "base64-public-key",
     };
 
@@ -216,9 +213,6 @@ Endpoint = vpn.example.com:51820`;
   describe("useWireGuardDeletePeer", () => {
     const mockRequest: WireGuardPeerRequest = {
       client_id: "test-client-123",
-      timestamp: Date.now(),
-      signature: "hex-signature",
-      key: "hex-key",
       wg_pubkey: "base64-public-key-to-delete",
     };
 
@@ -294,9 +288,6 @@ Endpoint = vpn.example.com:51820`;
   describe("useWireGuardDevices", () => {
     const mockRequest: WireGuardDevicesRequest = {
       client_id: "test-client-123",
-      timestamp: Date.now(),
-      signature: "hex-signature",
-      key: "hex-key",
     };
 
     const mockResponse: WireGuardDevicesResponse = {
@@ -435,9 +426,6 @@ Endpoint = vpn.example.com:51820`;
 
       result.current.mutate({
         client_id: "test",
-        timestamp: Date.now(),
-        signature: "sig",
-        key: "key",
         wg_pubkey: "pubkey",
       });
 
@@ -473,9 +461,6 @@ Endpoint = vpn.example.com:51820`;
 
       const mockRequest: WireGuardRegisterRequest = {
         client_id: "test",
-        timestamp: Date.now(),
-        signature: "sig",
-        key: "key",
         wg_pubkey: "pubkey",
       };
 
