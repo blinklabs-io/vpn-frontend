@@ -10,6 +10,10 @@ export interface PendingTransaction {
   attempts: number;
   maxAttempts: number;
   protocol: VpnProtocol;
+  // For renewals only: the subscription's expiration (ms) before renewal.
+  // Polling treats the tx as indexed once the expiration exceeds this value.
+  // Undefined for new signups, which instead wait for the client to appear.
+  expectedExpirationAfter?: number;
 }
 
 const STORAGE_KEY = "vpn_pending_transactions";
