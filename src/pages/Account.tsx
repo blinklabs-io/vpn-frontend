@@ -65,6 +65,9 @@ const Account = () => {
     region: string;
     priceAda: string;
     newExpiration?: string;
+    // For renew/buy-time: the subscription's expiration (ms) before renewal,
+    // so polling can wait for the indexed expiration to advance past it.
+    previousExpiration?: number;
   } | null>(null);
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [profileDeliveryModal, setProfileDeliveryModal] = useState<{
@@ -152,7 +155,11 @@ const Account = () => {
 
   // Initialize hooks first
   const clientProfileMutation = useClientProfile();
-  const { startPolling } = useClientPolling();
+  const {
+    startPolling,
+    isPolling,
+    clientId: pollingClientId,
+  } = useClientPolling();
 
   const signupMutation = useSignup();
 
@@ -446,27 +453,37 @@ const Account = () => {
   useEffect(() => {
     if (!dedupedClientList || pendingClientsFromStorage.length === 0) return;
 
-    const availableClientIds = new Set(
-      dedupedClientList.map((client) => client.id),
+    const clientById = new Map(
+      dedupedClientList.map((client) => [client.id, client]),
     );
 
-    const hasCompleted = pendingClientsFromStorage.some((pending) =>
-      availableClientIds.has(pending.id),
-    );
-    if (!hasCompleted) return;
+    // A signup completes once its client appears. A renewal reuses an existing
+    // client, so it completes only once the indexed expiration advances past
+    // its pre-renewal value — until then the record must persist so
+    // useClientPolling()/getActivePendingTransactions() can restore the
+    // "Renewing…" state after a reload.
+    const isComplete = (pending: (typeof pendingClientsFromStorage)[number]) => {
+      const client = clientById.get(pending.id);
+      if (!client) return false;
+      if (pending.expectedExpirationAfter == null) return true;
+      return (
+        new Date(client.expiration).getTime() > pending.expectedExpirationAfter
+      );
+    };
 
-    pendingClientsFromStorage.forEach((pending) => {
-      if (availableClientIds.has(pending.id)) {
-        console.log(
-          `Removing completed transaction ${pending.id} from localStorage`,
-        );
-        removePendingTransaction(pending.id);
-      }
+    const completedIds = new Set(
+      pendingClientsFromStorage.filter(isComplete).map((p) => p.id),
+    );
+    if (completedIds.size === 0) return;
+
+    completedIds.forEach((id) => {
+      console.log(`Removing completed transaction ${id} from localStorage`);
+      removePendingTransaction(id);
     });
 
     const timeoutId = window.setTimeout(() => {
       setPendingClientsFromStorage((prev) =>
-        prev.filter((pending) => !availableClientIds.has(pending.id)),
+        prev.filter((pending) => !completedIds.has(pending.id)),
       );
     }, 0);
 
@@ -593,12 +610,18 @@ const Account = () => {
         duration: txToSubmit.durationMs,
         purchaseTime: new Date().toISOString(),
         protocol,
+        expectedExpirationAfter: txToSubmit.previousExpiration,
       };
       addPendingTransaction(pendingClient);
       setPendingClientsFromStorage(
         getPendingTransactions().filter((tx) => tx.status === "pending"),
       );
-      startPolling(txToSubmit.clientId, protocol);
+      startPolling(
+        txToSubmit.clientId,
+        protocol,
+        0,
+        txToSubmit.previousExpiration ?? null,
+      );
     } catch (error) {
       console.error("Transaction error details:", error);
       setErrorModal("Failed to sign and submit transaction");
@@ -674,6 +697,7 @@ const Account = () => {
         newExpiration: newExpirationDate
           ? newExpirationDate.toLocaleString()
           : undefined,
+        previousExpiration: renewingInstanceExpiration?.getTime(),
       });
     } catch (error) {
       console.error("Renew failed:", error);
@@ -1177,6 +1201,11 @@ const Account = () => {
                         isDevicesLoading={wgDevicesLoadingId === instance.id}
                         devicesError={wgDevicesErrorById[instance.id] ?? null}
                         shouldSpinRenew={areAllInstancesExpired}
+                        isRenewing={
+                          isPolling &&
+                          pollingClientId === instance.id &&
+                          instance.status !== "Pending"
+                        }
                         onGetConfig={
                           isWg ? undefined : () => handleGetConfig(instance.id)
                         }
