@@ -1,0 +1,66 @@
+# Network spec for the ephemeral VPN testnet.
+#
+# One pool, one Haskell cardano-node as sole block producer (no relay, no
+# peers - see configurator.sh's config_topology_json). Slots are short (0.5s)
+# so a full signup -> renew -> transfer -> burn flow fits comfortably inside
+# a CI run; the epoch itself is left long (see the Shelley override below
+# for why) - only slot cadence needs to be fast here, not epoch turnover.
+#
+# Format: 6 YAML documents (see blinklabs-io/dingo's
+# internal/test/devnet/testnet.yaml, which this is adapted from, for the
+# full field reference).
+
+--- # Required Testnet Parameters
+poolCount: 1
+poolCost: 0
+poolMargin: 0.0
+poolPledge: 0
+delegatedSupply: 100000000000
+systemStart: 'now'
+systemStartDelay: 5
+networkMagic: 45
+testnetDomain: vpn-devnet
+
+--- # Byron Genesis Override
+protocolConsts:
+  k: 10
+
+--- # Shelley Genesis Override
+# 0.5s slots, block every ~1.25s. epochLength is large relative to how
+# long a run actually takes - nothing depends on it being smaller, and a
+# run staying within epoch 0 start to finish is one less variable.
+# nonceStabilityWindow = 4k/f = 4*10/0.4 = 100 < epochLength
+# blockfetchStabilityWindow = 3k/f = 3*10/0.4 = 75 < epochLength
+epochLength: 100000
+slotLength: 0.5
+activeSlotsCoeff: 0.4
+securityParam: 10
+# The generator creates both a staked and an unstaked genesis address for
+# the pool, so delegatedSupply=100000 ADA produces 200000 ADA of circulating
+# genesis UTxOs - plenty to fund the contracts-deployer's wallets.
+maxLovelaceSupply: 1000000000000
+protocolParams:
+  decentralisationParam: 0
+  protocolVersion:
+    major: 10
+    minor: 0
+
+--- # Alonzo Genesis Override
+
+--- # Conway Genesis Override
+
+--- # Node Config Override
+# Start straight into Conway (Plutus V3) - the vpn-contracts validators are
+# compiled against plutus = "v3".
+TestShelleyHardForkAtEpoch: 0
+TestAllegraHardForkAtEpoch: 0
+TestMaryHardForkAtEpoch: 0
+TestAlonzoHardForkAtEpoch: 0
+TestBabbageHardForkAtEpoch: 0
+TestConwayHardForkAtEpoch: 0
+ExperimentalHardForksEnabled: true
+ExperimentalProtocolsEnabled: true
+TraceForge: true
+TraceChainDb: false
+TraceMempool: true
+TurnOnLogging: true

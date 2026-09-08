@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import ViteImageOptimize from "vite-plugin-imagemin";
@@ -42,6 +42,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     css: true,
+    // e2e/ holds the Playwright suite (docker/testnet/), which is a
+    // separate runner/config (playwright.config.ts) - vitest's default
+    // include glob would otherwise also try to collect its *.spec.ts files.
+    exclude: [...configDefaults.exclude, "e2e/**"],
     coverage: {
       reporter: ["text", "json", "html"],
       exclude: [

@@ -1,0 +1,83 @@
+name: Testnet e2e
+
+# Brings up the ephemeral testnet stack (docker/testnet/ - a private
+# single-node Cardano network, blinklabs-io/vpn-contracts deployed fresh
+# onto it, vpn-indexer, and this repo's frontend, all running as
+# Kubernetes resources in a k3d cluster - see docs/testnet.md) and runs
+# the Playwright suite against it.
+#
+# Slow (genesis generation, image builds, waiting for on-chain
+# confirmations) relative to the unit-test workflow, so it's scoped to
+# changes likely to affect the integration, plus a manual trigger and a
+# nightly run that catches drift in the upstream repos it builds from
+# (vpn-indexer, vpn-contracts - both pinned to `main` by default).
+#
+# Resource note: this runner now hosts a full k3s control plane plus every
+# stack service as a pod, strictly more overhead than the flat container
+# list docker-compose used to run - watch actual wall-clock time on the
+# first several runs after this lands; timeout-minutes below is a
+# starting point, not a measured number, and may need a follow-up bump.
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "docker/**"
+      - "e2e/**"
+      - "Dockerfile"
+      - "playwright.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/testnet-e2e.yml"
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testnet-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testnet-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 https://github.com/actions/checkout/releases/tag/v7.0.1
+
+      # Pinned to the exact versions this repo's own harness was built and
+      # validated against (not floated via k3d's TAG=main or kubectl's
+      # stable.txt) - both official install channels, no third-party
+      # marketplace action (one less unverified trust dependency).
+      - name: Install k3d
+        env:
+          K3D_VERSION: v5.8.3
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh \
+            | TAG="${K3D_VERSION}" bash
+          k3d version
+
+      - name: Install kubectl
+        env:
+          KUBECTL_VERSION: v1.36.3
+        run: |
+          curl -fsSLO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          curl -fsSLO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Run the ephemeral testnet + e2e suite
+        run: docker/testnet/testnet.sh test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa9 # v4.6.2 https://github.com/actions/upload-artifact/releases/tag/v4.6.2
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore

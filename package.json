@@ -11,7 +11,15 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "testnet:up": "docker/testnet/testnet.sh up",
+    "testnet:down": "docker/testnet/testnet.sh down",
+    "testnet:test": "docker/testnet/testnet.sh test",
+    "testnet:preprod:up": "docker/testnet/testnet-preprod.sh up",
+    "testnet:preprod:down": "docker/testnet/testnet-preprod.sh down",
+    "testnet:preprod:test": "docker/testnet/testnet-preprod.sh test",
+    "testnet:preprod:burn": "docker/testnet/testnet-preprod.sh burn"
   },
   "dependencies": {
     "@cardano-foundation/cardano-connect-with-wallet": "^0.2.19",
@@ -31,6 +39,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@harmoniclabs/bip32_ed25519": "^0.1.3",
+    "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.5.1",

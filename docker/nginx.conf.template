@@ -1,0 +1,27 @@
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # API_BASE_URL is hardcoded to "/api" in src/api/client.ts for both dev
+    # and prod builds - the app always expects whatever serves it to proxy
+    # that prefix to the backend. In dev that's vite.config.ts's server
+    # proxy; here, it's this block. No trailing path on proxy_pass, so the
+    # matched /api/ prefix is forwarded unchanged (vpn-indexer's own routes
+    # are registered under /api/*, not stripped of it).
+    location /api/ {
+        proxy_pass ${API_PROXY_TARGET};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Client-side routing (react-router): fall back to index.html for
+    # anything that isn't a real static asset.
+    location / {
+        try_files $uri /index.html;
+    }
+}

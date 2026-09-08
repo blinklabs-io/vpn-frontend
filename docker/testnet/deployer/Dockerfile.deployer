@@ -1,0 +1,47 @@
+# Deploys blinklabs-io/vpn-contracts onto the ephemeral testnet: mints the
+# admin/reference NFT, creates the vpn script address, and writes out the
+# addresses/policy IDs vpn-indexer needs as env vars. Runs once per stack
+# start-up as a Kubernetes Job (see testnet.sh's own apply_contracts_
+# deploy_job).
+#
+# `plutus.json` (the compiled Aiken blueprint) is pulled straight from the
+# vpn-contracts repo via a named build context (`--build-context vpn-
+# contracts=...`, see testnet.sh's own build_and_import_images), pointed
+# at a git ref (branch/tag/sha) so this stays runnable with nothing but
+# Docker: no local checkout of vpn-contracts required.
+#
+# Pin to the same cardano-node version as the rest of the stack for cardano-cli.
+FROM ghcr.io/blinklabs-io/cardano-node:11.0.1
+
+USER root
+
+RUN apt update && \
+    apt install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        jq \
+        openssl \
+        python3 \
+        xxd && \
+    rm -rf /var/lib/apt/lists/*
+
+# aiken-lang/aiken doesn't publish container images (no ghcr.io/aiken-lang/*
+# package) - install the prebuilt musl binary from its own GitHub release
+# instead, pinned to the version vpn-contracts' aiken.toml itself is built
+# with (compiler = "v1.1.19").
+ARG AIKEN_VERSION=1.1.19
+RUN curl -fsSL "https://github.com/aiken-lang/aiken/releases/download/v${AIKEN_VERSION}/aiken-x86_64-unknown-linux-musl.tar.gz" \
+        -o /tmp/aiken.tar.gz && \
+    tar -xzf /tmp/aiken.tar.gz -C /tmp && \
+    install -m 0755 /tmp/aiken-x86_64-unknown-linux-musl/aiken /usr/local/bin/aiken && \
+    rm -rf /tmp/aiken.tar.gz /tmp/aiken-x86_64-unknown-linux-musl
+
+# Pulled from the vpn-contracts build context described above; only the
+# compiled blueprint is needed, not the Aiken source or toolchain.
+COPY --from=vpn-contracts /plutus.json /work/plutus.json
+
+COPY deploy.sh plutus_json_to_cbor.py /work/
+RUN chmod 0755 /work/deploy.sh
+
+WORKDIR /work
+ENTRYPOINT ["/work/deploy.sh"]

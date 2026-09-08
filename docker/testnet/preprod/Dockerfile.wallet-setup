@@ -1,0 +1,15 @@
+# wallet-setup.sh needs cardano-cli (already on the base image) plus a
+# `bursa` binary (github.com/blinklabs-io/bursa - a "programmatic Cardano
+# wallet": derives a cardano-cli-compatible payment key/address from a
+# BIP39 seed phrase via the standard CIP-1852 path, the same one every
+# major wallet uses) for the --seed-phrase option - see wallet-setup.sh
+# itself for how it's used.
+FROM ghcr.io/blinklabs-io/go:1.26.7-1 AS build
+WORKDIR /code
+COPY --from=bursa-src go.mod go.sum ./
+RUN go mod download
+COPY --from=bursa-src . .
+RUN make build
+
+FROM ghcr.io/blinklabs-io/cardano-node:11.0.1
+COPY --from=build /code/bursa /usr/local/bin/bursa

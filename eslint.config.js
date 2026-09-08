@@ -25,4 +25,14 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // The Playwright e2e suite runs under Node, so it needs
+    // `process`/`Buffer`/etc.; some fixtures also build `page.addInitScript`
+    // callbacks that run in the browser (e.g. fixtures/mock-wallet.ts), so
+    // browser globals stay available too.
+    files: ["e2e/**/*.ts", "playwright.config.ts"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
 );
