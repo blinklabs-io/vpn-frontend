@@ -1,7 +1,7 @@
 import Navigation from "./components/Navigation";
 import AppRoutes from "./routes";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./api";
+import { queryClient } from "./api/client";
 
 const VpnApp = () => {
   return (
