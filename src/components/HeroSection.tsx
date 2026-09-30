@@ -1,11 +1,7 @@
 import heroBackdrop from "/hero-backdrop.png";
 import heroCenter from "/hero-center-graphic.png";
 
-interface HeroSectionProps {
-  onGetStarted: () => void;
-}
-
-const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
+const HeroSection = () => {
   return (
     <div className="flex flex-col items-center justify-end min-h-[calc(100vh-4rem)] px-4 relative z-20 pointer-events-none">
       <img
@@ -28,22 +24,9 @@ const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
           Private. Transparent. Yours.
         </h1>
         <p className="font-ibm-plex text-white text-base sm:text-lg md:text-xl text-center max-w-4xl leading-relaxed">
-          <span className="font-ibm-plex">
-            Take back control of your online privacy with Nabu
-          </span>
-          -
-          <span className="font-ibm-plex">
-            a fully transparent VPN powered by Cardano.
-          </span>
+          Explore a transparent approach to online privacy with Nabu, a VPN
+          project powered by Cardano.
         </p>
-        <div className="flex items-center justify-center py-6 sm:py-8">
-          <button
-            onClick={onGetStarted}
-            className="flex py-3 sm:py-4 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full bg-gray-100 backdrop-blur-sm text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-200 transition-colors cursor-pointer"
-          >
-            Get Started
-          </button>
-        </div>
       </div>
     </div>
   );

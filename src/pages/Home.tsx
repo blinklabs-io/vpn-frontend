@@ -1,21 +1,14 @@
-import { useNavigate } from "react-router";
 import HeroSection from "../components/HeroSection";
 import WhatIsNabuSection from "../components/WhatIsNabuSection";
 
 const Home = () => {
-  const navigate = useNavigate();
-
-  const handleGetStarted = () => {
-    navigate("/account");
-  };
-
   return (
     <div className="flex flex-col relative min-h-screen overflow-hidden pt-16">
       {/* Hero Section */}
-      <HeroSection onGetStarted={handleGetStarted} />
+      <HeroSection />
 
       {/* What is Nabu Section */}
-      <WhatIsNabuSection onGetStarted={handleGetStarted} />
+      <WhatIsNabuSection />
     </div>
   );
 };
