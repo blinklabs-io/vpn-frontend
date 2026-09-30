@@ -529,7 +529,7 @@ const WireGuardInstallGuide = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-purple-400 font-bold">4.</span>
-                    Point your camera at the QR code shown on your Account page
+                    Point your camera at the QR code for your existing configuration
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-purple-400 font-bold">5.</span>
@@ -638,8 +638,7 @@ const WireGuardInstallGuide = () => {
                   <div>
                     <p className="text-white font-medium text-sm mb-1">Setting up on mobile?</p>
                     <p className="text-gray-300 text-sm">
-                      When you get your config from the Account page, you can display a QR code.
-                      Open WireGuard on your mobile device and scan the QR code to import your configuration instantly.
+                      If you have a QR code for your existing configuration, scan it with WireGuard on your mobile device.
                     </p>
                   </div>
                 </div>
