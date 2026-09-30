@@ -111,21 +111,21 @@ const DocsFaqs = () => {
         id: "setup-time-both",
         question: "How long after purchase can I start using the VPN?",
         answer:
-          "It only takes a few seconds to a few minutes for your transaction to be confirmed on-chain. For WireGuard, you can add devices immediately once your subscription is active—device registration happens instantly. For OpenVPN, your profile is generated within moments. You can check your subscription status anytime on the Account page.",
+          "It only takes a few seconds to a few minutes for your transaction to be confirmed on-chain. For WireGuard, you can add devices immediately once your subscription is active—device registration happens instantly. For OpenVPN, your profile is generated within moments.",
         bothProtocols: true,
       },
       {
         id: "setup-time-wg",
         question: "How long after purchase can I start using the VPN?",
         answer:
-          "It only takes a few seconds to a few minutes for your transaction to be confirmed on-chain. Once your subscription is active, you can add devices immediately—registration happens instantly. You can check your subscription status anytime on the Account page.",
+          "It only takes a few seconds to a few minutes for your transaction to be confirmed on-chain. Once your subscription is active, you can add devices immediately—registration happens instantly.",
         wireGuardOnly: true,
       },
       {
         id: "setup-time-ovpn",
         question: "How long after purchase can I start using the VPN?",
         answer:
-          "It only takes a few seconds to a few minutes for your transaction to be confirmed on-chain. Your OpenVPN profile is generated within moments after confirmation. You can check your subscription status anytime on the Account page.",
+          "It only takes a few seconds to a few minutes for your transaction to be confirmed on-chain. Your OpenVPN profile is generated within moments after confirmation.",
         openVpnOnly: true,
       },
       // Wallet per device - protocol aware
@@ -316,13 +316,6 @@ const DocsFaqs = () => {
           "No, we purposely do not log this information for your privacy. To learn more about our privacy-focused architecture, see our How it works page.",
         openVpnOnly: true,
       },
-      {
-        id: "wallet-balance-difference",
-        question:
-          "Why doesn't the wallet balance on the Account page match the balance shown by my wallet?",
-        answer:
-          "Many wallets will automatically include any unclaimed staking rewards when displaying the overall balance, but NABU is only querying the current wallet balance without unclaimed staking rewards. This may result in a small difference in the balance displayed, but it has no effect on your ability to manage your VPN subscriptions or the funds available in your wallet.",
-      },
     ];
 
     // Filter FAQs based on enabled protocols
@@ -447,4 +440,3 @@ const DocsFaqs = () => {
 };
 
 export default DocsFaqs;
-
