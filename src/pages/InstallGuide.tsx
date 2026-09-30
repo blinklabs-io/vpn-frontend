@@ -485,21 +485,11 @@ const WireGuardInstallGuide = () => {
                 <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <h3 className="text-lg font-semibold text-white">Connect Wallet & Add Device</h3>
+                <h3 className="text-lg font-semibold text-white">Use an Existing WireGuard Configuration</h3>
               </div>
               <p className="text-gray-300 mb-4">
-                Go to your account page, connect your Cardano wallet, and purchase a VPN subscription.
-                Then add a device to get your WireGuard configuration.
+                Import an existing WireGuard configuration into your VPN client to connect your device.
               </p>
-              <Link
-                to="/account"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-                Go to Account Page
-              </Link>
             </div>
           </div>
 
@@ -1053,21 +1043,11 @@ const OpenVpnInstallGuide = () => {
                 <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <h3 className="text-lg font-semibold text-white">Connect Wallet & Purchase</h3>
+                <h3 className="text-lg font-semibold text-white">Use an Existing OpenVPN Profile</h3>
               </div>
               <p className="text-gray-300 mb-4">
-                Go to your account page, connect your Cardano wallet, and purchase a VPN subscription.
-                Then download your OpenVPN profile (.ovpn file).
+                Import an existing OpenVPN profile (.ovpn file) into your client to connect your device.
               </p>
-              <Link
-                to="/account"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all duration-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-                Go to Account Page
-              </Link>
             </div>
           </div>
 
