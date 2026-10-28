@@ -11,4 +11,5 @@ export const SUPPORTED_WALLETS: string[] = [
   "gerowallet",
   "nufi",
   "begin",
+  "1am",
 ];
