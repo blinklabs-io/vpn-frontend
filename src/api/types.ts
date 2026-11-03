@@ -63,9 +63,8 @@ export interface ClientAvailableResponse {
 }
 
 export interface ClientProfileRequest {
+  /** Hex-encoded NFT asset name; auth is via the Bearer session token. */
   id: string;
-  key: string;
-  signature: string;
 }
 
 export interface TxRenewRequest {
@@ -82,22 +81,34 @@ export interface TxRenewResponse {
 }
 
 // ============================================================================
+// Session Auth Types
+// ============================================================================
+
+/**
+ * POST /api/auth/session - Exchange a wallet-signed challenge for a session
+ * token covering all subscriptions owned by the wallet.
+ */
+export interface SessionTokenResponse {
+  /** Signed JWT session token to send as `Authorization: Bearer <token>` */
+  token: string;
+  /** Unix timestamp (seconds) at which the token expires */
+  expires_at: number;
+}
+
+// ============================================================================
 // WireGuard Types
 // ============================================================================
 
 /**
- * Authentication payload required for all WireGuard API requests.
- * Uses COSE signature verification with Ed25519 keys.
+ * Authentication payload for WireGuard API requests.
+ *
+ * Requests are authenticated with an `Authorization: Bearer <token>` header
+ * (see {@link SessionTokenResponse}); `client_id` only names the target
+ * subscription in the body.
  */
 export interface WireGuardAuthPayload {
   /** Hex-encoded NFT asset name (subscription identifier) */
   client_id: string;
-  /** Unix timestamp (must be within 15 minutes of server time) */
-  timestamp: number;
-  /** Hex-encoded COSE Sign1 message (payload = client_id + timestamp) */
-  signature: string;
-  /** Hex-encoded COSE Key (Ed25519 public key) */
-  key: string;
 }
 
 /**

@@ -33,6 +33,9 @@ interface VpnInstanceProps {
   onConfirmRenewal?: () => void;
   onCancelRenewal?: () => void;
   shouldSpinRenew?: boolean;
+  // True while a submitted renewal/buy-time tx is being indexed, so the card
+  // shows a spinner and the new expiration appears without a manual refresh.
+  isRenewing?: boolean;
 }
 
 /**
@@ -85,6 +88,7 @@ const VpnInstance = ({
   onConfirmRenewal,
   onCancelRenewal,
   shouldSpinRenew = false,
+  isRenewing = false,
 }: VpnInstanceProps) => {
   const isWireGuard = protocol === "wireguard";
 
@@ -151,6 +155,12 @@ const VpnInstance = ({
               }`}
             ></span>
           </div>
+          {isRenewing && (
+            <div className="flex items-center gap-2 text-xs text-white/80">
+              <div className="w-3 h-3 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+              Renewing…
+            </div>
+          )}
         </div>
       </div>
 

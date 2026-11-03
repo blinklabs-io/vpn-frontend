@@ -1,23 +1,22 @@
 import globeIcon from "/globe-icon.svg";
-import walletIcon from "/wallet-icon.svg";
 import privacyIcon from "/privacy-icon.svg";
 import vpnIcon from "/vpn-icon.svg";
 
 const cardData = [
   {
-    icon: walletIcon,
-    header: "Connect Wallet",
-    subheader: "No usernames. No email. Just pure privacy.",
+    icon: globeIcon,
+    header: "Privacy focused",
+    subheader: "Designed to help protect your online activity.",
   },
   {
     icon: privacyIcon,
-    header: "Buy VPN time",
-    subheader: "Pay-as-you-go. Cancel anytime.",
+    header: "Transparent technology",
+    subheader: "Built with open and verifiable components.",
   },
   {
     icon: vpnIcon,
-    header: "Launch VPN session",
-    subheader: "Lightning-fast VPN access with zero tracking.",
+    header: "Powered by Cardano",
+    subheader: "Blockchain technology supports the Nabu project.",
   },
 ];
 
@@ -47,11 +46,7 @@ const CardComponent = ({
   );
 };
 
-interface WhatIsNabuSectionProps {
-  onGetStarted: () => void;
-}
-
-const WhatIsNabuSection = ({ onGetStarted }: WhatIsNabuSectionProps) => {
+const WhatIsNabuSection = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 md:pt-16 z-20 text-white">
       <div className="flex flex-col items-center gap-8 sm:gap-12 w-full max-w-[80rem]">
@@ -65,10 +60,8 @@ const WhatIsNabuSection = ({ onGetStarted }: WhatIsNabuSectionProps) => {
             What is Nabu?
           </p>
           <p className="font-ibm-plex text-white text-base sm:text-lg md:text-xl text-center leading-relaxed max-w-4xl px-4">
-            Nabu uses your Cardano wallet as your identity—no signup forms, no
-            tracking cookies. Once connected, you&apos;re seconds away from
-            spinning up a secure VPN tunnel that hides your IP, encrypts your
-            traffic, and keeps your data yours.
+            Nabu is a privacy-focused VPN project powered by Cardano, built
+            around transparent technology and online privacy.
           </p>
         </div>
         <div className="flex flex-col min-[1145px]:flex-row justify-center gap-4 sm:gap-6 text-center w-full">
@@ -85,12 +78,6 @@ const WhatIsNabuSection = ({ onGetStarted }: WhatIsNabuSectionProps) => {
           <p className="font-exo-2 text-white ">
             Powered by Cardano. Transparent & secure.
           </p>
-          <button
-            onClick={onGetStarted}
-            className="flex py-3 px-6 sm:px-10 justify-center items-center gap-2.5 rounded-full bg-gray-100 backdrop-blur-sm text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-200 transition-colors cursor-pointer"
-          >
-            Get Started
-          </button>
         </div>
       </div>
     </div>

@@ -18,6 +18,10 @@ interface PollingState {
   attempts: number;
   maxAttempts: number;
   protocol: VpnProtocol;
+  // Set for renewals: the pre-renewal expiration (ms). When present, the tx is
+  // "ready" once the client's indexed expiration exceeds it, rather than merely
+  // existing (which is always true for a renewed, pre-existing client).
+  expectedExpirationAfter: number | null;
 }
 
 const DEFAULT_MAX_ATTEMPTS = 20;
@@ -34,6 +38,7 @@ export function useClientPolling() {
         attempts: firstPending.attempts,
         maxAttempts: DEFAULT_MAX_ATTEMPTS,
         protocol: firstPending.protocol,
+        expectedExpirationAfter: firstPending.expectedExpirationAfter ?? null,
       };
     }
 
@@ -43,6 +48,7 @@ export function useClientPolling() {
       attempts: 0,
       maxAttempts: DEFAULT_MAX_ATTEMPTS,
       protocol: "openvpn",
+      expectedExpirationAfter: null,
     };
   });
 
@@ -54,6 +60,7 @@ export function useClientPolling() {
       clientId: string,
       protocol: VpnProtocol,
       initialAttempts: number = 0,
+      expectedExpirationAfter: number | null = null,
     ) => {
       setPollingState({
         isPolling: true,
@@ -61,6 +68,7 @@ export function useClientPolling() {
         attempts: initialAttempts,
         maxAttempts: DEFAULT_MAX_ATTEMPTS,
         protocol,
+        expectedExpirationAfter,
       });
     },
     [],
@@ -97,12 +105,28 @@ export function useClientPolling() {
       try {
         let isReady = false;
 
-        if (pollingState.protocol === "wireguard") {
-          // WireGuard subscriptions don't expose /client/available — they're
-          // ready as soon as the on-chain transaction confirms and the new
-          // clientId surfaces in /client/list. If the wallet isn't connected
-          // we treat this attempt as "not ready" and keep counting toward
-          // maxAttempts so the poll eventually gives up instead of stalling.
+        if (pollingState.expectedExpirationAfter !== null) {
+          // Renewal: the client already exists, so "exists" tells us nothing.
+          // Wait until the indexed expiration advances past its pre-renewal
+          // value. /client/list carries expiration for both protocols. If the
+          // wallet isn't connected we treat this as "not ready" and keep
+          // counting toward maxAttempts so the poll eventually gives up.
+          const ownerAddress = useWalletStore.getState().walletAddress;
+          const list = ownerAddress
+            ? await getClientListWithGraceful404({ ownerAddress })
+            : [];
+          const client = list.find((c) => c.id === pollingState.clientId);
+          isReady =
+            !!client &&
+            new Date(client.expiration).getTime() >
+              pollingState.expectedExpirationAfter;
+        } else if (pollingState.protocol === "wireguard") {
+          // New signup (WireGuard): subscriptions don't expose
+          // /client/available — they're ready as soon as the on-chain
+          // transaction confirms and the new clientId surfaces in
+          // /client/list. If the wallet isn't connected we treat this attempt
+          // as "not ready" and keep counting toward maxAttempts so the poll
+          // eventually gives up instead of stalling.
           const ownerAddress = useWalletStore.getState().walletAddress;
           const list = ownerAddress
             ? await getClientListWithGraceful404({ ownerAddress })
@@ -189,6 +213,7 @@ export function useClientPolling() {
     pollingState.attempts,
     pollingState.maxAttempts,
     pollingState.protocol,
+    pollingState.expectedExpirationAfter,
     queryClient,
     stopPolling,
   ]);

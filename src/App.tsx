@@ -1,8 +1,7 @@
 import Navigation from "./components/Navigation";
 import AppRoutes from "./routes";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./api";
-import WalletPickerModal from "./components/WalletPickerModal";
+import { queryClient } from "./api/client";
 
 const VpnApp = () => {
   return (
@@ -20,7 +19,6 @@ const VpnApp = () => {
         }}
       >
         <Navigation />
-        <WalletPickerModal />
         <AppRoutes />
       </div>
     </QueryClientProvider>

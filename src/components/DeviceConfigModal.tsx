@@ -8,13 +8,7 @@ import {
   useWireGuardProfile,
   useWireGuardRegister,
 } from '../api/hooks/useWireGuard';
-import { useWalletStore } from '../stores/walletStore';
 import type { WireGuardDevice } from '../api/types';
-
-interface SignDataResponse {
-  key: string;
-  signature: string;
-}
 
 interface DeviceConfigModalProps {
   isOpen: boolean;
@@ -70,14 +64,8 @@ export function DeviceConfigModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Last unix timestamp (in seconds) we minted for a WireGuard auth payload.
-  // Bumped monotonically so back-to-back signs in the same wall second don't
-  // produce identical (client_id, timestamp, signature) triples — Ed25519
-  // signatures are deterministic and the backend rejects replays.
-  const lastAuthTimestampRef = useRef(0);
 
   // Hooks
-  const { signMessage } = useWalletStore();
   const wireGuardRegister = useWireGuardRegister();
   const wireGuardProfile = useWireGuardProfile();
   const wireGuardDeletePeer = useWireGuardDeletePeer();
@@ -219,23 +207,9 @@ export function DeviceConfigModal({
       // because we never persist the private key.
       const newKeypair = await generateWireGuardKeypair();
 
-      // Each WireGuard endpoint takes a fresh COSE auth payload — the
-      // backend treats every (client_id, timestamp, signature) triple as
-      // one-shot, so we sign per call. Timestamp is bumped monotonically
-      // to avoid collisions when several calls land in the same second.
-      const buildAuth = async () => {
-        const now = Math.floor(Date.now() / 1000);
-        const timestamp = Math.max(now, lastAuthTimestampRef.current + 1);
-        lastAuthTimestampRef.current = timestamp;
-        const challenge = `${clientId}${timestamp}`;
-        const signResult = (await signMessage(challenge)) as SignDataResponse;
-        return {
-          client_id: clientId,
-          timestamp,
-          signature: signResult.signature,
-          key: signResult.key,
-        };
-      };
+      // The WireGuard endpoints authenticate with a session token that is
+      // minted on the first call and reused for the rest, so the wallet only
+      // prompts the user to sign once for the whole flow.
 
       // Step 2: Register the new pubkey. /wg-profile returns 404 if the
       // pubkey isn't registered, so this must come first.
@@ -243,16 +217,14 @@ export function DeviceConfigModal({
       // a downstream failure can't leave the user with no device. The
       // trade-off is that an at-limit re-download will fail with "device
       // limit reached" and the user will need to use Regenerate All.
-      const registerAuth = await buildAuth();
       await wireGuardRegister.mutateAsync({
-        ...registerAuth,
+        client_id: clientId,
         wg_pubkey: newKeypair.publicKey,
       });
 
       // Step 3: Fetch the config text for the newly-registered pubkey.
-      const profileAuth = await buildAuth();
       const configText = await wireGuardProfile.mutateAsync({
-        ...profileAuth,
+        client_id: clientId,
         wg_pubkey: newKeypair.publicKey,
       });
 
@@ -261,9 +233,8 @@ export function DeviceConfigModal({
       // new device plus an orphan they can clean up via Regenerate All.
       if (existingDevice) {
         try {
-          const deleteAuth = await buildAuth();
           await wireGuardDeletePeer.mutateAsync({
-            ...deleteAuth,
+            client_id: clientId,
             wg_pubkey: existingDevice.pubkey,
           });
           removeDeviceName(existingDevice.pubkey);
@@ -308,7 +279,7 @@ export function DeviceConfigModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [deviceName, existingDevice, clientId, signMessage, wireGuardRegister, wireGuardProfile, wireGuardDeletePeer, onDeviceCreated]);
+  }, [deviceName, existingDevice, clientId, wireGuardRegister, wireGuardProfile, wireGuardDeletePeer, onDeviceCreated]);
 
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();

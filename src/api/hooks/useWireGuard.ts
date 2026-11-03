@@ -4,7 +4,7 @@ import {
   type UseMutationOptions,
   type UseQueryOptions,
 } from "@tanstack/react-query";
-import { post, postPlainText, del } from "../client";
+import { authedPost, authedPostPlainText, authedDel } from "../session";
 import type {
   WireGuardRegisterRequest,
   WireGuardRegisterResponse,
@@ -25,7 +25,7 @@ export function useWireGuardRegister(
 ) {
   return useMutation({
     mutationFn: (data: WireGuardRegisterRequest) =>
-      post<WireGuardRegisterResponse>("/client/wg-register", data),
+      authedPost<WireGuardRegisterResponse>("/client/wg-register", data),
     ...options,
   });
 }
@@ -36,7 +36,7 @@ export function useWireGuardProfile(
 ) {
   return useMutation({
     mutationFn: (data: WireGuardProfileRequest) =>
-      postPlainText("/client/wg-profile", data), // Returns text/plain
+      authedPostPlainText("/client/wg-profile", data), // Returns text/plain
     ...options,
   });
 }
@@ -51,7 +51,7 @@ export function useWireGuardDeletePeer(
 ) {
   return useMutation({
     mutationFn: (data: WireGuardPeerRequest) =>
-      del<WireGuardDeleteResponse>("/client/wg-peer", data),
+      authedDel<WireGuardDeleteResponse>("/client/wg-peer", data),
     ...options,
   });
 }
@@ -66,7 +66,8 @@ export function useWireGuardDevices(
 ) {
   return useQuery({
     queryKey: ["wireGuardDevices", request.client_id],
-    queryFn: () => post<WireGuardDevicesResponse>("/client/wg-devices", request),
+    queryFn: () =>
+      authedPost<WireGuardDevicesResponse>("/client/wg-devices", request),
     ...options,
   });
 }
