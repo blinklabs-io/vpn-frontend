@@ -2,7 +2,7 @@
 import { defineConfig } from "vitest/config";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import ViteImageOptimize from "vite-plugin-imagemin";
+import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import topLevelAwait from "vite-plugin-top-level-await";
 
 // https://vite.dev/config/
@@ -11,11 +11,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
     topLevelAwait(),
-    ViteImageOptimize({
-      gifsicle: { optimizationLevel: 7 },
-      mozjpeg: { quality: 80 },
-      pngquant: { quality: [0.65, 0.8] },
-      webp: { quality: 80 },
+    ViteImageOptimizer({
+      test: /\.(jpe?g|png|gif|svg)$/i,
+      svg: { multipass: true },
+      png: { quality: 80, compressionLevel: 9 },
+      jpeg: { quality: 80 },
+      jpg: { quality: 80 },
     }),
   ],
   server: {
@@ -28,6 +29,7 @@ export default defineConfig({
     },
   },
   build: {
+    target: ["es2020", "edge88", "firefox78", "chrome87", "safari14.1"],
     rollupOptions: {
       output: {
         manualChunks: {
