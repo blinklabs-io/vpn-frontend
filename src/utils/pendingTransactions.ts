@@ -1,12 +1,16 @@
 import type { VpnProtocol } from "../api/types";
 import { getProtocolForRegion } from "../components/RegionSelect";
 
+export type PendingTransactionStatus = "pending" | "complete" | "failed";
+
 export interface PendingTransaction {
   id: string;
   region: string;
   duration: number; // duration in ms
   purchaseTime: string;
-  status: "pending" | "complete";
+  // "failed" means availability polling exhausted; it does not describe the
+  // submitted on-chain transaction's validity.
+  status: PendingTransactionStatus;
   attempts: number;
   maxAttempts: number;
   protocol: VpnProtocol;
@@ -75,7 +79,7 @@ export function addPendingTransaction(
 
 export function updateTransactionStatus(
   id: string,
-  status: "pending" | "complete",
+  status: PendingTransactionStatus,
 ): void {
   try {
     const transactions = getPendingTransactions();

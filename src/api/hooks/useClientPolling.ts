@@ -96,6 +96,32 @@ export function useClientPolling() {
     }
   }, []);
 
+  const recordFailedAttempt = useCallback(() => {
+    setPollingState((prev) => {
+      if (!prev.isPolling || !prev.clientId) {
+        return prev;
+      }
+
+      const newAttempts = prev.attempts + 1;
+      updateTransactionAttempts(prev.clientId, newAttempts);
+
+      if (newAttempts >= prev.maxAttempts) {
+        updateTransactionStatus(prev.clientId, "failed");
+        return {
+          ...prev,
+          isPolling: false,
+          clientId: null,
+          attempts: 0,
+        };
+      }
+
+      return {
+        ...prev,
+        attempts: newAttempts,
+      };
+    });
+  }, []);
+
   useEffect(() => {
     if (!pollingState.isPolling || !pollingState.clientId) {
       return;
@@ -151,47 +177,10 @@ export function useClientPolling() {
           return;
         }
 
-        let shouldStop = false;
-        setPollingState((prev) => {
-          const newAttempts = prev.attempts + 1;
-
-          if (prev.clientId) {
-            updateTransactionAttempts(prev.clientId, newAttempts);
-          }
-
-          shouldStop = newAttempts >= prev.maxAttempts;
-
-          return {
-            ...prev,
-            attempts: newAttempts,
-          };
-        });
-
-        if (shouldStop) {
-          stopPolling(false);
-        }
+        recordFailedAttempt();
       } catch (error) {
         console.error("Error polling client availability:", error);
-
-        let shouldStop = false;
-        setPollingState((prev) => {
-          const newAttempts = prev.attempts + 1;
-
-          if (prev.clientId) {
-            updateTransactionAttempts(prev.clientId, newAttempts);
-          }
-
-          shouldStop = newAttempts >= prev.maxAttempts;
-
-          return {
-            ...prev,
-            attempts: newAttempts,
-          };
-        });
-
-        if (shouldStop) {
-          stopPolling(false);
-        }
+        recordFailedAttempt();
       }
     };
 
@@ -215,6 +204,7 @@ export function useClientPolling() {
     pollingState.protocol,
     pollingState.expectedExpirationAfter,
     queryClient,
+    recordFailedAttempt,
     stopPolling,
   ]);
 
